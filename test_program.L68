@@ -1,0 +1,53 @@
+00008000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.16.01
+Created On: 10/15/2019 7:24:36 PM
+
+00000000                             1  *-----------------------------------------------------------
+00000000                             2  * Title      :  TEST PROGRAM
+00000000                             3  * Written by :  Team nibble (NICK, SHELBY, AND ZOE)
+00000000                             4  * Date       :
+00000000                             5  * Description:  TEST program to dissasemble
+00000000                             6  *-----------------------------------------------------------
+00008000                             7          ORG    $8000       * start far enough away from dissasembler program
+00008000  4E71                       8  START:  NOP
+00008002                             9  
+00008002                            10             
+00008002  327C D000                 11          MOVEA   #$D000,A1   * setup address registers with address for testing
+00008006  347C D004                 12          MOVEA   #$D004,A2
+0000800A                            13          
+0000800A                            14  *   test MOVE operations
+0000800A  103C 0037                 15          MOVE.B  #55,D0      * test MOVE.B with immediate addressing and data register direct addressing
+0000800E  13C0 0000D000             16          MOVE.B  D0,$D000       * data register direct to absolute word
+00008014  13FC 0063 0000D004        17          MOVE.B  #99,$D004   * immediate to absolute word address
+0000801C  1200                      18          MOVE.B  D0,D1  * data register to data register
+0000801E  1039 0000D004             19          MOVE.B  $D004,D0    * absolute word to data register
+00008024  13F9 0000D004 0000D000    20          MOVE.B  $D004,$D000 * absolute word to absolute word
+0000802E  1280                      21          MOVE.B  D0,(A1)     * data register to indirect address register
+00008030  14BC 00EF                 22          MOVE.B  #$EF,(A2)   * Immediate to indirect AR
+00008034  1491                      23          MOVE.B  (A1),(A2)   * indirect to indirect
+00008036  12FC 0037                 24          MOVE.B  #55,(A1)+   * immediate to indirect AR post increment
+0000803A  133C 004D                 25          MOVE.B  #77,-(A1)   * immediate to indirect pre decrement
+0000803E  12C0                      26          MOVE.B  D0,(A1)+    * data register to indirect post increment
+00008040  1301                      27          MOVE.B  D1,-(A1)    * data register to inderect pre decrement
+00008042  14F9 0000D000             28          MOVE.B  $D000,(A2)+ * absolute word to indirect post
+00008048  1539 0000D000             29          MOVE.B  $D000,-(A2) * Aboslute word to indirect pre
+0000804E  13DA 0000D000             30          MOVE.B  (A2)+,$D000 * Indirect post to absolute word
+00008054  13E2 0000D000             31          MOVE.B  -(A2),$D000 * Indirect pre to absolute word
+0000805A  121A                      32          MOVE.B  (A2)+,D1    * Indirect post to data register
+0000805C  1222                      33          MOVE.B  -(A2),D1    * indirect pre to data register
+0000805E  14D9                      34          MOVE.B  (A1)+,(A2)+ * indirect post to indirect post
+00008060  1521                      35          MOVE.B  -(A1),-(A2) * indirect pre to indirect pre
+00008062  14E1                      36          MOVE.B  -(A1),(A2)+ * indirect pre to indirect post
+00008064  131A                      37          MOVE.B  (A2)+,-(A1) * indirect post to indirect pre
+00008066                            38          
+00008066                            39          
+00008066                            40          END    START      
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+START               8000
