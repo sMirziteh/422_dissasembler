@@ -1,6 +1,6 @@
 00008000 Starting Address
 Assembler used: EASy68K Editor/Assembler v5.16.01
-Created On: 10/15/2019 7:24:36 PM
+Created On: 10/15/2019 7:47:55 PM
 
 00000000                             1  *-----------------------------------------------------------
 00000000                             2  * Title      :  TEST PROGRAM
@@ -14,37 +14,65 @@ Created On: 10/15/2019 7:24:36 PM
 00008002                            10             
 00008002  327C D000                 11          MOVEA   #$D000,A1   * setup address registers with address for testing
 00008006  347C D004                 12          MOVEA   #$D004,A2
-0000800A                            13          
-0000800A                            14  *   test MOVE operations
-0000800A  103C 0037                 15          MOVE.B  #55,D0      * test MOVE.B with immediate addressing and data register direct addressing
-0000800E  13C0 0000D000             16          MOVE.B  D0,$D000       * data register direct to absolute word
-00008014  13FC 0063 0000D004        17          MOVE.B  #99,$D004   * immediate to absolute word address
-0000801C  1200                      18          MOVE.B  D0,D1  * data register to data register
-0000801E  1039 0000D004             19          MOVE.B  $D004,D0    * absolute word to data register
-00008024  13F9 0000D004 0000D000    20          MOVE.B  $D004,$D000 * absolute word to absolute word
-0000802E  1280                      21          MOVE.B  D0,(A1)     * data register to indirect address register
-00008030  14BC 00EF                 22          MOVE.B  #$EF,(A2)   * Immediate to indirect AR
-00008034  1491                      23          MOVE.B  (A1),(A2)   * indirect to indirect
-00008036  12FC 0037                 24          MOVE.B  #55,(A1)+   * immediate to indirect AR post increment
-0000803A  133C 004D                 25          MOVE.B  #77,-(A1)   * immediate to indirect pre decrement
-0000803E  12C0                      26          MOVE.B  D0,(A1)+    * data register to indirect post increment
-00008040  1301                      27          MOVE.B  D1,-(A1)    * data register to inderect pre decrement
-00008042  14F9 0000D000             28          MOVE.B  $D000,(A2)+ * absolute word to indirect post
-00008048  1539 0000D000             29          MOVE.B  $D000,-(A2) * Aboslute word to indirect pre
-0000804E  13DA 0000D000             30          MOVE.B  (A2)+,$D000 * Indirect post to absolute word
-00008054  13E2 0000D000             31          MOVE.B  -(A2),$D000 * Indirect pre to absolute word
-0000805A  121A                      32          MOVE.B  (A2)+,D1    * Indirect post to data register
-0000805C  1222                      33          MOVE.B  -(A2),D1    * indirect pre to data register
-0000805E  14D9                      34          MOVE.B  (A1)+,(A2)+ * indirect post to indirect post
-00008060  1521                      35          MOVE.B  -(A1),-(A2) * indirect pre to indirect pre
-00008062  14E1                      36          MOVE.B  -(A1),(A2)+ * indirect pre to indirect post
-00008064  131A                      37          MOVE.B  (A2)+,-(A1) * indirect post to indirect pre
-00008066                            38          
-00008066                            39          
-00008066                            40          END    START      
+0000800A                            13      
+0000800A                            14  
+0000800A                            15  ****************************************************
+0000800A                            16  * This warning is normal when using 16bit addresses
+0000800A                            17  * this is required to test absolute word addressing
+0000800A                            18  * 
+0000800A                            19  * WARNING: Forcing SHORT addressing disables range
+0000800A                            20  * checking of extension word
+0000800A                            21  ****************************************************
+0000800A                            22  *   test MOVE operations
+0000800A  103C 0037                 23          MOVE.B  #55,D0      * immediate addressing and data register direct addressing
+Line 24 WARNING: Forcing SHORT addressing disables range checking of extension word
+0000800E  11C0 D000                 24          MOVE.B  D0,$D000.W  * data register direct to absolute word
+00008012  13C0 0000D000             25          MOVE.B  D0,$D000.L  * data register direct to absolute long
+Line 26 WARNING: Forcing SHORT addressing disables range checking of extension word
+00008018  11FC 0063 D004            26          MOVE.B  #99,$D004.W * immediate to absolute word address
+0000801E  13FC 0063 0000D004        27          MOVE.B  #99,$D004.L * immediate to absolute long address
+00008026  1200                      28          MOVE.B  D0,D1  * data register to data register
+Line 29 WARNING: Forcing SHORT addressing disables range checking of extension word
+00008028  1038 D004                 29          MOVE.B  $D004.W,D0    * absolute word to data register
+0000802C  1039 0000D004             30          MOVE.B  $D004.L,D0    * absolute long to data register
+Line 31 WARNING: Forcing SHORT addressing disables range checking of extension word
+00008032  11F8 D004 D000            31          MOVE.B  $D004.W,$D000.W * absolute word to absolute word
+00008038  13F9 0000D004 0000D000    32          MOVE.B  $D004.L,$D000.L * absolute long to absolute long
+Line 33 WARNING: Forcing SHORT addressing disables range checking of extension word
+00008042  11F9 0000D004 D000        33          MOVE.B  $D004.L,$D000.W * absolute Long to absolute word
+Line 34 WARNING: Forcing SHORT addressing disables range checking of extension word
+0000804A  13F8 D004 0000D000        34          MOVE.B  $D004.W,$D000.L * absolute word to absolute long
+00008052  1280                      35          MOVE.B  D0,(A1)     * data register to indirect address register
+00008054  14BC 00EF                 36          MOVE.B  #$EF,(A2)   * Immediate to indirect address register
+00008058  1491                      37          MOVE.B  (A1),(A2)   * indirect to indirect address registers
+0000805A  12FC 0037                 38          MOVE.B  #55,(A1)+   * immediate to indirect post increment
+0000805E  133C 004D                 39          MOVE.B  #77,-(A1)   * immediate to indirect pre decrement
+00008062  12C0                      40          MOVE.B  D0,(A1)+    * data register to indirect post increment
+00008064  1301                      41          MOVE.B  D1,-(A1)    * data register to inderect pre decrement
+Line 42 WARNING: Forcing SHORT addressing disables range checking of extension word
+00008066  14F8 D000                 42          MOVE.B  $D000.W,(A2)+ * absolute word to indirect post
+Line 43 WARNING: Forcing SHORT addressing disables range checking of extension word
+0000806A  1538 D000                 43          MOVE.B  $D000.W,-(A2) * Aboslute word to indirect pre
+0000806E  14F9 0000D000             44          MOVE.B  $D000.L,(A2)+ * absolute long to indirect post
+00008074  1539 0000D000             45          MOVE.B  $D000.L,-(A2) * Aboslute long to indirect pre
+Line 46 WARNING: Forcing SHORT addressing disables range checking of extension word
+0000807A  11DA D000                 46          MOVE.B  (A2)+,$D000.W * Indirect post to absolute word
+Line 47 WARNING: Forcing SHORT addressing disables range checking of extension word
+0000807E  11E2 D000                 47          MOVE.B  -(A2),$D000.W * Indirect pre to absolute word
+00008082  13DA 0000D000             48          MOVE.B  (A2)+,$D000.L * Indirect post to absolute long
+00008088  13E2 0000D000             49          MOVE.B  -(A2),$D000.L * Indirect pre to absolute long
+0000808E  121A                      50          MOVE.B  (A2)+,D1    * Indirect post to data register
+00008090  1222                      51          MOVE.B  -(A2),D1    * indirect pre to data register
+00008092  14D9                      52          MOVE.B  (A1)+,(A2)+ * indirect post to indirect post
+00008094  1521                      53          MOVE.B  -(A1),-(A2) * indirect pre to indirect pre
+00008096  14E1                      54          MOVE.B  -(A1),(A2)+ * indirect pre to indirect post
+00008098  131A                      55          MOVE.B  (A2)+,-(A1) * indirect post to indirect pre
+0000809A                            56          
+0000809A                            57          
+0000809A                            58          END    START      
 
 No errors detected
-No warnings generated
+10 warnings generated
 
 
 SYMBOL TABLE INFORMATION
