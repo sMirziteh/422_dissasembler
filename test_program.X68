@@ -4,14 +4,6 @@
 * Date       :
 * Description:  TEST program to dissasemble
 *-----------------------------------------------------------
-		ORG    $8000       * start far enough away from dissasembler program
-START:  NOP
-
-           
-        MOVEA   #$D000,A1   * setup address registers with address for testing
-        MOVEA   #$D004,A2
-    
-
 ****************************************************
 * This warning is normal when using 16bit addresses
 * this is required to test absolute word addressing
@@ -19,49 +11,153 @@ START:  NOP
 * WARNING: Forcing SHORT addressing disables range
 * checking of extension word
 ****************************************************
-*   test MOVE operations
-        MOVE.B  #55,D0      * immediate addressing and data register direct addressing
-        MOVE.B  D0,$D000.W  * data register direct to absolute word
-        MOVE.B  D0,$D000.L  * data register direct to absolute long
-        MOVE.B  #99,$D004.W * immediate to absolute word address
-        MOVE.B  #99,$D004.L * immediate to absolute long address
-        MOVE.B  D0,D1  * data register to data register
-        MOVE.B  $D004.W,D0    * absolute word to data register
-        MOVE.B  $D004.L,D0    * absolute long to data register
-        MOVE.B  $D004.W,$D000.W * absolute word to absolute word
-        MOVE.B  $D004.L,$D000.L * absolute long to absolute long
-        MOVE.B  $D004.L,$D000.W * absolute Long to absolute word
-        MOVE.B  $D004.W,$D000.L * absolute word to absolute long
-        MOVE.B  D0,(A1)     * data register to indirect address register
-        MOVE.B  #$EF,(A2)   * Immediate to indirect address register
-        MOVE.B  (A1),(A2)   * indirect to indirect address registers
-        MOVE.B  #55,(A1)+   * immediate to indirect post increment
-        MOVE.B  #77,-(A1)   * immediate to indirect pre decrement
-        MOVE.B  D0,(A1)+    * data register to indirect post increment
-        MOVE.B  D1,-(A1)    * data register to inderect pre decrement
-        MOVE.B  $D000.W,(A2)+ * absolute word to indirect post
-        MOVE.B  $D000.W,-(A2) * Aboslute word to indirect pre
-        MOVE.B  $D000.L,(A2)+ * absolute long to indirect post
-        MOVE.B  $D000.L,-(A2) * Aboslute long to indirect pre
-        MOVE.B  (A2)+,$D000.W * Indirect post to absolute word
-        MOVE.B  -(A2),$D000.W * Indirect pre to absolute word
-        MOVE.B  (A2)+,$D000.L * Indirect post to absolute long
-        MOVE.B  -(A2),$D000.L * Indirect pre to absolute long
-        MOVE.B  (A2)+,D1    * Indirect post to data register
-        MOVE.B  -(A2),D1    * indirect pre to data register
-        MOVE.B  (A1)+,(A2)+ * indirect post to indirect post
-        MOVE.B  -(A1),-(A2) * indirect pre to indirect pre
-        MOVE.B  -(A1),(A2)+ * indirect pre to indirect post
-        MOVE.B  (A2)+,-(A1) * indirect post to indirect pre
-        
-        NOP
-        
-		END    START      
-  
-                    
+	org $8000	* start at this address
+START	NOP	* first instruction NOP for testing
+	LEA $A000,A1	* init Address registers
+	LEA $A0F0,A2
+	MOVE.B #5,D0	* init data registers
+	MOVE.B #15,D1
 
-DATA    DC.B    "here is some random test data",0
 
+* Testing all EAs for MOVE.B
+	MOVE.B	D0,D1	* Data register direct to Data register direct
+	MOVE.B	D0,(A2)	* Data register direct to Address register indirect
+	MOVE.B	D0,(A2)+	* Data register direct to Address Register Indirect with post incrementing
+	MOVE.B	D0,-(A2)	* Data register direct to Address Register Indirect with pre decrementing
+	MOVE.B	D0,$A0F0.L	* Data register direct to Absolute Long Address
+	MOVE.B	D0,$A0F0.W	* Data register direct to Absoluter Word Address
+	MOVE.B	(A1),D1	* Address register indirect to Data register direct
+	MOVE.B	(A1),(A2)	* Address register indirect to Address register indirect
+	MOVE.B	(A1),(A2)+	* Address register indirect to Address Register Indirect with post incrementing
+	MOVE.B	(A1),-(A2)	* Address register indirect to Address Register Indirect with pre decrementing
+	MOVE.B	(A1),$A0F0.L	* Address register indirect to Absolute Long Address
+	MOVE.B	(A1),$A0F0.W	* Address register indirect to Absoluter Word Address
+	MOVE.B	#$AA,D1	* Immediate addressing to Data register direct
+	MOVE.B	#$AA,(A2)	* Immediate addressing to Address register indirect
+	MOVE.B	#$AA,(A2)+	* Immediate addressing to Address Register Indirect with post incrementing
+	MOVE.B	#$AA,-(A2)	* Immediate addressing to Address Register Indirect with pre decrementing
+	MOVE.B	#$AA,$A0F0.L	* Immediate addressing to Absolute Long Address
+	MOVE.B	#$AA,$A0F0.W	* Immediate addressing to Absoluter Word Address
+	MOVE.B	(A1)+,D1	* Address Register Indirect with post incrementing to Data register direct
+	MOVE.B	(A1)+,(A2)	* Address Register Indirect with post incrementing to Address register indirect
+	MOVE.B	(A1)+,(A2)+	* Address Register Indirect with post incrementing to Address Register Indirect with post incrementing
+	MOVE.B	(A1)+,-(A2)	* Address Register Indirect with post incrementing to Address Register Indirect with pre decrementing
+	MOVE.B	(A1)+,$A0F0.L	* Address Register Indirect with post incrementing to Absolute Long Address
+	MOVE.B	(A1)+,$A0F0.W	* Address Register Indirect with post incrementing to Absoluter Word Address
+	MOVE.B	-(A1),D1	* Address Register Indirect with pre decrementing to Data register direct
+	MOVE.B	-(A1),(A2)	* Address Register Indirect with pre decrementing to Address register indirect
+	MOVE.B	-(A1),(A2)+	* Address Register Indirect with pre decrementing to Address Register Indirect with post incrementing
+	MOVE.B	-(A1),-(A2)	* Address Register Indirect with pre decrementing to Address Register Indirect with pre decrementing
+	MOVE.B	-(A1),$A0F0.L	* Address Register Indirect with pre decrementing to Absolute Long Address
+	MOVE.B	-(A1),$A0F0.W	* Address Register Indirect with pre decrementing to Absoluter Word Address
+	MOVE.B	$A000.L,D1	* Absolute Long Address to Data register direct
+	MOVE.B	$A000.L,(A2)	* Absolute Long Address to Address register indirect
+	MOVE.B	$A000.L,(A2)+	* Absolute Long Address to Address Register Indirect with post incrementing
+	MOVE.B	$A000.L,-(A2)	* Absolute Long Address to Address Register Indirect with pre decrementing
+	MOVE.B	$A000.L,$A0F0.L	* Absolute Long Address to Absolute Long Address
+	MOVE.B	$A000.L,$A0F0.W	* Absolute Long Address to Absoluter Word Address
+	MOVE.B	$A000.W,D1	* Absoluter Word Address to Data register direct
+	MOVE.B	$A000.W,(A2)	* Absoluter Word Address to Address register indirect
+	MOVE.B	$A000.W,(A2)+	* Absoluter Word Address to Address Register Indirect with post incrementing
+	MOVE.B	$A000.W,-(A2)	* Absoluter Word Address to Address Register Indirect with pre decrementing
+	MOVE.B	$A000.W,$A0F0.L	* Absoluter Word Address to Absolute Long Address
+	MOVE.B	$A000.W,$A0F0.W	* Absoluter Word Address to Absoluter Word Address
+
+
+
+* Testing all EAs for MOVE.W
+	MOVE.W	D0,D1	* Data register direct to Data register direct
+	MOVE.W	D0,(A2)	* Data register direct to Address register indirect
+	MOVE.W	D0,(A2)+	* Data register direct to Address Register Indirect with post incrementing
+	MOVE.W	D0,-(A2)	* Data register direct to Address Register Indirect with pre decrementing
+	MOVE.W	D0,$A0F0.L	* Data register direct to Absolute Long Address
+	MOVE.W	D0,$A0F0.W	* Data register direct to Absoluter Word Address
+	MOVE.W	(A1),D1	* Address register indirect to Data register direct
+	MOVE.W	(A1),(A2)	* Address register indirect to Address register indirect
+	MOVE.W	(A1),(A2)+	* Address register indirect to Address Register Indirect with post incrementing
+	MOVE.W	(A1),-(A2)	* Address register indirect to Address Register Indirect with pre decrementing
+	MOVE.W	(A1),$A0F0.L	* Address register indirect to Absolute Long Address
+	MOVE.W	(A1),$A0F0.W	* Address register indirect to Absoluter Word Address
+	MOVE.W	#$AA,D1	* Immediate addressing to Data register direct
+	MOVE.W	#$AA,(A2)	* Immediate addressing to Address register indirect
+	MOVE.W	#$AA,(A2)+	* Immediate addressing to Address Register Indirect with post incrementing
+	MOVE.W	#$AA,-(A2)	* Immediate addressing to Address Register Indirect with pre decrementing
+	MOVE.W	#$AA,$A0F0.L	* Immediate addressing to Absolute Long Address
+	MOVE.W	#$AA,$A0F0.W	* Immediate addressing to Absoluter Word Address
+	MOVE.W	(A1)+,D1	* Address Register Indirect with post incrementing to Data register direct
+	MOVE.W	(A1)+,(A2)	* Address Register Indirect with post incrementing to Address register indirect
+	MOVE.W	(A1)+,(A2)+	* Address Register Indirect with post incrementing to Address Register Indirect with post incrementing
+	MOVE.W	(A1)+,-(A2)	* Address Register Indirect with post incrementing to Address Register Indirect with pre decrementing
+	MOVE.W	(A1)+,$A0F0.L	* Address Register Indirect with post incrementing to Absolute Long Address
+	MOVE.W	(A1)+,$A0F0.W	* Address Register Indirect with post incrementing to Absoluter Word Address
+	MOVE.W	-(A1),D1	* Address Register Indirect with pre decrementing to Data register direct
+	MOVE.W	-(A1),(A2)	* Address Register Indirect with pre decrementing to Address register indirect
+	MOVE.W	-(A1),(A2)+	* Address Register Indirect with pre decrementing to Address Register Indirect with post incrementing
+	MOVE.W	-(A1),-(A2)	* Address Register Indirect with pre decrementing to Address Register Indirect with pre decrementing
+	MOVE.W	-(A1),$A0F0.L	* Address Register Indirect with pre decrementing to Absolute Long Address
+	MOVE.W	-(A1),$A0F0.W	* Address Register Indirect with pre decrementing to Absoluter Word Address
+	MOVE.W	$A000.L,D1	* Absolute Long Address to Data register direct
+	MOVE.W	$A000.L,(A2)	* Absolute Long Address to Address register indirect
+	MOVE.W	$A000.L,(A2)+	* Absolute Long Address to Address Register Indirect with post incrementing
+	MOVE.W	$A000.L,-(A2)	* Absolute Long Address to Address Register Indirect with pre decrementing
+	MOVE.W	$A000.L,$A0F0.L	* Absolute Long Address to Absolute Long Address
+	MOVE.W	$A000.L,$A0F0.W	* Absolute Long Address to Absoluter Word Address
+	MOVE.W	$A000.W,D1	* Absoluter Word Address to Data register direct
+	MOVE.W	$A000.W,(A2)	* Absoluter Word Address to Address register indirect
+	MOVE.W	$A000.W,(A2)+	* Absoluter Word Address to Address Register Indirect with post incrementing
+	MOVE.W	$A000.W,-(A2)	* Absoluter Word Address to Address Register Indirect with pre decrementing
+	MOVE.W	$A000.W,$A0F0.L	* Absoluter Word Address to Absolute Long Address
+	MOVE.W	$A000.W,$A0F0.W	* Absoluter Word Address to Absoluter Word Address
+
+
+
+* Testing all EAs for MOVE.L
+	MOVE.L	D0,D1	* Data register direct to Data register direct
+	MOVE.L	D0,(A2)	* Data register direct to Address register indirect
+	MOVE.L	D0,(A2)+	* Data register direct to Address Register Indirect with post incrementing
+	MOVE.L	D0,-(A2)	* Data register direct to Address Register Indirect with pre decrementing
+	MOVE.L	D0,$A0F0.L	* Data register direct to Absolute Long Address
+	MOVE.L	D0,$A0F0.W	* Data register direct to Absoluter Word Address
+	MOVE.L	(A1),D1	* Address register indirect to Data register direct
+	MOVE.L	(A1),(A2)	* Address register indirect to Address register indirect
+	MOVE.L	(A1),(A2)+	* Address register indirect to Address Register Indirect with post incrementing
+	MOVE.L	(A1),-(A2)	* Address register indirect to Address Register Indirect with pre decrementing
+	MOVE.L	(A1),$A0F0.L	* Address register indirect to Absolute Long Address
+	MOVE.L	(A1),$A0F0.W	* Address register indirect to Absoluter Word Address
+	MOVE.L	#$AA,D1	* Immediate addressing to Data register direct
+	MOVE.L	#$AA,(A2)	* Immediate addressing to Address register indirect
+	MOVE.L	#$AA,(A2)+	* Immediate addressing to Address Register Indirect with post incrementing
+	MOVE.L	#$AA,-(A2)	* Immediate addressing to Address Register Indirect with pre decrementing
+	MOVE.L	#$AA,$A0F0.L	* Immediate addressing to Absolute Long Address
+	MOVE.L	#$AA,$A0F0.W	* Immediate addressing to Absoluter Word Address
+	MOVE.L	(A1)+,D1	* Address Register Indirect with post incrementing to Data register direct
+	MOVE.L	(A1)+,(A2)	* Address Register Indirect with post incrementing to Address register indirect
+	MOVE.L	(A1)+,(A2)+	* Address Register Indirect with post incrementing to Address Register Indirect with post incrementing
+	MOVE.L	(A1)+,-(A2)	* Address Register Indirect with post incrementing to Address Register Indirect with pre decrementing
+	MOVE.L	(A1)+,$A0F0.L	* Address Register Indirect with post incrementing to Absolute Long Address
+	MOVE.L	(A1)+,$A0F0.W	* Address Register Indirect with post incrementing to Absoluter Word Address
+	MOVE.L	-(A1),D1	* Address Register Indirect with pre decrementing to Data register direct
+	MOVE.L	-(A1),(A2)	* Address Register Indirect with pre decrementing to Address register indirect
+	MOVE.L	-(A1),(A2)+	* Address Register Indirect with pre decrementing to Address Register Indirect with post incrementing
+	MOVE.L	-(A1),-(A2)	* Address Register Indirect with pre decrementing to Address Register Indirect with pre decrementing
+	MOVE.L	-(A1),$A0F0.L	* Address Register Indirect with pre decrementing to Absolute Long Address
+	MOVE.L	-(A1),$A0F0.W	* Address Register Indirect with pre decrementing to Absoluter Word Address
+	MOVE.L	$A000.L,D1	* Absolute Long Address to Data register direct
+	MOVE.L	$A000.L,(A2)	* Absolute Long Address to Address register indirect
+	MOVE.L	$A000.L,(A2)+	* Absolute Long Address to Address Register Indirect with post incrementing
+	MOVE.L	$A000.L,-(A2)	* Absolute Long Address to Address Register Indirect with pre decrementing
+	MOVE.L	$A000.L,$A0F0.L	* Absolute Long Address to Absolute Long Address
+	MOVE.L	$A000.L,$A0F0.W	* Absolute Long Address to Absoluter Word Address
+	MOVE.L	$A000.W,D1	* Absoluter Word Address to Data register direct
+	MOVE.L	$A000.W,(A2)	* Absoluter Word Address to Address register indirect
+	MOVE.L	$A000.W,(A2)+	* Absoluter Word Address to Address Register Indirect with post incrementing
+	MOVE.L	$A000.W,-(A2)	* Absoluter Word Address to Address Register Indirect with pre decrementing
+	MOVE.L	$A000.W,$A0F0.L	* Absoluter Word Address to Absolute Long Address
+	MOVE.L	$A000.W,$A0F0.W	* Absoluter Word Address to Absoluter Word Address
+
+
+
+	END	START
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~

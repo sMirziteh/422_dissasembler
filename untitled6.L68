@@ -1,0 +1,193 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.16.01
+Created On: 10/15/2019 9:13:47 PM
+
+00001000                             1      org $1000
+00001000  4E71                       2  START   NOP
+00001002  43F9 00008000              3      LEA $8000,A1
+00001008  45F9 000080F0              4      LEA $80F0,A2
+0000100E  103C 0005                  5      MOVE.B #5,D0
+00001012  123C 000F                  6      MOVE.B #15,D1
+00001016                             7  
+00001016                             8  
+00001016                             9  * Testing all EAs for MOVE.mode MOVE.B  D0,D1   * Data register direct to Data register direct
+00001016  1480                      10      MOVE.B  D0,(A2) * Data register direct to Address register indirect
+00001018  14C0                      11      MOVE.B  D0,(A2)+    * Data register direct to Address Register Indirect with post incrementing
+0000101A  1500                      12      MOVE.B  D0,-(A2)    * Data register direct to Address Register Indirect with pre decrementing
+0000101C  13C0 000080F0             13      MOVE.B  D0,$80F0.L  * Data register direct to Absolute Long Address
+Line 14 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001022  11C0 80F0                 14      MOVE.B  D0,$80F0.W  * Data register direct to Absoluter Word Address
+00001026  1211                      15      MOVE.B  (A1),D1 * Address register indirect to Data register direct
+00001028  1491                      16      MOVE.B  (A1),(A2)   * Address register indirect to Address register indirect
+0000102A  14D1                      17      MOVE.B  (A1),(A2)+  * Address register indirect to Address Register Indirect with post incrementing
+0000102C  1511                      18      MOVE.B  (A1),-(A2)  * Address register indirect to Address Register Indirect with pre decrementing
+0000102E  13D1 000080F0             19      MOVE.B  (A1),$80F0.L    * Address register indirect to Absolute Long Address
+Line 20 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001034  11D1 80F0                 20      MOVE.B  (A1),$80F0.W    * Address register indirect to Absoluter Word Address
+00001038  123C 00AA                 21      MOVE.B  #$AA,D1 * Immediate addressing to Data register direct
+0000103C  14BC 00AA                 22      MOVE.B  #$AA,(A2)   * Immediate addressing to Address register indirect
+00001040  14FC 00AA                 23      MOVE.B  #$AA,(A2)+  * Immediate addressing to Address Register Indirect with post incrementing
+00001044  153C 00AA                 24      MOVE.B  #$AA,-(A2)  * Immediate addressing to Address Register Indirect with pre decrementing
+00001048  13FC 00AA 000080F0        25      MOVE.B  #$AA,$80F0.L    * Immediate addressing to Absolute Long Address
+Line 26 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001050  11FC 00AA 80F0            26      MOVE.B  #$AA,$80F0.W    * Immediate addressing to Absoluter Word Address
+00001056  1219                      27      MOVE.B  (A1)+,D1    * Address Register Indirect with post incrementing to Data register direct
+00001058  1499                      28      MOVE.B  (A1)+,(A2)  * Address Register Indirect with post incrementing to Address register indirect
+0000105A  14D9                      29      MOVE.B  (A1)+,(A2)+ * Address Register Indirect with post incrementing to Address Register Indirect with post incrementing
+0000105C  1519                      30      MOVE.B  (A1)+,-(A2) * Address Register Indirect with post incrementing to Address Register Indirect with pre decrementing
+0000105E  13D9 000080F0             31      MOVE.B  (A1)+,$80F0.L   * Address Register Indirect with post incrementing to Absolute Long Address
+Line 32 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001064  11D9 80F0                 32      MOVE.B  (A1)+,$80F0.W   * Address Register Indirect with post incrementing to Absoluter Word Address
+00001068  1221                      33      MOVE.B  -(A1),D1    * Address Register Indirect with pre decrementing to Data register direct
+0000106A  14A1                      34      MOVE.B  -(A1),(A2)  * Address Register Indirect with pre decrementing to Address register indirect
+0000106C  14E1                      35      MOVE.B  -(A1),(A2)+ * Address Register Indirect with pre decrementing to Address Register Indirect with post incrementing
+0000106E  1521                      36      MOVE.B  -(A1),-(A2) * Address Register Indirect with pre decrementing to Address Register Indirect with pre decrementing
+00001070  13E1 000080F0             37      MOVE.B  -(A1),$80F0.L   * Address Register Indirect with pre decrementing to Absolute Long Address
+Line 38 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001076  11E1 80F0                 38      MOVE.B  -(A1),$80F0.W   * Address Register Indirect with pre decrementing to Absoluter Word Address
+0000107A  1239 00008000             39      MOVE.B  $8000.L,D1  * Absolute Long Address to Data register direct
+00001080  14B9 00008000             40      MOVE.B  $8000.L,(A2)    * Absolute Long Address to Address register indirect
+00001086  14F9 00008000             41      MOVE.B  $8000.L,(A2)+   * Absolute Long Address to Address Register Indirect with post incrementing
+0000108C  1539 00008000             42      MOVE.B  $8000.L,-(A2)   * Absolute Long Address to Address Register Indirect with pre decrementing
+00001092  13F9 00008000 000080F0    43      MOVE.B  $8000.L,$80F0.L * Absolute Long Address to Absolute Long Address
+Line 44 WARNING: Forcing SHORT addressing disables range checking of extension word
+0000109C  11F9 00008000 80F0        44      MOVE.B  $8000.L,$80F0.W * Absolute Long Address to Absoluter Word Address
+Line 45 WARNING: Forcing SHORT addressing disables range checking of extension word
+000010A4  1238 8000                 45      MOVE.B  $8000.W,D1  * Absoluter Word Address to Data register direct
+Line 46 WARNING: Forcing SHORT addressing disables range checking of extension word
+000010A8  14B8 8000                 46      MOVE.B  $8000.W,(A2)    * Absoluter Word Address to Address register indirect
+Line 47 WARNING: Forcing SHORT addressing disables range checking of extension word
+000010AC  14F8 8000                 47      MOVE.B  $8000.W,(A2)+   * Absoluter Word Address to Address Register Indirect with post incrementing
+Line 48 WARNING: Forcing SHORT addressing disables range checking of extension word
+000010B0  1538 8000                 48      MOVE.B  $8000.W,-(A2)   * Absoluter Word Address to Address Register Indirect with pre decrementing
+Line 49 WARNING: Forcing SHORT addressing disables range checking of extension word
+000010B4  13F8 8000 000080F0        49      MOVE.B  $8000.W,$80F0.L * Absoluter Word Address to Absolute Long Address
+Line 50 WARNING: Forcing SHORT addressing disables range checking of extension word
+000010BC  11F8 8000 80F0            50      MOVE.B  $8000.W,$80F0.W * Absoluter Word Address to Absoluter Word Address
+000010C2                            51  
+000010C2                            52  
+000010C2                            53  
+000010C2                            54  * Testing all EAs for MOVE.mode MOVE.W  D0,D1   * Data register direct to Data register direct
+000010C2  3480                      55      MOVE.W  D0,(A2) * Data register direct to Address register indirect
+000010C4  34C0                      56      MOVE.W  D0,(A2)+    * Data register direct to Address Register Indirect with post incrementing
+000010C6  3500                      57      MOVE.W  D0,-(A2)    * Data register direct to Address Register Indirect with pre decrementing
+000010C8  33C0 000080F0             58      MOVE.W  D0,$80F0.L  * Data register direct to Absolute Long Address
+Line 59 WARNING: Forcing SHORT addressing disables range checking of extension word
+000010CE  31C0 80F0                 59      MOVE.W  D0,$80F0.W  * Data register direct to Absoluter Word Address
+000010D2  3211                      60      MOVE.W  (A1),D1 * Address register indirect to Data register direct
+000010D4  3491                      61      MOVE.W  (A1),(A2)   * Address register indirect to Address register indirect
+000010D6  34D1                      62      MOVE.W  (A1),(A2)+  * Address register indirect to Address Register Indirect with post incrementing
+000010D8  3511                      63      MOVE.W  (A1),-(A2)  * Address register indirect to Address Register Indirect with pre decrementing
+000010DA  33D1 000080F0             64      MOVE.W  (A1),$80F0.L    * Address register indirect to Absolute Long Address
+Line 65 WARNING: Forcing SHORT addressing disables range checking of extension word
+000010E0  31D1 80F0                 65      MOVE.W  (A1),$80F0.W    * Address register indirect to Absoluter Word Address
+000010E4  323C 00AA                 66      MOVE.W  #$AA,D1 * Immediate addressing to Data register direct
+000010E8  34BC 00AA                 67      MOVE.W  #$AA,(A2)   * Immediate addressing to Address register indirect
+000010EC  34FC 00AA                 68      MOVE.W  #$AA,(A2)+  * Immediate addressing to Address Register Indirect with post incrementing
+000010F0  353C 00AA                 69      MOVE.W  #$AA,-(A2)  * Immediate addressing to Address Register Indirect with pre decrementing
+000010F4  33FC 00AA 000080F0        70      MOVE.W  #$AA,$80F0.L    * Immediate addressing to Absolute Long Address
+Line 71 WARNING: Forcing SHORT addressing disables range checking of extension word
+000010FC  31FC 00AA 80F0            71      MOVE.W  #$AA,$80F0.W    * Immediate addressing to Absoluter Word Address
+00001102  3219                      72      MOVE.W  (A1)+,D1    * Address Register Indirect with post incrementing to Data register direct
+00001104  3499                      73      MOVE.W  (A1)+,(A2)  * Address Register Indirect with post incrementing to Address register indirect
+00001106  34D9                      74      MOVE.W  (A1)+,(A2)+ * Address Register Indirect with post incrementing to Address Register Indirect with post incrementing
+00001108  3519                      75      MOVE.W  (A1)+,-(A2) * Address Register Indirect with post incrementing to Address Register Indirect with pre decrementing
+0000110A  33D9 000080F0             76      MOVE.W  (A1)+,$80F0.L   * Address Register Indirect with post incrementing to Absolute Long Address
+Line 77 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001110  31D9 80F0                 77      MOVE.W  (A1)+,$80F0.W   * Address Register Indirect with post incrementing to Absoluter Word Address
+00001114  3221                      78      MOVE.W  -(A1),D1    * Address Register Indirect with pre decrementing to Data register direct
+00001116  34A1                      79      MOVE.W  -(A1),(A2)  * Address Register Indirect with pre decrementing to Address register indirect
+00001118  34E1                      80      MOVE.W  -(A1),(A2)+ * Address Register Indirect with pre decrementing to Address Register Indirect with post incrementing
+0000111A  3521                      81      MOVE.W  -(A1),-(A2) * Address Register Indirect with pre decrementing to Address Register Indirect with pre decrementing
+0000111C  33E1 000080F0             82      MOVE.W  -(A1),$80F0.L   * Address Register Indirect with pre decrementing to Absolute Long Address
+Line 83 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001122  31E1 80F0                 83      MOVE.W  -(A1),$80F0.W   * Address Register Indirect with pre decrementing to Absoluter Word Address
+00001126  3239 00008000             84      MOVE.W  $8000.L,D1  * Absolute Long Address to Data register direct
+0000112C  34B9 00008000             85      MOVE.W  $8000.L,(A2)    * Absolute Long Address to Address register indirect
+00001132  34F9 00008000             86      MOVE.W  $8000.L,(A2)+   * Absolute Long Address to Address Register Indirect with post incrementing
+00001138  3539 00008000             87      MOVE.W  $8000.L,-(A2)   * Absolute Long Address to Address Register Indirect with pre decrementing
+0000113E  33F9 00008000 000080F0    88      MOVE.W  $8000.L,$80F0.L * Absolute Long Address to Absolute Long Address
+Line 89 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001148  31F9 00008000 80F0        89      MOVE.W  $8000.L,$80F0.W * Absolute Long Address to Absoluter Word Address
+Line 90 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001150  3238 8000                 90      MOVE.W  $8000.W,D1  * Absoluter Word Address to Data register direct
+Line 91 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001154  34B8 8000                 91      MOVE.W  $8000.W,(A2)    * Absoluter Word Address to Address register indirect
+Line 92 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001158  34F8 8000                 92      MOVE.W  $8000.W,(A2)+   * Absoluter Word Address to Address Register Indirect with post incrementing
+Line 93 WARNING: Forcing SHORT addressing disables range checking of extension word
+0000115C  3538 8000                 93      MOVE.W  $8000.W,-(A2)   * Absoluter Word Address to Address Register Indirect with pre decrementing
+Line 94 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001160  33F8 8000 000080F0        94      MOVE.W  $8000.W,$80F0.L * Absoluter Word Address to Absolute Long Address
+Line 95 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001168  31F8 8000 80F0            95      MOVE.W  $8000.W,$80F0.W * Absoluter Word Address to Absoluter Word Address
+0000116E                            96  
+0000116E                            97  
+0000116E                            98  
+0000116E                            99  * Testing all EAs for MOVE.mode MOVE.L  D0,D1   * Data register direct to Data register direct
+0000116E  2480                     100      MOVE.L  D0,(A2) * Data register direct to Address register indirect
+00001170  24C0                     101      MOVE.L  D0,(A2)+    * Data register direct to Address Register Indirect with post incrementing
+00001172  2500                     102      MOVE.L  D0,-(A2)    * Data register direct to Address Register Indirect with pre decrementing
+00001174  23C0 000080F0            103      MOVE.L  D0,$80F0.L  * Data register direct to Absolute Long Address
+Line 104 WARNING: Forcing SHORT addressing disables range checking of extension word
+0000117A  21C0 80F0                104      MOVE.L  D0,$80F0.W  * Data register direct to Absoluter Word Address
+0000117E  2211                     105      MOVE.L  (A1),D1 * Address register indirect to Data register direct
+00001180  2491                     106      MOVE.L  (A1),(A2)   * Address register indirect to Address register indirect
+00001182  24D1                     107      MOVE.L  (A1),(A2)+  * Address register indirect to Address Register Indirect with post incrementing
+00001184  2511                     108      MOVE.L  (A1),-(A2)  * Address register indirect to Address Register Indirect with pre decrementing
+00001186  23D1 000080F0            109      MOVE.L  (A1),$80F0.L    * Address register indirect to Absolute Long Address
+Line 110 WARNING: Forcing SHORT addressing disables range checking of extension word
+0000118C  21D1 80F0                110      MOVE.L  (A1),$80F0.W    * Address register indirect to Absoluter Word Address
+00001190  223C 000000AA            111      MOVE.L  #$AA,D1 * Immediate addressing to Data register direct
+00001196  24BC 000000AA            112      MOVE.L  #$AA,(A2)   * Immediate addressing to Address register indirect
+0000119C  24FC 000000AA            113      MOVE.L  #$AA,(A2)+  * Immediate addressing to Address Register Indirect with post incrementing
+000011A2  253C 000000AA            114      MOVE.L  #$AA,-(A2)  * Immediate addressing to Address Register Indirect with pre decrementing
+000011A8  23FC 000000AA 000080F0   115      MOVE.L  #$AA,$80F0.L    * Immediate addressing to Absolute Long Address
+Line 116 WARNING: Forcing SHORT addressing disables range checking of extension word
+000011B2  21FC 000000AA 80F0       116      MOVE.L  #$AA,$80F0.W    * Immediate addressing to Absoluter Word Address
+000011BA  2219                     117      MOVE.L  (A1)+,D1    * Address Register Indirect with post incrementing to Data register direct
+000011BC  2499                     118      MOVE.L  (A1)+,(A2)  * Address Register Indirect with post incrementing to Address register indirect
+000011BE  24D9                     119      MOVE.L  (A1)+,(A2)+ * Address Register Indirect with post incrementing to Address Register Indirect with post incrementing
+000011C0  2519                     120      MOVE.L  (A1)+,-(A2) * Address Register Indirect with post incrementing to Address Register Indirect with pre decrementing
+000011C2  23D9 000080F0            121      MOVE.L  (A1)+,$80F0.L   * Address Register Indirect with post incrementing to Absolute Long Address
+Line 122 WARNING: Forcing SHORT addressing disables range checking of extension word
+000011C8  21D9 80F0                122      MOVE.L  (A1)+,$80F0.W   * Address Register Indirect with post incrementing to Absoluter Word Address
+000011CC  2221                     123      MOVE.L  -(A1),D1    * Address Register Indirect with pre decrementing to Data register direct
+000011CE  24A1                     124      MOVE.L  -(A1),(A2)  * Address Register Indirect with pre decrementing to Address register indirect
+000011D0  24E1                     125      MOVE.L  -(A1),(A2)+ * Address Register Indirect with pre decrementing to Address Register Indirect with post incrementing
+000011D2  2521                     126      MOVE.L  -(A1),-(A2) * Address Register Indirect with pre decrementing to Address Register Indirect with pre decrementing
+000011D4  23E1 000080F0            127      MOVE.L  -(A1),$80F0.L   * Address Register Indirect with pre decrementing to Absolute Long Address
+Line 128 WARNING: Forcing SHORT addressing disables range checking of extension word
+000011DA  21E1 80F0                128      MOVE.L  -(A1),$80F0.W   * Address Register Indirect with pre decrementing to Absoluter Word Address
+000011DE  2239 00008000            129      MOVE.L  $8000.L,D1  * Absolute Long Address to Data register direct
+000011E4  24B9 00008000            130      MOVE.L  $8000.L,(A2)    * Absolute Long Address to Address register indirect
+000011EA  24F9 00008000            131      MOVE.L  $8000.L,(A2)+   * Absolute Long Address to Address Register Indirect with post incrementing
+000011F0  2539 00008000            132      MOVE.L  $8000.L,-(A2)   * Absolute Long Address to Address Register Indirect with pre decrementing
+000011F6  23F9 00008000 000080F0   133      MOVE.L  $8000.L,$80F0.L * Absolute Long Address to Absolute Long Address
+Line 134 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001200  21F9 00008000 80F0       134      MOVE.L  $8000.L,$80F0.W * Absolute Long Address to Absoluter Word Address
+Line 135 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001208  2238 8000                135      MOVE.L  $8000.W,D1  * Absoluter Word Address to Data register direct
+Line 136 WARNING: Forcing SHORT addressing disables range checking of extension word
+0000120C  24B8 8000                136      MOVE.L  $8000.W,(A2)    * Absoluter Word Address to Address register indirect
+Line 137 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001210  24F8 8000                137      MOVE.L  $8000.W,(A2)+   * Absoluter Word Address to Address Register Indirect with post incrementing
+Line 138 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001214  2538 8000                138      MOVE.L  $8000.W,-(A2)   * Absoluter Word Address to Address Register Indirect with pre decrementing
+Line 139 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001218  23F8 8000 000080F0       139      MOVE.L  $8000.W,$80F0.L * Absoluter Word Address to Absolute Long Address
+Line 140 WARNING: Forcing SHORT addressing disables range checking of extension word
+00001220  21F8 8000 80F0           140      MOVE.L  $8000.W,$80F0.W * Absoluter Word Address to Absoluter Word Address
+00001226                           141  
+00001226                           142  
+00001226                           143  
+00001226                           144      END START
+
+No errors detected
+36 warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+START               1000
