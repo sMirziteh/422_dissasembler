@@ -1,0 +1,35 @@
+00000400 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.16.01
+Created On: 10/17/2019 6:26:47 PM
+
+00000000                             1  *-----------------------------------------------------------
+00000000                             2  * Title      :
+00000000                             3  * Written by :
+00000000                             4  * Date       :
+00000000                             5  * Description:
+00000000                             6  *-----------------------------------------------------------
+00000400                             7          ORG    $400
+00000400  303C 0500                  8  START:  MOVE #$500,D0
+00000404                             9          
+00000404  4EB9 0000040E             10          JSR check
+0000040A  0640 00FF                 11          ADDI #$ff,D0
+0000040E                            12  
+0000040E  323C 0700                 13  check   MOVE #$700,D1
+00000412  4E75                      14          RTS              ; first instruction of program
+00000414                            15  
+00000414                            16  * Put program code here
+00000414                            17  
+00000414                            18  
+00000414                            19  * Put variables and constants here
+00000414                            20  
+00000414                            21          END    START        ; last line of source
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+CHECK               40E
+START               400
