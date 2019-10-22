@@ -9,23 +9,49 @@
 ****    MAIN LOOP   ****
 START:  
         LEA ST_A_MSG,A1 * load start address prompt message
-        MOVE.B  #14,D0  * print start address prompt message
-        TRAP    #15
+        JSR PRINT_A1    * print message
         
         LEA     ST_ADDR,A1 * load start address
         CLR.L   (A1)    * clear long at a1
         MOVE.B  #2,D0   * trap task 2 read a null terminated string from keyboard at A1 length at D1
         TRAP    #15
         
-        JSR     IN_ADDR_TO_HEX  * convert address to hex
+        JSR     IN_ADDR_TO_HEX  * convert start address to hex
              
-*        LEA     E_A_MSG,A1 * load end address prompt message
-*        MOVE.B  #14,D0  * print end address prompt message
-*        TRAP    #15
-*        
-*        MOVE.B  #2,D0   * trap task 2 read a null terminated string from keyboard at A1 length at D1
-*        TRAP    #15
+        LEA     E_A_MSG,A1 * load end address prompt message
+        JSR PRINT_A1       * print message
         
+        LEA     E_ADDR,A1  * load end address
+        CLR.L   (A1)    * clear long at end address
+        MOVE.B  #2,D0   * trap task 2 read a null terminated string from keyboard at A1 length at D1
+        TRAP    #15
+        
+        JSR     IN_ADDR_TO_HEX  * convert end address to hex
+        
+        * print converted addresses for testing purposes
+        LEA     NEW_LINE,A1
+        JSR     PRINT_A1
+        
+        LEA     TEST_MSG,A1
+        JSR     PRINT_A1    
+        MOVE.L  ST_ADDR,D1
+        JSR     PRINT_D1_HEX
+        
+        LEA     NEW_LINE,A1
+        JSR     PRINT_A1
+        
+        LEA     TEST_MSG,A1
+        JSR     PRINT_A1    
+        MOVE.L  E_ADDR,D1
+        JSR     PRINT_D1_HEX
+        
+        LEA     NEW_LINE,A1
+        JSR     PRINT_A1
+        LEA     NEW_LINE,A1
+        JSR     PRINT_A1
+        * end test printing converted numbers
+
+    
         BRA     START 
 
 
@@ -56,11 +82,10 @@ TO_HEX_INTERNAL:
         BLE     _0_9        * GOTO 0_9 if <= 39
 A_F     SUBI.B  #$7,D0      * Subtract 7 from D0) for ASCII A-F
 _0_9    SUBI.B  #$30,D0     * Subtract $30 to convert to hexidecimal
-        MOVEQ  #1,D2        * put 1 in D2
-        LSL.L   D1,D2       * shift 1 to hex digit final postion
-        MULU    D0,D2       
+        MOVE.L  D0,D2        * put hex digit in D2
+        LSL.L   D1,D2       * shift hex digit final postion    
         ADD.L   D2,D3       * add to hex result
-        SUBI    #4,D1       * subract one hex digit of bits from remaining length 
+        SUBI.L    #4,D1       * subract one hex digit of bits from remaining length 
         BRA     TO_HEX_INTERNAL   * convert next byte
 END_H   MOVE.L  D3,(A2)     * save result back at starting address
         RTS
@@ -77,10 +102,21 @@ IN_ADDR_TO_HEX:
 *   print address input error
 PADDR_IN_ERR: 
         LEA     ADR_IN_ERR,A1   * load address unput error message 
-        MOVE.B  #14,D0          * dispay message
-        TRAP    #15
+        JMP     PRINT_A1
         BRA     START           * return to start of program
-        
+
+PRINT_A1:
+        MOVE.B  #14,D0
+        TRAP    #15
+        RTS
+
+*  print hex number contained in D1
+PRINT_D1_HEX:
+        MOVE.L  #16,D2  * put 16 in D2 for base 16
+        MOVE.L  #15,D0  * trap task 15 for printing number of base
+        TRAP    #15
+        RTS
+      
 ****    VARS    ****
 ST_ADDR DS.L    3   * allocate 3 longs for address ascii input needs 9 bytes to get 8 chars 
 E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for this
@@ -92,10 +128,12 @@ LF          EQU     $0A     * line feed
 ****    MESSAGES    ****
 ST_A_MSG    DC.B    'Valid address chars: 0123456789ABCDEF (uppercase only)',CR,LF  * start address message
             DC.B    'Enter start address:',0    
-E_A_MSG     DC.B    'Enter end address',0    * end address message
+E_A_MSG     DC.B    'Enter end address:',0    * end address message
 
 ADR_IN_ERR  DC.B    'ERROR INVALID ADDRESS: input must be 0-8 hexidecimal digits long',CR,LF,0    * address input error message
 
+TEST_MSG    DC.B    'CONVERTED ADDRESS IS: '  * test message for printing start and end addresses
+NEW_LINE    DC.B    CR,LF,0
             
 		    END     START        * last line of source
 

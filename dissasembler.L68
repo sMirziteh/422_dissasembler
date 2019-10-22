@@ -1,6 +1,6 @@
 00001000 Starting Address
 Assembler used: EASy68K Editor/Assembler v5.16.01
-Created On: 10/21/2019 8:28:55 PM
+Created On: 10/21/2019 9:10:34 PM
 
 00000000                             1  *-----------------------------------------------------------
 00000000                             2  * Title      :  Dissasembler
@@ -12,96 +12,134 @@ Created On: 10/21/2019 8:28:55 PM
 00001000                             8          
 00001000                             9  ****    MAIN LOOP   ****
 00001000                            10  START:  
-00001000  43F9 0000108C             11          LEA ST_A_MSG,A1 * load start address prompt message
-00001006  103C 000E                 12          MOVE.B  #14,D0  * print start address prompt message
-0000100A  4E4F                      13          TRAP    #15
-0000100C                            14          
-0000100C  43F9 00001074             15          LEA     ST_ADDR,A1 * load start address
-00001012  4291                      16          CLR.L   (A1)    * clear long at a1
-00001014  103C 0002                 17          MOVE.B  #2,D0   * trap task 2 read a null terminated string from keyboard at A1 length at D1
-00001018  4E4F                      18          TRAP    #15
-0000101A                            19          
-0000101A  4EB9 00001058             20          JSR     IN_ADDR_TO_HEX  * convert address to hex
-00001020                            21               
-00001020                            22  *        LEA     E_A_MSG,A1 * load end address prompt message
-00001020                            23  *        MOVE.B  #14,D0  * print end address prompt message
-00001020                            24  *        TRAP    #15
-00001020                            25  *        
-00001020                            26  *        MOVE.B  #2,D0   * trap task 2 read a null terminated string from keyboard at A1 length at D1
-00001020                            27  *        TRAP    #15
-00001020                            28          
-00001020  60DE                      29          BRA     START 
-00001022                            30  
-00001022                            31  
-00001022                            32  ****    OP-CODES    ****
-00001022                            33  
-00001022                            34  
-00001022                            35  
-00001022                            36  ****       EA       ****
-00001022                            37  
-00001022                            38  
-00001022                            39  ***       UTILS     ****
-00001022                            40  
-00001022  103C 0009                 41  DONE    MOVE.B  #9,D0       * Trap task 9 halt simulator
-00001026  4E4F                      42          TRAP    #15
-00001028                            43          
-00001028                            44  * Converts ASCII string containing chars 0-9 and A-F uppercase to hexidecimal number
-00001028                            45  * d1 is string length, will be changed
-00001028                            46  TO_HEX
-00001028  4282                      47          CLR.L   D2      * clear to hold digit magnitude
-0000102A  4283                      48          CLR.L   D3      * clear to hold result
-0000102C  5341                      49          SUBI    #1,D1    * subtract 1
-0000102E  C2FC 0004                 50          MULU    #4,D1   * multiply length by four to get length in binary
-00001032  2449                      51          MOVEA.L A1,A2   * save starting address
-00001034                            52  TO_HEX_INTERNAL:
-00001034  1019                      53          MOVE.B  (A1)+,D0     * Load char at A1 into D0
-00001036  6700 001C                 54          BEQ     END_H       * GOTO end if byte is zero (null terminated)
-0000103A  0C40 0039                 55          CMPI    #$39,D0     * compare char value to 39
-0000103E  6F00 0004                 56          BLE     _0_9        * GOTO 0_9 if <= 39
-00001042  5F00                      57  A_F     SUBI.B  #$7,D0      * Subtract 7 from D0) for ASCII A-F
-00001044  0400 0030                 58  _0_9    SUBI.B  #$30,D0     * Subtract $30 to convert to hexidecimal
-00001048  7401                      59          MOVEQ  #1,D2        * put 1 in D2
-0000104A  E3AA                      60          LSL.L   D1,D2       * shift 1 to hex digit final postion
-0000104C  C4C0                      61          MULU    D0,D2       
-0000104E  D682                      62          ADD.L   D2,D3       * add to hex result
-00001050  5941                      63          SUBI    #4,D1       * subract one hex digit of bits from remaining length 
-00001052  60E0                      64          BRA     TO_HEX_INTERNAL   * convert next byte
-00001054  2483                      65  END_H   MOVE.L  D3,(A2)
-00001056  4E75                      66          RTS
-00001058                            67  
-00001058                            68  
-00001058                            69  *   input address to hexadecimal
-00001058                            70  IN_ADDR_TO_HEX:
-00001058  B27C 0008                 71          CMP     #8,D1   * compare string input length to 8
-0000105C  6E00 0008                 72          BGT     PADDR_IN_ERR    * if input greater than 8 bytes print input address error
-00001060  4EB8 1028                 73          JSR     TO_HEX          * else convert to hex
-00001064  4E75                      74          RTS
-00001066                            75          
-00001066                            76          
-00001066                            77  *   print address input error
-00001066                            78  PADDR_IN_ERR: 
-00001066  43F9 000010EB             79          LEA     ADR_IN_ERR,A1   * load address unput error message 
-0000106C  103C 000E                 80          MOVE.B  #14,D0          * dispay message
-00001070  4E4F                      81          TRAP    #15
-00001072  608C                      82          BRA     START           * return to start of program
-00001074                            83          
-00001074                            84  ****    VARS    ****
-00001074                            85  ST_ADDR DS.L    3   * allocate 3 longs for address ascii input needs 9 bytes to get 8 chars 
-00001080                            86  E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for this
-0000108C                            87          
-0000108C                            88  ****    CONST   ****
-0000108C  =0000000D                 89  CR          EQU     $0D     * carraige return          
-0000108C  =0000000A                 90  LF          EQU     $0A     * line feed 
-0000108C                            91  
-0000108C                            92  ****    MESSAGES    ****
-0000108C= 56 61 6C 69 64 20 ...     93  ST_A_MSG    DC.B    'Valid address chars: 0123456789ABCDEF (uppercase only)',CR,LF  * start address message
-000010C4= 45 6E 74 65 72 20 ...     94              DC.B    'Enter start address:',0    
-000010D9= 45 6E 74 65 72 20 ...     95  E_A_MSG     DC.B    'Enter end address',0    * end address message
-000010EB                            96  
-000010EB= 45 52 52 4F 52 20 ...     97  ADR_IN_ERR  DC.B    'ERROR INVALID ADDRESS: input must be 0-8 hexidecimal digits long',CR,LF,0    * address input error message
-0000112E                            98  
-0000112E                            99              
-0000112E                           100              END     START        * last line of source
+00001000  43F9 0000111E             11          LEA ST_A_MSG,A1 * load start address prompt message
+00001006  4EB9 000010F6             12          JSR PRINT_A1    * print message
+0000100C                            13          
+0000100C  43F9 00001106             14          LEA     ST_ADDR,A1 * load start address
+00001012  4291                      15          CLR.L   (A1)    * clear long at a1
+00001014  103C 0002                 16          MOVE.B  #2,D0   * trap task 2 read a null terminated string from keyboard at A1 length at D1
+00001018  4E4F                      17          TRAP    #15
+0000101A                            18          
+0000101A  4EB9 000010D8             19          JSR     IN_ADDR_TO_HEX  * convert start address to hex
+00001020                            20               
+00001020  43F9 0000116B             21          LEA     E_A_MSG,A1 * load end address prompt message
+00001026  4EB9 000010F6             22          JSR PRINT_A1       * print message
+0000102C                            23          
+0000102C  43F9 00001112             24          LEA     E_ADDR,A1  * load end address
+00001032  4291                      25          CLR.L   (A1)    * clear long at end address
+00001034  103C 0002                 26          MOVE.B  #2,D0   * trap task 2 read a null terminated string from keyboard at A1 length at D1
+00001038  4E4F                      27          TRAP    #15
+0000103A                            28          
+0000103A  4EB9 000010D8             29          JSR     IN_ADDR_TO_HEX  * convert end address to hex
+00001040                            30          
+00001040                            31          * print converted addresses for testing purposes
+00001040  43F9 000011D7             32          LEA     NEW_LINE,A1
+00001046  4EB9 000010F6             33          JSR     PRINT_A1
+0000104C                            34          
+0000104C  43F9 000011C1             35          LEA     TEST_MSG,A1
+00001052  4EB9 000010F6             36          JSR     PRINT_A1    
+00001058  2239 00001106             37          MOVE.L  ST_ADDR,D1
+0000105E  4EB9 000010FE             38          JSR     PRINT_D1_HEX
+00001064                            39          
+00001064  43F9 000011D7             40          LEA     NEW_LINE,A1
+0000106A  4EB9 000010F6             41          JSR     PRINT_A1
+00001070                            42          
+00001070  43F9 000011C1             43          LEA     TEST_MSG,A1
+00001076  4EB9 000010F6             44          JSR     PRINT_A1    
+0000107C  2239 00001112             45          MOVE.L  E_ADDR,D1
+00001082  4EB9 000010FE             46          JSR     PRINT_D1_HEX
+00001088                            47          
+00001088  43F9 000011D7             48          LEA     NEW_LINE,A1
+0000108E  4EB9 000010F6             49          JSR     PRINT_A1
+00001094  43F9 000011D7             50          LEA     NEW_LINE,A1
+0000109A  4EB9 000010F6             51          JSR     PRINT_A1
+000010A0                            52          * end test printing converted numbers
+000010A0                            53  
+000010A0                            54      
+000010A0  6000 FF5E                 55          BRA     START 
+000010A4                            56  
+000010A4                            57  
+000010A4                            58  ****    OP-CODES    ****
+000010A4                            59  
+000010A4                            60  
+000010A4                            61  
+000010A4                            62  ****       EA       ****
+000010A4                            63  
+000010A4                            64  
+000010A4                            65  ***       UTILS     ****
+000010A4                            66  
+000010A4  103C 0009                 67  DONE    MOVE.B  #9,D0       * Trap task 9 halt simulator
+000010A8  4E4F                      68          TRAP    #15
+000010AA                            69          
+000010AA                            70  * Converts ASCII string containing chars 0-9 and A-F uppercase to hexidecimal number
+000010AA                            71  * d1 is string length, will be changed
+000010AA                            72  TO_HEX
+000010AA  4282                      73          CLR.L   D2      * clear to hold digit magnitude
+000010AC  4283                      74          CLR.L   D3      * clear to hold result
+000010AE  5341                      75          SUBI    #1,D1    * subtract 1
+000010B0  C2FC 0004                 76          MULU    #4,D1   * multiply length by four to get length in binary
+000010B4  2449                      77          MOVEA.L A1,A2   * save starting address
+000010B6                            78  TO_HEX_INTERNAL:
+000010B6  1019                      79          MOVE.B  (A1)+,D0     * Load char at A1 into D0
+000010B8  6700 001A                 80          BEQ     END_H       * GOTO end if byte is zero (null terminated)
+000010BC  0C40 0039                 81          CMPI    #$39,D0     * compare char value to 39
+000010C0  6F00 0004                 82          BLE     _0_9        * GOTO 0_9 if <= 39
+000010C4  5F00                      83  A_F     SUBI.B  #$7,D0      * Subtract 7 from D0) for ASCII A-F
+000010C6  0400 0030                 84  _0_9    SUBI.B  #$30,D0     * Subtract $30 to convert to hexidecimal
+000010CA  2400                      85          MOVE.L  D0,D2        * put hex digit in D2
+000010CC  E3AA                      86          LSL.L   D1,D2       * shift hex digit final postion    
+000010CE  D682                      87          ADD.L   D2,D3       * add to hex result
+000010D0  5981                      88          SUBI.L    #4,D1       * subract one hex digit of bits from remaining length 
+000010D2  60E2                      89          BRA     TO_HEX_INTERNAL   * convert next byte
+000010D4  2483                      90  END_H   MOVE.L  D3,(A2)     * save result back at starting address
+000010D6  4E75                      91          RTS
+000010D8                            92  
+000010D8                            93  
+000010D8                            94  *   input address to hexadecimal
+000010D8                            95  IN_ADDR_TO_HEX:
+000010D8  B27C 0008                 96          CMP     #8,D1   * compare string input length to 8
+000010DC  6E00 0008                 97          BGT     PADDR_IN_ERR    * if input greater than 8 bytes print input address error
+000010E0  4EB8 10AA                 98          JSR     TO_HEX          * else convert to hex
+000010E4  4E75                      99          RTS
+000010E6                           100          
+000010E6                           101          
+000010E6                           102  *   print address input error
+000010E6                           103  PADDR_IN_ERR: 
+000010E6  43F9 0000117E            104          LEA     ADR_IN_ERR,A1   * load address unput error message 
+000010EC  4EF9 000010F6            105          JMP     PRINT_A1
+000010F2  6000 FF0C                106          BRA     START           * return to start of program
+000010F6                           107  
+000010F6                           108  PRINT_A1:
+000010F6  103C 000E                109          MOVE.B  #14,D0
+000010FA  4E4F                     110          TRAP    #15
+000010FC  4E75                     111          RTS
+000010FE                           112  
+000010FE                           113  *  print hex number contained in D1
+000010FE                           114  PRINT_D1_HEX:
+000010FE  7410                     115          MOVE.L  #16,D2  * put 16 in D2 for base 16
+00001100  700F                     116          MOVE.L  #15,D0  * trap task 15 for printing number of base
+00001102  4E4F                     117          TRAP    #15
+00001104  4E75                     118          RTS
+00001106                           119        
+00001106                           120  ****    VARS    ****
+00001106                           121  ST_ADDR DS.L    3   * allocate 3 longs for address ascii input needs 9 bytes to get 8 chars 
+00001112                           122  E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for this
+0000111E                           123          
+0000111E                           124  ****    CONST   ****
+0000111E  =0000000D                125  CR          EQU     $0D     * carraige return          
+0000111E  =0000000A                126  LF          EQU     $0A     * line feed 
+0000111E                           127  
+0000111E                           128  ****    MESSAGES    ****
+0000111E= 56 61 6C 69 64 20 ...    129  ST_A_MSG    DC.B    'Valid address chars: 0123456789ABCDEF (uppercase only)',CR,LF  * start address message
+00001156= 45 6E 74 65 72 20 ...    130              DC.B    'Enter start address:',0    
+0000116B= 45 6E 74 65 72 20 ...    131  E_A_MSG     DC.B    'Enter end address:',0    * end address message
+0000117E                           132  
+0000117E= 45 52 52 4F 52 20 ...    133  ADR_IN_ERR  DC.B    'ERROR INVALID ADDRESS: input must be 0-8 hexidecimal digits long',CR,LF,0    * address input error message
+000011C1                           134  
+000011C1= 43 4F 4E 56 45 52 ...    135  TEST_MSG    DC.B    'CONVERTED ADDRESS IS: '  * test message for printing start and end addresses
+000011D7= 0D 0A 00                 136  NEW_LINE    DC.B    CR,LF,0
+000011DA                           137              
+000011DA                           138              END     START        * last line of source
 
 No errors detected
 No warnings generated
@@ -110,19 +148,23 @@ No warnings generated
 SYMBOL TABLE INFORMATION
 Symbol-name         Value
 -------------------------
-ADR_IN_ERR          10EB
-A_F                 1042
+ADR_IN_ERR          117E
+A_F                 10C4
 CR                  D
-DONE                1022
-END_H               1054
-E_ADDR              1080
-E_A_MSG             10D9
-IN_ADDR_TO_HEX      1058
+DONE                10A4
+END_H               10D4
+E_ADDR              1112
+E_A_MSG             116B
+IN_ADDR_TO_HEX      10D8
 LF                  A
-PADDR_IN_ERR        1066
+NEW_LINE            11D7
+PADDR_IN_ERR        10E6
+PRINT_A1            10F6
+PRINT_D1_HEX        10FE
 START               1000
-ST_ADDR             1074
-ST_A_MSG            108C
-TO_HEX              1028
-TO_HEX_INTERNAL     1034
-_0_9                1044
+ST_ADDR             1106
+ST_A_MSG            111E
+TEST_MSG            11C1
+TO_HEX              10AA
+TO_HEX_INTERNAL     10B6
+_0_9                10C6
