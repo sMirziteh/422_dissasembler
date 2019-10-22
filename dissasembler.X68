@@ -50,15 +50,31 @@ START:
         LEA     NEW_LINE,A1
         JSR     PRINT_A1
         * end test printing converted numbers
-
+        JSR     OP_CODES
     
         BRA     START 
 
 
 ****    OP-CODES    ****
-
-
-
+OP_CODES:
+        MOVE.L  ST_ADDR,A5  * load starting address into a5
+        MOVE.L  E_ADDR,A6   * load ending address into a6
+OP_START:
+        MOVE.L  A5,D1   * load address from A5 into D1
+        JSR     PRINT_D1_HEX * print address
+        
+        LEA     DATA_MSG,A1 * Load template for data, will need to organize this better
+        JSR     PRINT_A1
+        
+        MOVE.W (A5)+,D1 * load word of memory into D1
+        JSR     PRINT_D1_HEX * print memory word
+        
+        LEA     NEW_LINE,A1 * print newline
+        JSR     PRINT_A1
+        
+        CMP.L   A6,A5  * loop if start is less than or equal to end
+        BLE     OP_START
+OP_DONE RTS
 ****       EA       ****
 
 
@@ -93,7 +109,7 @@ END_H   MOVE.L  D3,(A2)     * save result back at starting address
 
 *   input address to hexadecimal
 IN_ADDR_TO_HEX:
-        CMP     #8,D1   * compare string input length to 8
+        CMPI    #8,D1   * compare string input length to 8
         BGT     PADDR_IN_ERR    * if input greater than 8 bytes print input address error
         JSR     TO_HEX          * else convert to hex
         RTS
@@ -132,7 +148,9 @@ E_A_MSG     DC.B    'Enter end address:',0    * end address message
 
 ADR_IN_ERR  DC.B    'ERROR INVALID ADDRESS: input must be 0-8 hexidecimal digits long',CR,LF,0    * address input error message
 
-TEST_MSG    DC.B    'CONVERTED ADDRESS IS: '  * test message for printing start and end addresses
+DATA_MSG    DC.B    ' DATA $',0
+
+TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
 NEW_LINE    DC.B    CR,LF,0
             
 		    END     START        * last line of source
