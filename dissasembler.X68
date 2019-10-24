@@ -97,7 +97,7 @@ TO_HEX_INTERNAL:
         CMPI    #$39,D0     * compare char value to 39
         BLE     _0_9        * GOTO 0_9 if <= 39
 A_F     SUBI.B  #$7,D0      * Subtract 7 from D0) for ASCII A-F
-_0_9    SUBI.B  #$30,D0     * Subtract $30 to convert to hexidecimal
+_0_9    ANDI.B  #$0F,D0     * AND with 00001111 to isolate left most 4 bits, converts to hex
         MOVE.L  D0,D2        * put hex digit in D2
         LSL.L   D1,D2       * shift hex digit final postion    
         ADD.L   D2,D3       * add to hex result
@@ -142,8 +142,10 @@ CR          EQU     $0D     * carraige return
 LF          EQU     $0A     * line feed 
 
 ****    MESSAGES    ****
-ST_A_MSG    DC.B    'Valid address chars: 0123456789ABCDEF (uppercase only)',CR,LF  * start address message
+ST_A_MSG    DC.B    'Enter an address range in hexidecimal to be dissasembled,',CR,LF * start address message
+            DC.B    'Valid address chars: 0-1 A-F case insensitive',CR,LF  
             DC.B    'Enter start address:',0    
+            
 E_A_MSG     DC.B    'Enter end address:',0    * end address message
 
 ADR_IN_ERR  DC.B    'ERROR INVALID ADDRESS: input must be 0-8 hexidecimal digits long',CR,LF,0    * address input error message
@@ -154,6 +156,8 @@ TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing star
 NEW_LINE    DC.B    CR,LF,0
             
 		    END     START        * last line of source
+
+
 
 *~Font name~Courier New~
 *~Font size~10~
