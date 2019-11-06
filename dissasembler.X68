@@ -50,6 +50,7 @@ START:  NOP
         LEA     NEW_LINE,A1
         JSR     PRINT_A1
         * end test printing converted numbers
+        
         JSR     OP_CODES
     
         BRA     START 
@@ -66,50 +67,47 @@ OP_START:
         LEA     TAB,A1
         JSR     PRINT_A1
         
-        MOVE.W (A5)+,D1 * load word of memory into D1
+        MOVE.W (A5),D2 * load word of memory into D1
         
 CHK_LFT_NIB:
-        MOVE.L  D1,D2   * copy to d2
+        MOVE.L  D2,D3   * copy to d2
         
-        ANDI.W  #Nib3Mask,D2 * clear all but left four bits
-        MOVE.L  #12,D0  * put shift amount into d0
-        LSR.W   D0,D2   * shift nibble to right
-        
-        CMPI.B  #4,D2   * if nibble3 == 4 branch to that
+        ANDI.W  #Nib3Mask,D3 * clear all but left four bits                
+        CMPI.W  #$4000,D3   * if nibble3 == 4 branch to that
         BEQ     OP_4 
         
 print_data:
         LEA     DATA_MSG,A1 * Load template for data, will need to organize this better
         JSR     PRINT_A1
+        MOVE.W  D2,D1   * load address contents into d1 for printing
         JSR     PRINT_D1_HEX * print memory word from d1
         
                        
         
 CHK_OP_LOOP:    * print newline then check if op-code loop is done
         LEA     NEW_LINE,A1 * print newline
-        JSR     PRINT_A1 
+        JSR     PRINT_A1
+        ADD.L   #2,A5   * increment current address pointer by 2 bytes 
         CMP.L   A6,A5  * loop if start is less than or equal to end
         BLE     OP_START
 OP_DONE RTS
 
 
 OP_4:   * could be nop, rts, stop, movem
-        MOVE.L  D1,D2   * copy instruction word
-        ANDI.W  #Nib2Mask,D2
-        LSR.W   #8,D2   * shift to right nibble
-        
-        CMPI.B  #$E,D2  * if nibble 3 is E could be nop or rts
+        MOVE.L  D2,D3   * copy instruction word
+        ANDI.W  #Nib2Mask,D3
+        CMPI.W  #$0E00,D3  * if nibble 2 is E could be nop or rts
         BEQ     NOP_RTS
         
         BRA print_data  * return to print data
         
 NOP_RTS: * could be NOP or RTS     
-        MOVE.L  D1,D2       *copy instruction word
-        ANDI.W  #Byte0Mask,D2 * isolate right most byte
+        MOVE.L  D2,D3       *copy instruction word
+        ANDI.W  #Byte0Mask,D3 * isolate right most byte
         
-        CMPI.B  #$71,D2     * test for NOP
+        CMPI.B  #$71,D3     * test for NOP
         BEQ     load_NOP
-        CMPI.B  #$75, D2    * test for RTS
+        CMPI.B  #$75, D3    * test for RTS
         BEQ     load_RTS
             
         BRA     print_data  * return to op loop print data instruction not recognized
@@ -172,7 +170,7 @@ IN_ADDR_TO_HEX:
         
 *   print address input error
 PADDR_IN_ERR: 
-        LEA     ADR_IN_ERR,A1   * load address unput error message 
+        LEA     ADR_IN_ERR,A1   * load address input error message 
         JMP     PRINT_A1
         BRA     START           * return to start of program
 
@@ -215,7 +213,7 @@ _RTS    DC.B    'RTS',0
 _MOVEM  DC.B    'MOVEM',0
 
 ****    MESSAGES    ****
-ST_A_MSG    DC.B    'Enter an address range in hexidecimal to be dissasembled,',CR,LF * start address message
+ST_A_MSG    DC.B    'Enter an address range in hexidecimal to be dissasembled',CR,LF * start address message
             DC.B    'Valid address chars: 0-1 A-F case insensitive',CR,LF  
             DC.B    'Enter start address:',0    
             
@@ -230,6 +228,7 @@ TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing star
 NEW_LINE    DC.B    CR,LF,0
             
 		    END     START        * last line of source
+
 
 
 
