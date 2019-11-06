@@ -8,8 +8,11 @@
 		
 ****    MAIN LOOP   ****
 START:  NOP
-        LEA ST_A_MSG,A1 * load start address prompt message
-        JSR PRINT_A1    * print message
+        JSR     RESET_BUF_PTR   * move a4 to start of string buffer
+
+        LEA     ST_A_MSG,A1     * load start address prompt message
+        JSR     WRITE_ASCII     * write to string buffer
+        JSR     TERM_PNT_RST_BUF * terminate string buffer and print reseting pointer at A4
         
         LEA     ST_ADDR,A1 * load start address
         CLR.L   (A1)    * clear long at a1
@@ -18,8 +21,9 @@ START:  NOP
         
         JSR     IN_ADDR_TO_HEX  * convert start address to hex
              
-        LEA     E_A_MSG,A1 * load end address prompt message
-        JSR PRINT_A1       * print message
+        LEA     E_A_MSG,A1      * load end address prompt message
+        JSR     WRITE_ASCII     * print message
+        JSR     TERM_PNT_RST_BUF  * print and reset buffer no newline
         
         LEA     E_ADDR,A1  * load end address
         CLR.L   (A1)    * clear long at end address
@@ -29,30 +33,29 @@ START:  NOP
         JSR     IN_ADDR_TO_HEX  * convert end address to hex
         
         * print converted addresses for testing purposes
-        LEA     NEW_LINE,A1
-        JSR     PRINT_A1
+        
+        JSR     RESET_BUF_PTR         * move a4 to start of string buffer
+        
+        JSR     WRITE_NL_A4           * write newline to buffer
         
         LEA     TEST_MSG,A1
-        JSR     PRINT_A1
+        JSR     WRITE_ASCII
         
         MOVE.L  ST_ADDR,D1    * test print from string buffer
-        LEA     STR_BUF,A4    * lead buffer address into a4
-        JSR     HEX_TO_ASCII    * call conversion subroutine
-        JSR     WRITE_NULL_A4   * terminate string
-        JSR     PRINT_STR_BUF   * print from buffer
-        
-        LEA     NEW_LINE,A1
-        JSR     PRINT_A1
+        JSR     WRITE_HEX_TO_ASCII    * call conversion subroutine
+
+        JSR     WRITE_NL_A4           * write newline to buffer
         
         LEA     TEST_MSG,A1
-        JSR     PRINT_A1    
-        MOVE.L  E_ADDR,D1
-        JSR     PRINT_D1_HEX
+        JSR     WRITE_ASCII           * copy test_msg to buffer  
         
-        LEA     NEW_LINE,A1
-        JSR     PRINT_A1
-        LEA     NEW_LINE,A1
-        JSR     PRINT_A1
+        MOVE.L  E_ADDR,D1             * write end address to buffer
+        JSR     WRITE_HEX_TO_ASCII
+        
+
+        JSR     WRITE_NL_A4           * write newline to buffer
+        JSR     NL_TERM_PNT_RST_BUF   * print buffer contents
+        
         * end test printing converted numbers
         
         JSR     OP_CODES
@@ -62,16 +65,15 @@ START:  NOP
 
 ****    OP-CODES    ****
 OP_CODES:
+        JSR     RESET_BUF_PTR   * reset string buffer pointer
         MOVE.L  ST_ADDR,A5  * load starting address into a5
         MOVE.L  E_ADDR,A6   * load ending address into a6
         
 OP_START:
-        MOVE.L  STR_BUF,A4   * initialize string buffer pointer to start of string buffer
-        
+        * write address and a tab to str buffer
         MOVE.L  A5,D1   * load address from A5 into D1
-        JSR     PRINT_D1_HEX * print address
-        LEA     TAB,A1
-        JSR     PRINT_A1
+        JSR     WRITE_HEX_TO_ASCII
+        JSR     WRITE_TAB_A4
         
         MOVE.W (A5),D2 * load word of memory into D1
         
@@ -83,17 +85,13 @@ CHK_LFT_NIB:
         CMPI.W  #$4000,D3   * if nibble3 == 4 branch to that
         BEQ     OP_4 
         
-print_data:
-        LEA     DATA_MSG,A1 * Load template for data, will need to organize this better
-        JSR     PRINT_A1
-        MOVE.W  D2,D1   * load address contents into d1 for printing
-        JSR     PRINT_D1_HEX * print memory word from d1
         
                        
+OP_ERR  JSR     LOAD_DATA_STR_INTO_BUF
         
-CHK_OP_LOOP:    * print newline then check if op-code loop is done
-        LEA     NEW_LINE,A1 * print newline
-        JSR     PRINT_A1
+
+DECODE_DONE:    * print newline then check if op-code loop is done
+        JSR     NL_TERM_PNT_RST_BUF * write newline then print
         ADD.L   #2,A5   * increment current address pointer by 2 bytes 
         CMP.L   A6,A5  * loop if start is less than or equal to end
         BLE     OP_START
@@ -106,7 +104,7 @@ OP_4:   * could be nop, rts, stop, movem
         CMPI.W  #$0E00,D3  * if nibble 2 is E could be nop or rts
         BEQ     NOP_RTS
         
-        BRA print_data  * return to print data
+        BRA     OP_ERR  * return to error decoding
         
 NOP_RTS: * could be NOP or RTS     
         MOVE.L  D2,D3       *copy instruction word
@@ -117,17 +115,18 @@ NOP_RTS: * could be NOP or RTS
         CMPI.B  #$75, D3    * test for RTS
         BEQ     load_RTS
             
-        BRA     print_data  * return to op loop print data instruction not recognized
+        BRA     OP_ERR  * return to error decoding
+
                 
 load_NOP:   * load ad print NOP neumonic return to op loop
         LEA     _NOP,A1
-        JSR     PRINT_A1
-        BRA     CHK_OP_LOOP
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
         
 load_RTS:   * load and print RTS neumonic return to op loop
         LEA     _RTS,A1
-        JSR     PRINT_A1
-        BRA     CHK_OP_LOOP
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
        
 
 ****       EA       ****
@@ -135,6 +134,19 @@ load_RTS:   * load and print RTS neumonic return to op loop
 
 
 ***       UTILS     ****
+
+LOAD_DATA_STR_INTO_BUF: * expects address to be in a5
+        MOVEM   D1,-(SP)
+        JSR     RESET_BUF_PTR
+        MOVE.L  A5,D1
+        JSR     WRITE_HEX_TO_ASCII * write memory address to buffer
+        JSR     WRITE_TAB_A4    * wrtie a tab
+        LEA     DATA_MSG,A1     * Load template for data
+        JSR     WRITE_ASCII     * write 'DATA    $' to buffer
+        MOVE.W  (A5),D1   * load address contents of memory to d1 for printing
+        JSR     WRITE_HEX_TO_ASCII * save to buffer
+        MOVEM   (SP)+,D1
+        RTS
 
 DONE    MOVE.B  #9,D0       * Trap task 9 halt simulator
         TRAP    #15
@@ -163,7 +175,37 @@ _0_9    ANDI.B  #$0F,D0     * AND with 00001111 to isolate left most 4 bits, con
 END_H   MOVEM (SP)+,D0-D2/A1-A2
         RTS
 
-HEX_TO_ASCII: * write hex in d1 to a4 as ascii
+
+*   input address to hexadecimal saves output at A1
+IN_ADDR_TO_HEX:
+        MOVEM   D6,-(SP)
+        CMPI    #8,D1   * compare string input length to 8
+        BGT     PADDR_IN_ERR    * if input greater than 8 bytes print input address error
+        JSR     TO_HEX          * else convert to hex
+        MOVE.L  D6,(A1)
+        MOVEM   (SP)+,D6
+        RTS
+        
+        
+*   print address input error
+PADDR_IN_ERR: 
+        LEA     ADR_IN_ERR,A1   * load address input error message 
+        JMP     PRINT_A1
+        BRA     START           * return to start of program
+
+PRINT_A1:
+        MOVEM   D0,-(SP) * save register state
+        MOVE.B  #14,D0   * print A1
+        TRAP    #15
+        MOVEM   (SP)+,D0  *  restore register state
+        RTS
+
+****************************************************
+* Subroutines for printing and writing to and from
+* the string buffer at A4
+****************************************************        
+        
+WRITE_HEX_TO_ASCII: * write hex in d1 to a4 as ascii
         * may need to add case to handle sign extended shorts
         MOVEM   D2-D4,-(SP)
         MOVE.L  D1,D2   * copy input to working temp var
@@ -198,62 +240,71 @@ h_a_low:
         BRA     h_a_loop    * return to loop start
 h_a_dne MOVEM   (SP)+,D2-D4
         RTS
-        
 
-
-*   input address to hexadecimal saves output at A1
-IN_ADDR_TO_HEX:
-        MOVEM   D6,-(SP)
-        CMPI    #8,D1   * compare string input length to 8
-        BGT     PADDR_IN_ERR    * if input greater than 8 bytes print input address error
-        JSR     TO_HEX          * else convert to hex
-        MOVE.L  D6,(A1)
-        MOVEM   (SP)+,D6
-        RTS
-        
-        
-*   print address input error
-PADDR_IN_ERR: 
-        LEA     ADR_IN_ERR,A1   * load address input error message 
-        JMP     PRINT_A1
-        BRA     START           * return to start of program
-
-PRINT_A1:
-        MOVEM   D0,-(SP) * save register state
-        MOVE.B  #14,D0   * print A1
-        TRAP    #15
-        MOVEM   (SP)+,D0  *  restore register state
+WRITE_ASCII:    * copies null terminated string from A1 to A4 without null
+        MOVEM   D1/A1,-(SP)
+w_a_loop:
+        MOVE.B  (A1)+,D1    * load value at A1
+        BEQ     w_a_done    * if 0(null) is moved copy is done
+        MOVE.B  D1,(A4)+    * else copy value to A4
+        BRA     w_a_loop
+w_a_done:
+        MOVEM   (SP)+,D1/A1
         RTS
 
 WRITE_NULL_A4: * used to terminate a string in memory 
         MOVE.B  #0,(A4)+
         RTS
+        
+WRITE_SPC_A4: * writes an ascii space at a4
+        MOVE.B  #SPACE,(A4)+
+        RTS 
 
+WRITE_NL_A4: * writes a newline at a4
+        MOVE.B  #CR,(A4)+
+        MOVE.B  #LF,(A4)+
+        RTS
+        
+WRITE_TAB_A4:
+        MOVE.B  #TAB,(A4)+
+        RTS   
+
+NL_TERM_PNT_RST_BUF: * write newline, null then print contents then reset bufffer
+        JSR     WRITE_NL_A4
+        JSR     WRITE_NULL_A4
+        JSR     PRINT_STR_BUF
+        JSR     RESET_BUF_PTR
+        RTS
+        
+TERM_PNT_RST_BUF: * write null then print contents then reset bufffer pointer
+        JSR     WRITE_NULL_A4
+        JSR     PRINT_STR_BUF
+        JSR     RESET_BUF_PTR
+        RTS
+        
 PRINT_STR_BUF: * prints string buffer contents to console
         MOVEM   D0/A1,-(SP)
         LEA     STR_BUF,A1  * load string buffer
         MOVE    #14,D0       * print contents
         TRAP    #15
         MOVEM   (SP)+,D0/A1
+        RTS
+
+RESET_BUF_PTR:  * sets a4 to start of string buffer
+        MOVEA   #STR_BUF,A4
         RTS        
 
-*  print hex number contained in D1
-PRINT_D1_HEX:
-        MOVEM   D0/D2,-(SP)
-        MOVE.L  #16,D2  * put 16 in D2 for base 16
-        MOVE.L  #15,D0  * trap task 15 for printing number of base
-        TRAP    #15
-        MOVEM   (SP)+,D0/D2
-        RTS
-      
 ****    VARS    ****
 ST_ADDR DS.L    3   * allocate 3 longs for address ascii input needs 9 bytes to get 8 chars 
 E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for this
-STR_BUF DCB.B   81,0  * buffer to hold 80 chars + null terminator init to 0
-        
+STR_BUF DCB.B   241,0  * buffer to hold 240 chars + null terminator. 3 80 char lines
+         
 ****    CONST   ****
 CR          EQU     $0D     * carraige return          
 LF          EQU     $0A     * line feed
+SPACE       EQU     $20     * ascii space
+TAB         EQU     $09     * ascii tab character
+
 * masks for isolating nibbles with and 0 being least significant nibble
 Nib3Mask    EQU     $F000 
 Nib2Mask    EQU     $0F00
@@ -278,16 +329,10 @@ E_A_MSG     DC.B    'Enter end address:',0    * end address message
 ADR_IN_ERR  DC.B    'ERROR INVALID ADDRESS: input must be 0-8 hexidecimal digits long',CR,LF,0    * address input error message
 
 DATA_MSG    DC.B    'DATA   $',0
-TAB         DC.B    '   ',0
 
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
-NEW_LINE    DC.B    CR,LF,0
             
 		    END     START        * last line of source
-
-
-
-
 
 *~Font name~Courier New~
 *~Font size~10~
