@@ -33,9 +33,13 @@ START:  NOP
         JSR     PRINT_A1
         
         LEA     TEST_MSG,A1
-        JSR     PRINT_A1    
-        MOVE.L  ST_ADDR,D1
-        JSR     PRINT_D1_HEX
+        JSR     PRINT_A1
+        
+        MOVE.L  ST_ADDR,D1    * test print from string buffer
+        LEA     STR_BUF,A4    * lead buffer address into a4
+        JSR     HEX_TO_ASCII    * call conversion subroutine
+        JSR     WRITE_NULL_A4   * terminate string
+        JSR     PRINT_STR_BUF   * print from buffer
         
         LEA     NEW_LINE,A1
         JSR     PRINT_A1
@@ -62,12 +66,15 @@ OP_CODES:
         MOVE.L  E_ADDR,A6   * load ending address into a6
         
 OP_START:
+        MOVE.L  STR_BUF,A4   * initialize string buffer pointer to start of string buffer
+        
         MOVE.L  A5,D1   * load address from A5 into D1
         JSR     PRINT_D1_HEX * print address
         LEA     TAB,A1
         JSR     PRINT_A1
         
         MOVE.W (A5),D2 * load word of memory into D1
+        
         
 CHK_LFT_NIB:
         MOVE.L  D2,D3   * copy to d2
@@ -133,11 +140,11 @@ DONE    MOVE.B  #9,D0       * Trap task 9 halt simulator
         TRAP    #15
         
 * Converts ASCII string containing chars 0-9 and A-F uppercase to hexidecimal number
-* returns result in D3
+* returns result in D6
 TO_HEX
         MOVEM   D0-D2/A1-A2,-(SP)   * save state of registers to be changed
         CLR.L   D2      * clear to hold digit magnitude
-        CLR.L   D3      * clear to hold result
+        CLR.L   D6      * clear to hold result
         SUBI    #1,D1    * subtract 1
         MULU    #4,D1   * multiply length by four to get length in binary
         
@@ -150,21 +157,58 @@ A_F     SUBI.B  #$7,D0      * Subtract 7 from D0) for ASCII A-F
 _0_9    ANDI.B  #$0F,D0     * AND with 00001111 to isolate left most 4 bits, converts to hex
         MOVE.L  D0,D2        * put hex digit in D2
         LSL.L   D1,D2       * shift hex digit final postion    
-        ADD.L   D2,D3       * add to hex result
+        ADD.L   D2,D6       * add to hex result
         SUBI.L    #4,D1       * subract one hex digit of bits from remaining length 
         BRA     TO_HEX_INTERNAL   * convert next byte
 END_H   MOVEM (SP)+,D0-D2/A1-A2
         RTS
 
+HEX_TO_ASCII: * write hex in d1 to a4 as ascii
+        * may need to add case to handle sign extended shorts
+        MOVEM   D2-D4,-(SP)
+        MOVE.L  D1,D2   * copy input to working temp var
+        ANDI.L  #$FFFF0000,D2   * mask for bits 31-16
+        CMPI.L  #0,D2           * if masked value is 0 there is no value in long portion of register for unsigned ints
+        BEQ     h_short         * if no value must be non sign extended short  
+        * setup params for ling processing
+        MOVE.L  #$F0000000,D3   * init mask for isolating first long hex most significand digit
+        MOVE.L  #28,D4          * init shift value for first long hex MSD
+        BRA     h_a_loop
+        
+h_short: * setup params for short processing
+        MOVE.L  #$F000,D3   * init mask for isolating first short hex most significand digit
+        MOVE.L  #12,D4      * init shift value for first short hex MSD
+        
+h_a_loop:
+        CMPI.L  #0,D4   * compare shift value to 0
+        BLT     h_a_dne * done if less than 0
+        MOVE.L  D1,D2   * copy input to working temp var
+        AND.L   D3,D2   * isolate digit
+        LSR.L   D4,D2   * shift to rightmost position
+        
+        CMPI.L  #$A,D2   * compare to A
+        BLT     h_a_low  * if less than A 0-9
+        ADDI    #7,D2    * add an additional 7 to A-F     
+h_a_low:
+        ADDI    #$30,D2  * add $30 to convert to ascii
+        MOVE.B  D2,(A4)+ * write digit to pointer location
+        
+        LSR.L   #4,D3   * shift mask to isolate next hex digit
+        SUBI.L  #4,D4   * subtract shift for next digit
+        BRA     h_a_loop    * return to loop start
+h_a_dne MOVEM   (SP)+,D2-D4
+        RTS
+        
+
 
 *   input address to hexadecimal saves output at A1
 IN_ADDR_TO_HEX:
-        MOVEM   D3,-(SP)
+        MOVEM   D6,-(SP)
         CMPI    #8,D1   * compare string input length to 8
         BGT     PADDR_IN_ERR    * if input greater than 8 bytes print input address error
         JSR     TO_HEX          * else convert to hex
-        MOVE.L  D3,(A1)
-        MOVEM   (SP)+,D3
+        MOVE.L  D6,(A1)
+        MOVEM   (SP)+,D6
         RTS
         
         
@@ -180,7 +224,18 @@ PRINT_A1:
         TRAP    #15
         MOVEM   (SP)+,D0  *  restore register state
         RTS
-        
+
+WRITE_NULL_A4: * used to terminate a string in memory 
+        MOVE.B  #0,(A4)+
+        RTS
+
+PRINT_STR_BUF: * prints string buffer contents to console
+        MOVEM   D0/A1,-(SP)
+        LEA     STR_BUF,A1  * load string buffer
+        MOVE    #14,D0       * print contents
+        TRAP    #15
+        MOVEM   (SP)+,D0/A1
+        RTS        
 
 *  print hex number contained in D1
 PRINT_D1_HEX:
@@ -194,6 +249,7 @@ PRINT_D1_HEX:
 ****    VARS    ****
 ST_ADDR DS.L    3   * allocate 3 longs for address ascii input needs 9 bytes to get 8 chars 
 E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for this
+STR_BUF DCB.B   81,0  * buffer to hold 80 chars + null terminator init to 0
         
 ****    CONST   ****
 CR          EQU     $0D     * carraige return          
