@@ -81,11 +81,19 @@ OP_START:
 CHK_LFT_NIB:
         MOVE.L  D2,D3   * copy to d2
         
-        ANDI.W  #Nib3Mask,D3 * clear all but left four bits                
-        CMPI.W  #$4000,D3   * if nibble3 == 4 branch to that
+        ANDI.W  #Nib3Mask,D3 * clear all but left four bits
+        CMPI.W  #$1000,D3   * if nibble3 == 1, branch to move byte (1)
+        BEQ     load_MOVE_B
+        CMPI.W  #$2000,D3   * if nibble3 == 2, branch to move long (2)
+        BEQ     load_MOVE_L * will need to account for MOVEA
+        CMPI.W  #$3000,D3   * if nibble3 == 3, branch to move word (3)
+        BEQ     load_MOVE_W * will need to account for MOVEA        
+        CMPI.W  #$4000,D3   * if nibble3 == 4 branch to that set
         BEQ     OP_4 
-        
-        
+        CMPI.W  #$5000,D3   * if nibble3 == 5, branch to ADDQ (5)
+        BEQ     load_ADDQ
+        CMPI.W  #$6000,D3   * if nibble3 == 6, branch to that set
+        BEQ     OP_6
                        
 OP_ERR  JSR     LOAD_DATA_STR_INTO_BUF
         
@@ -97,15 +105,37 @@ DECODE_DONE:    * print newline then check if op-code loop is done
         BLE     OP_START
 OP_DONE RTS
 
+load_MOVE_B:    * load and print MOVE.B neumonic return to op loop
+        LEA     _MOVE_B,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
 
-OP_4:   * could be nop, rts, stop, movem
+load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
+        LEA     _MOVE_L,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
+        LEA     _MOVE_W,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+
+OP_4:   * could be not, nop, rts, jsr, movem, lea
         MOVE.L  D2,D3   * copy instruction word
         ANDI.W  #Nib2Mask,D3
+        CMPI.W  #$0600,D3   * if nibble 2 is 6, instruction is NOT
+        BEQ     load_NOT
         CMPI.W  #$0E00,D3  * if nibble 2 is E could be nop or rts
         BEQ     NOP_RTS
+        * will need more subroutines for jsr, movem, lea
         
         BRA     OP_ERR  * return to error decoding
         
+load_NOT:   * load and print NOT neumonic return to op loop
+        LEA     _NOT,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+
 NOP_RTS: * could be NOP or RTS     
         MOVE.L  D2,D3       *copy instruction word
         ANDI.W  #Byte0Mask,D3 * isolate right most byte
@@ -117,8 +147,7 @@ NOP_RTS: * could be NOP or RTS
             
         BRA     OP_ERR  * return to error decoding
 
-                
-load_NOP:   * load ad print NOP neumonic return to op loop
+load_NOP:   * load and print NOP neumonic return to op loop
         LEA     _NOP,A1
         JSR     WRITE_ASCII
         BRA     DECODE_DONE
@@ -127,7 +156,43 @@ load_RTS:   * load and print RTS neumonic return to op loop
         LEA     _RTS,A1
         JSR     WRITE_ASCII
         BRA     DECODE_DONE
-       
+
+load_ADDQ:  * load and print ADDQ neumonic return to op loop
+        LEA     _ADDQ,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+OP_6:   * could be BRA, BEQ, BGT, BLE
+        MOVE.L  D2,D3   * copy instruction word
+        ANDI.W  #Nib2Mask,D3
+        CMPI.W  #$0000,D3   * if nibble 2 is 0, instruction is BRA
+        BEQ     load_BRA
+        CMPI.W  #$0700,D3   * if nibble 2 is 7, instruction is BEQ
+        BEQ     load_BEQ
+        CMPI.W  #$0E00,D3   * if nibble 2 is E, instruction is BGT
+        BEQ     load_BGT
+        CMPI.W  #$0F00,D3   * if nibble 2 is F, instruction is BLE
+        BEQ     load_BLE
+        
+load_BRA:   * load and print BRA neumonic return to op loop
+        LEA     _BRA,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+load_BEQ:   * load and print BEQ neumonic return to op loop
+        LEA     _BEQ,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+
+load_BGT:   * load and print BGT neumonic return to op loop
+        LEA     _BGT,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+load_BLE:   * load and print BLE neumonic return to op loop
+        LEA     _BLE,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
 
 ****       EA       ****
 
@@ -315,9 +380,18 @@ Byte0Mask   EQU     $00FF
 Byte1Mask   EQU     $FF00
 
 ****    Instructions    ****
+_NOT    DC.B    'NOT',0
 _NOP    DC.B    'NOP',0
 _RTS    DC.B    'RTS',0
 _MOVEM  DC.B    'MOVEM',0
+_MOVE_B DC.B    'MOVE.B',0
+_MOVE_L DC.B    'MOVE.L',0
+_MOVE_W DC.B    'MOVE.W',0
+_ADDQ   DC.B    'ADDQ',0
+_BRA    DC.B    'BRA',0
+_BEQ    DC.B    'BEQ',0
+_BGT    DC.B    'BGT',0
+_BLE    DC.B    'BLE',0
 
 ****    MESSAGES    ****
 ST_A_MSG    DC.B    'Enter an address range in hexidecimal to be dissasembled',CR,LF * start address message
@@ -333,6 +407,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     START        * last line of source
+
 
 *~Font name~Courier New~
 *~Font size~10~
