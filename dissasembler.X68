@@ -204,8 +204,8 @@ MOVE_EA:
         MOVE.L  D2,D4   *copy instruction to D4 for mode
         ANDI.W  #Bit0Mask,D3 *mask to isolate 3-bit register code
         ANDI.W  #Bit1Mask,D4 *mask to isolate 3-bit opmode
-        BRA     DEAMODE
-REG_CHK BRA     DEAREG
+        BRA     DEAMODE         *branch to check for opmode
+REG_CHK BRA     DEAREG          *branch to check for reg #
 
 MV_SRC:
 
@@ -213,39 +213,39 @@ MV_SRC:
         RTS
 
 DEAMODE:
-        CMP.W   #$0000,D4
-        BEQ     LOAD_DR_MODE
-        CMP.W   #$0080,D4
-        BEQ     INDAD_MODE
-        CMP.W   #$00C0,D4
-        BEQ     INDAD_POST_MODE
-        CMP.W   #$0100,D4
-        BEQ     INDAD_PREC_MODE
-        CMP.W   #$01C0,D4
-        BEQ     ADDR_MODE
-MODE_ERR BRA    LOAD_MODE_ERR     
-GOTO_REG BRA    REG_CHK
+        CMP.W   #$0000,D4       *000?
+        BEQ     DR_MODE         *branch to load Dn to buffer
+        CMP.W   #$0080,D4       *010?
+        BEQ     INDAD_MODE      *branch to load (An) to buffer
+        CMP.W   #$00C0,D4       *011?
+        BEQ     INDAD_POST_MODE *branch to load (An)+ to buffer 
+        CMP.W   #$0100,D4       *100?
+        BEQ     INDAD_PREC_MODE *branch to load -(An) to buffer
+        CMP.W   #$01C0,D4       *111?
+        BEQ     ADDR_MODE       *branch to load xxx.w/l to buffer
+MODE_ERR BRA    LOAD_MODE_ERR   *branch to load error
+GOTO_REG BRA    REG_CHK         *branch back to check reg #
 
 
 DEAREG:
-        CMP.W   #$0E00,D3
-        BEQ     SEV
-        CMP.W   #$0E00,D3
-        BEQ     SIX
-        CMP.W   #$0E00,D3 
-        BEQ     FIVE
-        CMP.W   #$0E00,D3
-        BEQ     FOUR
-        CMP.W   #$0E00,D3
-        BEQ     THR 
-        CMP.W   #$0E00,D3
-        BEQ     TWO
-        CMP.W   #$0E00,D3
-        BEQ     ONE
-        CMP.W   #$0E00,D3
-        BEQ     ZER 
-DREG_ERR  BRA   LOAD_REG_ERR
-DREG_DONE BRA   MV_SRC
+        CMP.W   #$0E00,D3       *111
+        BEQ     SEV             *branch to load 7 to buffer
+        CMP.W   #$0C00,D3       *110
+        BEQ     SIX             *branch to load 6 to buffer
+        CMP.W   #$0A00,D3       *101
+        BEQ     FIVE            *branch to load 5 to buffer
+        CMP.W   #$0800,D3       *100
+        BEQ     FOUR            *branch to load 4 to buffer
+        CMP.W   #$0600,D3       *011
+        BEQ     THR             *branch to load 3 to buffer
+        CMP.W   #$0400,D3       *010
+        BEQ     TWO             *branch to load 2 to buffer
+        CMP.W   #$0200,D3       *001
+        BEQ     ONE             *branch to load 1 to buffer
+        CMP.W   #$0000,D3       *000
+        BEQ     ZER             *branch to load 0 to buffer
+DREG_ERR  BRA   LOAD_REG_ERR    *branch to load error
+DREG_DONE BRA   MV_SRC          *branch to check source EAs
 
 
 
