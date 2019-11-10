@@ -79,7 +79,7 @@ OP_START:
         
         
 CHK_LFT_NIB:
-        MOVE.L  D2,D3   * copy to d2
+        MOVE.L  D2,D3   * copy to d3
         
         ANDI.W  #Nib3Mask,D3 * clear all but left four bits
         CMPI.W  #$1000,D3   * if nibble3 == 1, branch to move byte (1)
@@ -108,16 +108,19 @@ OP_DONE RTS
 load_MOVE_B:    * load and print MOVE.B neumonic return to op loop
         LEA     _MOVE_B,A1
         JSR     WRITE_ASCII
+        JSR     MOVE_EA
         BRA     DECODE_DONE
 
 load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
         LEA     _MOVE_L,A1
         JSR     WRITE_ASCII
+        JSR     MOVE_EA
         BRA     DECODE_DONE
         
 load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
         LEA     _MOVE_W,A1
         JSR     WRITE_ASCII
+        JSR     MOVE_EA
         BRA     DECODE_DONE
 
 OP_4:   * could be not, nop, rts, jsr, movem, lea
@@ -194,7 +197,55 @@ load_BLE:   * load and print BLE neumonic return to op loop
         JSR     WRITE_ASCII
         BRA     DECODE_DONE
 
+
 ****       EA       ****
+MOVE_EA:
+        MOVE.L  D2,D3   *copy instruction to D3 for register
+        MOVE.L  D2,D4   *copy instruction to D4 for mode
+        ANDI.W  #Bit0Mask,D3 *mask to isolate 3-bit register code
+        ANDI.W  #Bit1Mask,D4 *mask to isolate 3-bit opmode
+        BRA     DEAMODE
+REG_CHK BRA     DEAREG
+
+MV_SRC:
+
+        
+        RTS
+
+DEAMODE:
+        CMP.W   #$0000,D4
+        BEQ     LOAD_DR_MODE
+        CMP.W   #$0080,D4
+        BEQ     INDAD_MODE
+        CMP.W   #$00C0,D4
+        BEQ     INDAD_POST_MODE
+        CMP.W   #$0100,D4
+        BEQ     INDAD_PREC_MODE
+        CMP.W   #$01C0,D4
+        BEQ     ADDR_MODE
+MODE_ERR BRA    LOAD_MODE_ERR     
+GOTO_REG BRA    REG_CHK
+
+
+DEAREG:
+        CMP.W   #$0E00,D3
+        BEQ     SEV
+        CMP.W   #$0E00,D3
+        BEQ     SIX
+        CMP.W   #$0E00,D3 
+        BEQ     FIVE
+        CMP.W   #$0E00,D3
+        BEQ     FOUR
+        CMP.W   #$0E00,D3
+        BEQ     THR 
+        CMP.W   #$0E00,D3
+        BEQ     TWO
+        CMP.W   #$0E00,D3
+        BEQ     ONE
+        CMP.W   #$0E00,D3
+        BEQ     ZER 
+DREG_ERR  BRA   LOAD_REG_ERR
+DREG_DONE BRA   MV_SRC
 
 
 
@@ -375,6 +426,10 @@ Nib3Mask    EQU     $F000
 Nib2Mask    EQU     $0F00
 Nib1Mask    EQU     $00F0
 Nib0Mask    EQU     $000F
+Bit0Mask    EQU     $0E00
+Bit1Mask    EQU     $01C0
+Bit2Mask    EQU     $0038
+Bit3Mask    EQU     $0007
 
 Byte0Mask   EQU     $00FF
 Byte1Mask   EQU     $FF00
@@ -392,6 +447,27 @@ _BRA    DC.B    'BRA',0
 _BEQ    DC.B    'BEQ',0
 _BGT    DC.B    'BGT',0
 _BLE    DC.B    'BLE',0
+
+****    Modes    ****
+_DR             DC.B   'D',0
+_AR             DC.B   'A',0
+_IND_AR1        DC.B   '(A',0
+_IND_AR2        DC.B   ')',0
+_AR_POST1       DC.B   '(A',0
+_AR_POST2       DC.B   ')+',0
+_AR_PRE1        DC.B   '-(A',0
+_AR_PRE2        DC.B   ')',0
+
+****    Numbers    ****
+_ZERO   DC.B    '0',0
+_ONE    DC.B    '1',0
+_TWO    DC.B    '2',0
+_THREE  DC.B    '3',0
+_FOUR   DC.B    '4',0
+_FIVE   DC.B    '5',0
+_SIX    DC.B    '6',0
+_SEVEN  DC.B    '7',0
+
 
 ****    MESSAGES    ****
 ST_A_MSG    DC.B    'Enter an address range in hexidecimal to be dissasembled',CR,LF * start address message
