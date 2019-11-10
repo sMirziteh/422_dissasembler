@@ -108,6 +108,7 @@ OP_DONE RTS
 load_MOVE_B:    * load and print MOVE.B neumonic return to op loop
         LEA     _MOVE_B,A1
         JSR     WRITE_ASCII
+        CLR     D3
         JSR     MOVE_EA
         BRA     DECODE_DONE
 
@@ -200,34 +201,37 @@ load_BLE:   * load and print BLE neumonic return to op loop
 
 ****       EA       ****
 MOVE_EA:
-        MOVE.L  D2,D3   *copy instruction to D3 for register
-        MOVE.L  D2,D4   *copy instruction to D4 for mode
-        ANDI.W  #Bit0Mask,D3 *mask to isolate 3-bit register code
-        ANDI.W  #Bit1Mask,D4 *mask to isolate 3-bit opmode
-        BRA     DEAMODE         *branch to check for opmode
-REG_CHK BRA     DEAREG          *branch to check for reg #
-
+        MOVE.L  D2,D3           *copy instruction to D3 for register
+        ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
+        JSR     DEA_MODE        *JMP to check for opmode
+        CLR     D3
+        MOVE.L  D2,D3
+        ANDI.W  #Bit1Mask,D3    *mask to isolate 3-bit opmode
+        JSR     DEA_REG          *JMP to check for reg #
+        CLR     D3
 MV_SRC:
 
         
         RTS
 
-DEAMODE:
-        CMP.W   #$0000,D4       *000?
+DEA_MODE:
+        CMP.W   #cDR,D3         *000?
         BEQ     DR_MODE         *branch to load Dn to buffer
-        CMP.W   #$0080,D4       *010?
-        BEQ     INDAD_MODE      *branch to load (An) to buffer
-        CMP.W   #$00C0,D4       *011?
-        BEQ     INDAD_POST_MODE *branch to load (An)+ to buffer 
-        CMP.W   #$0100,D4       *100?
-        BEQ     INDAD_PREC_MODE *branch to load -(An) to buffer
-        CMP.W   #$01C0,D4       *111?
-        BEQ     ADDR_MODE       *branch to load xxx.w/l to buffer
-MODE_ERR BRA    LOAD_MODE_ERR   *branch to load error
-GOTO_REG BRA    REG_CHK         *branch back to check reg #
+        CMP.W   #cAR,D3         *001?
+        BEQ     AR_MODE         *branch to load An to buffer
+        CMP.W   #cIND_AR,D3     *010?
+        BEQ     INDAR_MODE      *branch to load (An) to buffer
+        CMP.W   #cAR_POST,D3    *011?
+        BEQ     INDAR_POST_MODE *branch to load (An)+ to buffer 
+        CMP.W   #cAR_PRE,D3     *100?
+        BEQ     INDAR_PREC_MODE *branch to load -(An) to buffer
+        CMP.W   #cABS,D3        *111?
+        BEQ     ABS_MODE        *branch to load xxx.w/l to buffer
+        JSR     LOAD_MODE_ERR   *JMP to load error
+        RTS
 
 
-DEAREG:
+DEA_REG:
         CMP.W   #$0E00,D3       *111
         BEQ     SEV             *branch to load 7 to buffer
         CMP.W   #$0C00,D3       *110
@@ -244,9 +248,8 @@ DEAREG:
         BEQ     ONE             *branch to load 1 to buffer
         CMP.W   #$0000,D3       *000
         BEQ     ZER             *branch to load 0 to buffer
-DREG_ERR  BRA   LOAD_REG_ERR    *branch to load error
-DREG_DONE BRA   MV_SRC          *branch to check source EAs
-
+        JSR     LOAD_REG_ERR    *branch to load error
+        RTS
 
 
 ***       UTILS     ****
@@ -426,6 +429,7 @@ Nib3Mask    EQU     $F000
 Nib2Mask    EQU     $0F00
 Nib1Mask    EQU     $00F0
 Nib0Mask    EQU     $000F
+
 Bit0Mask    EQU     $0E00
 Bit1Mask    EQU     $01C0
 Bit2Mask    EQU     $0038
@@ -457,6 +461,8 @@ _AR_POST1       DC.B   '(A',0
 _AR_POST2       DC.B   ')+',0
 _AR_PRE1        DC.B   '-(A',0
 _AR_PRE2        DC.B   ')',0
+_ABS            DC.B    '$',0
+_IMD            DC.B    '#',0
 
 ****    Numbers    ****
 _ZERO   DC.B    '0',0
@@ -468,6 +474,13 @@ _FIVE   DC.B    '5',0
 _SIX    DC.B    '6',0
 _SEVEN  DC.B    '7',0
 
+****    MODE CMP VALUES    ****
+cDR             EQU     $0000
+cAR             EQU     $0040
+cIND_AR         EQU     $0080
+cAR_POST        EQU     $00C0
+cAR_PRE         EQU     $0100
+cABS            EQU     $01C0
 
 ****    MESSAGES    ****
 ST_A_MSG    DC.B    'Enter an address range in hexidecimal to be dissasembled',CR,LF * start address message
