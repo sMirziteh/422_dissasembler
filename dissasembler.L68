@@ -1,6 +1,6 @@
 00001000 Starting Address
 Assembler used: EASy68K Editor/Assembler v5.16.01
-Created On: 11/9/2019 1:59:46 PM
+Created On: 11/11/2019 8:04:05 PM
 
 00000000                             1  *-----------------------------------------------------------
 00000000                             2  * Title      :  Dissasembler
@@ -12,53 +12,53 @@ Created On: 11/9/2019 1:59:46 PM
 00001000                             8          
 00001000                             9  ****    MAIN LOOP   ****
 00001000  4E71                      10  START:  NOP
-00001002  4EB9 0000139A             11          JSR     RESET_BUF_PTR   * move a4 to start of string buffer
+00001002  4EB9 000013BE             11          JSR     RESET_BUF_PTR   * move a4 to start of string buffer
 00001008                            12  
-00001008  43F9 000014E5             13          LEA     ST_A_MSG,A1     * load start address prompt message
-0000100E  4EB9 0000132C             14          JSR     WRITE_ASCII     * write to string buffer
-00001014  4EB9 00001372             15          JSR     TERM_PNT_RST_BUF * terminate string buffer and print reseting pointer at A4
+00001008  43F9 00001532             13          LEA     ST_A_MSG,A1     * load start address prompt message
+0000100E  4EB9 00001350             14          JSR     WRITE_ASCII     * write to string buffer
+00001014  4EB9 00001396             15          JSR     TERM_PNT_RST_BUF * terminate string buffer and print reseting pointer at A4
 0000101A                            16          
-0000101A  43F9 000013A0             17          LEA     ST_ADDR,A1 * load start address
+0000101A  43F9 000013C4             17          LEA     ST_ADDR,A1 * load start address
 00001020  4291                      18          CLR.L   (A1)    * clear long at a1
 00001022  103C 0002                 19          MOVE.B  #2,D0   * trap task 2 read a null terminated string from keyboard at A1 length at D1
 00001026  4E4F                      20          TRAP    #15
 00001028                            21          
-00001028  4EB9 0000129C             22          JSR     IN_ADDR_TO_HEX  * convert start address to hex
+00001028  4EB9 000012C0             22          JSR     IN_ADDR_TO_HEX  * convert start address to hex
 0000102E                            23               
-0000102E  43F9 00001563             24          LEA     E_A_MSG,A1      * load end address prompt message
-00001034  4EB9 0000132C             25          JSR     WRITE_ASCII     * print message
-0000103A  4EB9 00001372             26          JSR     TERM_PNT_RST_BUF  * print and reset buffer no newline
+0000102E  43F9 000015B0             24          LEA     E_A_MSG,A1      * load end address prompt message
+00001034  4EB9 00001350             25          JSR     WRITE_ASCII     * print message
+0000103A  4EB9 00001396             26          JSR     TERM_PNT_RST_BUF  * print and reset buffer no newline
 00001040                            27          
-00001040  43F9 000013AC             28          LEA     E_ADDR,A1  * load end address
+00001040  43F9 000013D0             28          LEA     E_ADDR,A1  * load end address
 00001046  4291                      29          CLR.L   (A1)    * clear long at end address
 00001048  103C 0002                 30          MOVE.B  #2,D0   * trap task 2 read a null terminated string from keyboard at A1 length at D1
 0000104C  4E4F                      31          TRAP    #15
 0000104E                            32          
-0000104E  4EB9 0000129C             33          JSR     IN_ADDR_TO_HEX  * convert end address to hex
+0000104E  4EB9 000012C0             33          JSR     IN_ADDR_TO_HEX  * convert end address to hex
 00001054                            34          
 00001054                            35          * print converted addresses for testing purposes
 00001054                            36          
-00001054  4EB9 0000139A             37          JSR     RESET_BUF_PTR         * move a4 to start of string buffer
+00001054  4EB9 000013BE             37          JSR     RESET_BUF_PTR         * move a4 to start of string buffer
 0000105A                            38          
-0000105A  4EB9 0000134C             39          JSR     WRITE_NL_A4           * write newline to buffer
+0000105A  4EB9 00001370             39          JSR     WRITE_NL_A4           * write newline to buffer
 00001060                            40          
-00001060  43F9 000015C2             41          LEA     TEST_MSG,A1
-00001066  4EB9 0000132C             42          JSR     WRITE_ASCII
+00001060  43F9 0000160F             41          LEA     TEST_MSG,A1
+00001066  4EB9 00001350             42          JSR     WRITE_ASCII
 0000106C                            43          
-0000106C  2239 000013A0             44          MOVE.L  ST_ADDR,D1    * test print from string buffer
-00001072  4EB9 000012D4             45          JSR     WRITE_HEX_TO_ASCII    * call conversion subroutine
+0000106C  2239 000013C4             44          MOVE.L  ST_ADDR,D1    * test print from string buffer
+00001072  4EB9 000012F8             45          JSR     WRITE_HEX_TO_ASCII    * call conversion subroutine
 00001078                            46  
-00001078  4EB9 0000134C             47          JSR     WRITE_NL_A4           * write newline to buffer
+00001078  4EB9 00001370             47          JSR     WRITE_NL_A4           * write newline to buffer
 0000107E                            48          
-0000107E  43F9 000015C2             49          LEA     TEST_MSG,A1
-00001084  4EB9 0000132C             50          JSR     WRITE_ASCII           * copy test_msg to buffer  
+0000107E  43F9 0000160F             49          LEA     TEST_MSG,A1
+00001084  4EB9 00001350             50          JSR     WRITE_ASCII           * copy test_msg to buffer  
 0000108A                            51          
-0000108A  2239 000013AC             52          MOVE.L  E_ADDR,D1             * write end address to buffer
-00001090  4EB9 000012D4             53          JSR     WRITE_HEX_TO_ASCII
+0000108A  2239 000013D0             52          MOVE.L  E_ADDR,D1             * write end address to buffer
+00001090  4EB9 000012F8             53          JSR     WRITE_HEX_TO_ASCII
 00001096                            54          
 00001096                            55  
-00001096  4EB9 0000134C             56          JSR     WRITE_NL_A4           * write newline to buffer
-0000109C  4EB9 0000135C             57          JSR     NL_TERM_PNT_RST_BUF   * print buffer contents
+00001096  4EB9 00001370             56          JSR     WRITE_NL_A4           * write newline to buffer
+0000109C  4EB9 00001380             57          JSR     NL_TERM_PNT_RST_BUF   * print buffer contents
 000010A2                            58          
 000010A2                            59          * end test printing converted numbers
 000010A2                            60          
@@ -69,15 +69,15 @@ Created On: 11/9/2019 1:59:46 PM
 000010AC                            65  
 000010AC                            66  ****    OP-CODES    ****
 000010AC                            67  OP_CODES:
-000010AC  4EB9 0000139A             68          JSR     RESET_BUF_PTR   * reset string buffer pointer
-000010B2  2A79 000013A0             69          MOVE.L  ST_ADDR,A5  * load starting address into a5
-000010B8  2C79 000013AC             70          MOVE.L  E_ADDR,A6   * load ending address into a6
+000010AC  4EB9 000013BE             68          JSR     RESET_BUF_PTR   * reset string buffer pointer
+000010B2  2A79 000013C4             69          MOVE.L  ST_ADDR,A5  * load starting address into a5
+000010B8  2C79 000013D0             70          MOVE.L  E_ADDR,A6   * load ending address into a6
 000010BE                            71          
 000010BE                            72  OP_START:
 000010BE                            73          * write address and a tab to str buffer
 000010BE  220D                      74          MOVE.L  A5,D1   * load address from A5 into D1
-000010C0  4EB9 000012D4             75          JSR     WRITE_HEX_TO_ASCII
-000010C6  4EB9 00001356             76          JSR     WRITE_TAB_A4
+000010C0  4EB9 000012F8             75          JSR     WRITE_HEX_TO_ASCII
+000010C6  4EB9 0000137A             76          JSR     WRITE_TAB_A4
 000010CC                            77          
 000010CC  3415                      78          MOVE.W (A5),D2 * load word of memory into D1
 000010CE                            79          
@@ -89,338 +89,432 @@ Created On: 11/9/2019 1:59:46 PM
 000010D4  0C43 1000                 85          CMPI.W  #$1000,D3   * if nibble3 == 1, branch to move byte (1)
 000010D8  6700 003E                 86          BEQ     load_MOVE_B
 000010DC  0C43 2000                 87          CMPI.W  #$2000,D3   * if nibble3 == 2, branch to move long (2)
-000010E0  6700 004A                 88          BEQ     load_MOVE_L * will need to account for MOVEA
+000010E0  6700 004C                 88          BEQ     load_MOVE_L * will need to account for MOVEA
 000010E4  0C43 3000                 89          CMPI.W  #$3000,D3   * if nibble3 == 3, branch to move word (3)
-000010E8  6700 0056                 90          BEQ     load_MOVE_W * will need to account for MOVEA        
+000010E8  6700 0058                 90          BEQ     load_MOVE_W * will need to account for MOVEA        
 000010EC  0C43 4000                 91          CMPI.W  #$4000,D3   * if nibble3 == 4 branch to that set
-000010F0  6700 0062                 92          BEQ     OP_4 
+000010F0  6700 0064                 92          BEQ     OP_4 
 000010F4  0C43 5000                 93          CMPI.W  #$5000,D3   * if nibble3 == 5, branch to ADDQ (5)
-000010F8  6700 00BA                 94          BEQ     load_ADDQ
+000010F8  6700 00BC                 94          BEQ     load_ADDQ
 000010FC  0C43 6000                 95          CMPI.W  #$6000,D3   * if nibble3 == 6, branch to that set
-00001100  6700 00C2                 96          BEQ     OP_6
+00001100  6700 00C4                 96          BEQ     OP_6
 00001104                            97                         
-00001104  4EB9 00001232             98  OP_ERR  JSR     LOAD_DATA_STR_INTO_BUF
+00001104  4EB9 00001256             98  OP_ERR  JSR     LOAD_DATA_STR_INTO_BUF
 0000110A                            99          
 0000110A                           100  
 0000110A                           101  DECODE_DONE:    * print newline then check if op-code loop is done
-0000110A  4EB9 0000135C            102          JSR     NL_TERM_PNT_RST_BUF * write newline then print
+0000110A  4EB9 00001380            102          JSR     NL_TERM_PNT_RST_BUF * write newline then print
 00001110  548D                     103          ADD.L   #2,A5   * increment current address pointer by 2 bytes 
 00001112  BBCE                     104          CMP.L   A6,A5  * loop if start is less than or equal to end
 00001114  6FA8                     105          BLE     OP_START
 00001116  4E75                     106  OP_DONE RTS
 00001118                           107  
 00001118                           108  load_MOVE_B:    * load and print MOVE.B neumonic return to op loop
-00001118  43F9 000014BB            109          LEA     _MOVE_B,A1
-0000111E  4EB9 0000132C            110          JSR     WRITE_ASCII
-00001124  4EB9 0000122A            111          JSR     CHK_DEST
-0000112A  60DE                     112          BRA     DECODE_DONE
-0000112C                           113  
-0000112C                           114  load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
-0000112C  43F9 000014C2            115          LEA     _MOVE_L,A1
-00001132  4EB9 0000132C            116          JSR     WRITE_ASCII
-00001138  4EB9 0000122A            117          JSR     CHK_DEST
-0000113E  60CA                     118          BRA     DECODE_DONE
-00001140                           119          
-00001140                           120  load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
-00001140  43F9 000014C9            121          LEA     _MOVE_W,A1
-00001146  4EB9 0000132C            122          JSR     WRITE_ASCII
-0000114C  4EB9 0000122A            123          JSR     CHK_DEST
-00001152  60B6                     124          BRA     DECODE_DONE
-00001154                           125  
-00001154                           126  OP_4:   * could be not, nop, rts, jsr, movem, lea
-00001154  2602                     127          MOVE.L  D2,D3   * copy instruction word
-00001156  0243 0F00                128          ANDI.W  #Nib2Mask,D3
-0000115A  0C43 0600                129          CMPI.W  #$0600,D3   * if nibble 2 is 6, instruction is NOT
-0000115E  6700 000C                130          BEQ     load_NOT
-00001162  0C43 0E00                131          CMPI.W  #$0E00,D3  * if nibble 2 is E could be nop or rts
-00001166  6700 0012                132          BEQ     NOP_RTS
-0000116A                           133          * will need more subroutines for jsr, movem, lea
-0000116A                           134          
-0000116A  6098                     135          BRA     OP_ERR  * return to error decoding
-0000116C                           136          
-0000116C                           137  load_NOT:   * load and print NOT neumonic return to op loop
-0000116C  43F9 000014A9            138          LEA     _NOT,A1
-00001172  4EB9 0000132C            139          JSR     WRITE_ASCII
-00001178  6090                     140          BRA     DECODE_DONE
-0000117A                           141  
-0000117A                           142  NOP_RTS: * could be NOP or RTS     
-0000117A  2602                     143          MOVE.L  D2,D3       *copy instruction word
-0000117C  0243 00FF                144          ANDI.W  #Byte0Mask,D3 * isolate right most byte
-00001180                           145          
-00001180  0C03 0071                146          CMPI.B  #$71,D3     * test for NOP
-00001184  6700 000E                147          BEQ     load_NOP
-00001188  0C03 0075                148          CMPI.B  #$75, D3    * test for RTS
-0000118C  6700 0016                149          BEQ     load_RTS
-00001190                           150              
-00001190  6000 FF72                151          BRA     OP_ERR  * return to error decoding
-00001194                           152  
-00001194                           153  load_NOP:   * load and print NOP neumonic return to op loop
-00001194  43F9 000014AD            154          LEA     _NOP,A1
-0000119A  4EB9 0000132C            155          JSR     WRITE_ASCII
-000011A0  6000 FF68                156          BRA     DECODE_DONE
-000011A4                           157          
-000011A4                           158  load_RTS:   * load and print RTS neumonic return to op loop
-000011A4  43F9 000014B1            159          LEA     _RTS,A1
-000011AA  4EB9 0000132C            160          JSR     WRITE_ASCII
-000011B0  6000 FF58                161          BRA     DECODE_DONE
-000011B4                           162  
-000011B4                           163  load_ADDQ:  * load and print ADDQ neumonic return to op loop
-000011B4  43F9 000014D0            164          LEA     _ADDQ,A1
-000011BA  4EB9 0000132C            165          JSR     WRITE_ASCII
-000011C0  6000 FF48                166          BRA     DECODE_DONE
-000011C4                           167          
-000011C4                           168  OP_6:   * could be BRA, BEQ, BGT, BLE
-000011C4  2602                     169          MOVE.L  D2,D3   * copy instruction word
-000011C6  0243 0F00                170          ANDI.W  #Nib2Mask,D3
-000011CA  0C43 0000                171          CMPI.W  #$0000,D3   * if nibble 2 is 0, instruction is BRA
-000011CE  6700 001A                172          BEQ     load_BRA
-000011D2  0C43 0700                173          CMPI.W  #$0700,D3   * if nibble 2 is 7, instruction is BEQ
-000011D6  6700 0022                174          BEQ     load_BEQ
-000011DA  0C43 0E00                175          CMPI.W  #$0E00,D3   * if nibble 2 is E, instruction is BGT
-000011DE  6700 002A                176          BEQ     load_BGT
-000011E2  0C43 0F00                177          CMPI.W  #$0F00,D3   * if nibble 2 is F, instruction is BLE
-000011E6  6700 0032                178          BEQ     load_BLE
-000011EA                           179          
-000011EA                           180  load_BRA:   * load and print BRA neumonic return to op loop
-000011EA  43F9 000014D5            181          LEA     _BRA,A1
-000011F0  4EB9 0000132C            182          JSR     WRITE_ASCII
-000011F6  6000 FF12                183          BRA     DECODE_DONE
-000011FA                           184          
-000011FA                           185  load_BEQ:   * load and print BEQ neumonic return to op loop
-000011FA  43F9 000014D9            186          LEA     _BEQ,A1
-00001200  4EB9 0000132C            187          JSR     WRITE_ASCII
-00001206  6000 FF02                188          BRA     DECODE_DONE
-0000120A                           189  
-0000120A                           190  load_BGT:   * load and print BGT neumonic return to op loop
-0000120A  43F9 000014DD            191          LEA     _BGT,A1
-00001210  4EB9 0000132C            192          JSR     WRITE_ASCII
-00001216  6000 FEF2                193          BRA     DECODE_DONE
-0000121A                           194          
-0000121A                           195  load_BLE:   * load and print BLE neumonic return to op loop
-0000121A  43F9 000014E1            196          LEA     _BLE,A1
-00001220  4EB9 0000132C            197          JSR     WRITE_ASCII
-00001226  6000 FEE2                198          BRA     DECODE_DONE
-0000122A                           199  
-0000122A                           200  ****       DEST     ****
-0000122A                           201  CHK_DEST:
-0000122A  2602                     202          MOVE.L  D2,D3   *copy instruction to D3
-0000122C  0243 0F00                203          ANDI.W  #Nib2Mask,D3 *isolate 2nd nibble
-00001230  4E75                     204          RTS
-00001232                           205  
-00001232                           206  
-00001232                           207  ****       EA       ****
-00001232                           208  
-00001232                           209  
-00001232                           210  
-00001232                           211  ***       UTILS     ****
-00001232                           212  
-00001232                           213  LOAD_DATA_STR_INTO_BUF: * expects address to be in a5
-00001232  48A7 4000                214          MOVEM   D1,-(SP)
-00001236  4EB9 0000139A            215          JSR     RESET_BUF_PTR
-0000123C  220D                     216          MOVE.L  A5,D1
-0000123E  4EB9 000012D4            217          JSR     WRITE_HEX_TO_ASCII * write memory address to buffer
-00001244  4EB9 00001356            218          JSR     WRITE_TAB_A4    * wrtie a tab
-0000124A  43F9 000015B9            219          LEA     DATA_MSG,A1     * Load template for data
-00001250  4EB9 0000132C            220          JSR     WRITE_ASCII     * write 'DATA    $' to buffer
-00001256  3215                     221          MOVE.W  (A5),D1   * load address contents of memory to d1 for printing
-00001258  4EB9 000012D4            222          JSR     WRITE_HEX_TO_ASCII * save to buffer
-0000125E  4C9F 0002                223          MOVEM   (SP)+,D1
-00001262  4E75                     224          RTS
-00001264                           225  
-00001264  103C 0009                226  DONE    MOVE.B  #9,D0       * Trap task 9 halt simulator
-00001268  4E4F                     227          TRAP    #15
-0000126A                           228          
-0000126A                           229  * Converts ASCII string containing chars 0-9 and A-F uppercase to hexidecimal number
-0000126A                           230  * returns result in D6
-0000126A                           231  TO_HEX
-0000126A  48A7 E060                232          MOVEM   D0-D2/A1-A2,-(SP)   * save state of registers to be changed
-0000126E  4282                     233          CLR.L   D2      * clear to hold digit magnitude
-00001270  4286                     234          CLR.L   D6      * clear to hold result
-00001272  5341                     235          SUBI    #1,D1    * subtract 1
-00001274  C2FC 0004                236          MULU    #4,D1   * multiply length by four to get length in binary
-00001278                           237          
-00001278                           238  TO_HEX_INTERNAL:
-00001278  1019                     239          MOVE.B  (A1)+,D0     * Load char at A1 into D0
-0000127A  6700 001A                240          BEQ     END_H       * GOTO end if byte is zero (null terminated)
-0000127E  0C40 0039                241          CMPI    #$39,D0     * compare char value to 39
-00001282  6F00 0004                242          BLE     _0_9        * GOTO 0_9 if <= 39
-00001286  5F00                     243  A_F     SUBI.B  #$7,D0      * Subtract 7 from D0) for ASCII A-F
-00001288  0200 000F                244  _0_9    ANDI.B  #$0F,D0     * AND with 00001111 to isolate left most 4 bits, converts to hex
-0000128C  2400                     245          MOVE.L  D0,D2        * put hex digit in D2
-0000128E  E3AA                     246          LSL.L   D1,D2       * shift hex digit final postion    
-00001290  DC82                     247          ADD.L   D2,D6       * add to hex result
-00001292  5981                     248          SUBI.L    #4,D1       * subract one hex digit of bits from remaining length 
-00001294  60E2                     249          BRA     TO_HEX_INTERNAL   * convert next byte
-00001296  4C9F 0607                250  END_H   MOVEM (SP)+,D0-D2/A1-A2
-0000129A  4E75                     251          RTS
-0000129C                           252  
-0000129C                           253  
-0000129C                           254  *   input address to hexadecimal saves output at A1
-0000129C                           255  IN_ADDR_TO_HEX:
-0000129C  48A7 0200                256          MOVEM   D6,-(SP)
-000012A0  0C41 0008                257          CMPI    #8,D1   * compare string input length to 8
-000012A4  6E00 000E                258          BGT     PADDR_IN_ERR    * if input greater than 8 bytes print input address error
-000012A8  4EB8 126A                259          JSR     TO_HEX          * else convert to hex
-000012AC  2286                     260          MOVE.L  D6,(A1)
-000012AE  4C9F 0040                261          MOVEM   (SP)+,D6
-000012B2  4E75                     262          RTS
-000012B4                           263          
-000012B4                           264          
-000012B4                           265  *   print address input error
-000012B4                           266  PADDR_IN_ERR: 
-000012B4  43F9 00001576            267          LEA     ADR_IN_ERR,A1   * load address input error message 
-000012BA  4EF9 000012C4            268          JMP     PRINT_A1
-000012C0  6000 FD3E                269          BRA     START           * return to start of program
-000012C4                           270  
-000012C4                           271  PRINT_A1:
-000012C4  48A7 8000                272          MOVEM   D0,-(SP) * save register state
-000012C8  103C 000E                273          MOVE.B  #14,D0   * print A1
-000012CC  4E4F                     274          TRAP    #15
-000012CE  4C9F 0001                275          MOVEM   (SP)+,D0  *  restore register state
-000012D2  4E75                     276          RTS
-000012D4                           277  
-000012D4                           278  ****************************************************
-000012D4                           279  * Subroutines for printing and writing to and from
-000012D4                           280  * the string buffer at A4
-000012D4                           281  ****************************************************        
-000012D4                           282          
-000012D4                           283  WRITE_HEX_TO_ASCII: * write hex in d1 to a4 as ascii
-000012D4                           284          * may need to add case to handle sign extended shorts
-000012D4  48A7 3800                285          MOVEM   D2-D4,-(SP)
-000012D8  2401                     286          MOVE.L  D1,D2   * copy input to working temp var
-000012DA  0282 FFFF0000            287          ANDI.L  #$FFFF0000,D2   * mask for bits 31-16
-000012E0  0C82 00000000            288          CMPI.L  #0,D2           * if masked value is 0 there is no value in long portion of register for unsigned ints
-000012E6  6700 000E                289          BEQ     h_short         * if no value must be non sign extended short  
-000012EA                           290          * setup params for ling processing
-000012EA  263C F0000000            291          MOVE.L  #$F0000000,D3   * init mask for isolating first long hex most significand digit
-000012F0  781C                     292          MOVE.L  #28,D4          * init shift value for first long hex MSD
-000012F2  6000 000A                293          BRA     h_a_loop
-000012F6                           294          
-000012F6                           295  h_short: * setup params for short processing
-000012F6  263C 0000F000            296          MOVE.L  #$F000,D3   * init mask for isolating first short hex most significand digit
-000012FC  780C                     297          MOVE.L  #12,D4      * init shift value for first short hex MSD
-000012FE                           298          
-000012FE                           299  h_a_loop:
-000012FE  0C84 00000000            300          CMPI.L  #0,D4   * compare shift value to 0
-00001304  6D00 0020                301          BLT     h_a_dne * done if less than 0
-00001308  2401                     302          MOVE.L  D1,D2   * copy input to working temp var
-0000130A  C483                     303          AND.L   D3,D2   * isolate digit
-0000130C  E8AA                     304          LSR.L   D4,D2   * shift to rightmost position
-0000130E                           305          
-0000130E  0C82 0000000A            306          CMPI.L  #$A,D2   * compare to A
-00001314  6D00 0004                307          BLT     h_a_low  * if less than A 0-9
-00001318  5E42                     308          ADDI    #7,D2    * add an additional 7 to A-F     
-0000131A                           309  h_a_low:
-0000131A  0642 0030                310          ADDI    #$30,D2  * add $30 to convert to ascii
-0000131E  18C2                     311          MOVE.B  D2,(A4)+ * write digit to pointer location
-00001320                           312          
-00001320  E88B                     313          LSR.L   #4,D3   * shift mask to isolate next hex digit
-00001322  5984                     314          SUBI.L  #4,D4   * subtract shift for next digit
-00001324  60D8                     315          BRA     h_a_loop    * return to loop start
-00001326  4C9F 001C                316  h_a_dne MOVEM   (SP)+,D2-D4
-0000132A  4E75                     317          RTS
-0000132C                           318  
-0000132C                           319  WRITE_ASCII:    * copies null terminated string from A1 to A4 without null
-0000132C  48A7 4040                320          MOVEM   D1/A1,-(SP)
-00001330                           321  w_a_loop:
-00001330  1219                     322          MOVE.B  (A1)+,D1    * load value at A1
-00001332  6700 0006                323          BEQ     w_a_done    * if 0(null) is moved copy is done
-00001336  18C1                     324          MOVE.B  D1,(A4)+    * else copy value to A4
-00001338  60F6                     325          BRA     w_a_loop
-0000133A                           326  w_a_done:
-0000133A  4C9F 0202                327          MOVEM   (SP)+,D1/A1
-0000133E  4E75                     328          RTS
-00001340                           329  
-00001340                           330  WRITE_NULL_A4: * used to terminate a string in memory 
-00001340  18FC 0000                331          MOVE.B  #0,(A4)+
-00001344  4E75                     332          RTS
-00001346                           333          
-00001346                           334  WRITE_SPC_A4: * writes an ascii space at a4
-00001346  18FC 0020                335          MOVE.B  #SPACE,(A4)+
-0000134A  4E75                     336          RTS 
-0000134C                           337  
-0000134C                           338  WRITE_NL_A4: * writes a newline at a4
-0000134C  18FC 000D                339          MOVE.B  #CR,(A4)+
-00001350  18FC 000A                340          MOVE.B  #LF,(A4)+
-00001354  4E75                     341          RTS
-00001356                           342          
-00001356                           343  WRITE_TAB_A4:
-00001356  18FC 0009                344          MOVE.B  #TAB,(A4)+
-0000135A  4E75                     345          RTS   
-0000135C                           346  
-0000135C                           347  NL_TERM_PNT_RST_BUF: * write newline, null then print contents then reset bufffer
-0000135C  4EB8 134C                348          JSR     WRITE_NL_A4
-00001360  4EB8 1340                349          JSR     WRITE_NULL_A4
-00001364  4EB9 00001384            350          JSR     PRINT_STR_BUF
-0000136A  4EB9 0000139A            351          JSR     RESET_BUF_PTR
-00001370  4E75                     352          RTS
-00001372                           353          
-00001372                           354  TERM_PNT_RST_BUF: * write null then print contents then reset bufffer pointer
-00001372  4EB8 1340                355          JSR     WRITE_NULL_A4
-00001376  4EB9 00001384            356          JSR     PRINT_STR_BUF
-0000137C  4EB9 0000139A            357          JSR     RESET_BUF_PTR
-00001382  4E75                     358          RTS
-00001384                           359          
-00001384                           360  PRINT_STR_BUF: * prints string buffer contents to console
-00001384  48A7 8040                361          MOVEM   D0/A1,-(SP)
-00001388  43F9 000013B8            362          LEA     STR_BUF,A1  * load string buffer
-0000138E  303C 000E                363          MOVE    #14,D0       * print contents
-00001392  4E4F                     364          TRAP    #15
-00001394  4C9F 0201                365          MOVEM   (SP)+,D0/A1
-00001398  4E75                     366          RTS
-0000139A                           367  
-0000139A                           368  RESET_BUF_PTR:  * sets a4 to start of string buffer
-0000139A  387C 13B8                369          MOVEA   #STR_BUF,A4
-0000139E  4E75                     370          RTS        
-000013A0                           371  
-000013A0                           372  ****    VARS    ****
-000013A0                           373  ST_ADDR DS.L    3   * allocate 3 longs for address ascii input needs 9 bytes to get 8 chars 
-000013AC                           374  E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for this
-000013B8= 00 00 00 00 00 00 ...    375  STR_BUF DCB.B   241,0  * buffer to hold 240 chars + null terminator. 3 80 char lines
-000014A9                           376           
-000014A9                           377  ****    CONST   ****
-000014A9  =0000000D                378  CR          EQU     $0D     * carraige return          
-000014A9  =0000000A                379  LF          EQU     $0A     * line feed
-000014A9  =00000020                380  SPACE       EQU     $20     * ascii space
-000014A9  =00000009                381  TAB         EQU     $09     * ascii tab character
-000014A9                           382  
-000014A9                           383  * masks for isolating nibbles with and 0 being least significant nibble
-000014A9  =0000F000                384  Nib3Mask    EQU     $F000 
-000014A9  =00000F00                385  Nib2Mask    EQU     $0F00
-000014A9  =000000F0                386  Nib1Mask    EQU     $00F0
-000014A9  =0000000F                387  Nib0Mask    EQU     $000F
-000014A9                           388  
-000014A9  =000000FF                389  Byte0Mask   EQU     $00FF
-000014A9  =0000FF00                390  Byte1Mask   EQU     $FF00
-000014A9                           391  
-000014A9                           392  ****    Instructions    ****
-000014A9= 4E 4F 54 00              393  _NOT    DC.B    'NOT',0
-000014AD= 4E 4F 50 00              394  _NOP    DC.B    'NOP',0
-000014B1= 52 54 53 00              395  _RTS    DC.B    'RTS',0
-000014B5= 4D 4F 56 45 4D 00        396  _MOVEM  DC.B    'MOVEM',0
-000014BB= 4D 4F 56 45 2E 42 00     397  _MOVE_B DC.B    'MOVE.B',0
-000014C2= 4D 4F 56 45 2E 4C 00     398  _MOVE_L DC.B    'MOVE.L',0
-000014C9= 4D 4F 56 45 2E 57 00     399  _MOVE_W DC.B    'MOVE.W',0
-000014D0= 41 44 44 51 00           400  _ADDQ   DC.B    'ADDQ',0
-000014D5= 42 52 41 00              401  _BRA    DC.B    'BRA',0
-000014D9= 42 45 51 00              402  _BEQ    DC.B    'BEQ',0
-000014DD= 42 47 54 00              403  _BGT    DC.B    'BGT',0
-000014E1= 42 4C 45 00              404  _BLE    DC.B    'BLE',0
-000014E5                           405  
-000014E5                           406  ****    MESSAGES    ****
-000014E5= 45 6E 74 65 72 20 ...    407  ST_A_MSG    DC.B    'Enter an address range in hexidecimal to be dissasembled',CR,LF * start address message
-0000151F= 56 61 6C 69 64 20 ...    408              DC.B    'Valid address chars: 0-1 A-F case insensitive',CR,LF  
-0000154E= 45 6E 74 65 72 20 ...    409              DC.B    'Enter start address:',0    
-00001563                           410              
-00001563= 45 6E 74 65 72 20 ...    411  E_A_MSG     DC.B    'Enter end address:',0    * end address message
-00001576                           412  
-00001576= 45 52 52 4F 52 20 ...    413  ADR_IN_ERR  DC.B    'ERROR INVALID ADDRESS: input must be 0-8 hexidecimal digits long',CR,LF,0    * address input error message
-000015B9                           414  
-000015B9= 44 41 54 41 20 20 ...    415  DATA_MSG    DC.B    'DATA   $',0
-000015C2                           416  
-000015C2= 43 4F 4E 56 45 52 ...    417  TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
-000015D9                           418              
-000015D9                           419              END     START        * last line of source
+00001118  43F9 000014DF            109          LEA     _MOVE_B,A1
+0000111E  4EB9 00001350            110          JSR     WRITE_ASCII
+00001124  4243                     111          CLR     D3
+00001126  4EB9 0000122C            112          JSR     MOVE_EA
+0000112C  60DC                     113          BRA     DECODE_DONE
+0000112E                           114  
+0000112E                           115  load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
+0000112E  43F9 000014E6            116          LEA     _MOVE_L,A1
+00001134  4EB9 00001350            117          JSR     WRITE_ASCII
+0000113A  4EB9 0000122C            118          JSR     MOVE_EA
+00001140  60C8                     119          BRA     DECODE_DONE
+00001142                           120          
+00001142                           121  load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
+00001142  43F9 000014ED            122          LEA     _MOVE_W,A1
+00001148  4EB9 00001350            123          JSR     WRITE_ASCII
+0000114E  4EB9 0000122C            124          JSR     MOVE_EA
+00001154  60B4                     125          BRA     DECODE_DONE
+00001156                           126  
+00001156                           127  OP_4:   * could be not, nop, rts, jsr, movem, lea
+00001156  2602                     128          MOVE.L  D2,D3   * copy instruction word
+00001158  0243 0F00                129          ANDI.W  #Nib2Mask,D3
+0000115C  0C43 0600                130          CMPI.W  #$0600,D3   * if nibble 2 is 6, instruction is NOT
+00001160  6700 000C                131          BEQ     load_NOT
+00001164  0C43 0E00                132          CMPI.W  #$0E00,D3  * if nibble 2 is E could be nop or rts
+00001168  6700 0012                133          BEQ     NOP_RTS
+0000116C                           134          * will need more subroutines for jsr, movem, lea
+0000116C                           135          
+0000116C  6096                     136          BRA     OP_ERR  * return to error decoding
+0000116E                           137          
+0000116E                           138  load_NOT:   * load and print NOT neumonic return to op loop
+0000116E  43F9 000014CD            139          LEA     _NOT,A1
+00001174  4EB9 00001350            140          JSR     WRITE_ASCII
+0000117A  608E                     141          BRA     DECODE_DONE
+0000117C                           142  
+0000117C                           143  NOP_RTS: * could be NOP or RTS     
+0000117C  2602                     144          MOVE.L  D2,D3       *copy instruction word
+0000117E  0243 00FF                145          ANDI.W  #Byte0Mask,D3 * isolate right most byte
+00001182                           146          
+00001182  0C03 0071                147          CMPI.B  #$71,D3     * test for NOP
+00001186  6700 000E                148          BEQ     load_NOP
+0000118A  0C03 0075                149          CMPI.B  #$75, D3    * test for RTS
+0000118E  6700 0016                150          BEQ     load_RTS
+00001192                           151              
+00001192  6000 FF70                152          BRA     OP_ERR  * return to error decoding
+00001196                           153  
+00001196                           154  load_NOP:   * load and print NOP neumonic return to op loop
+00001196  43F9 000014D1            155          LEA     _NOP,A1
+0000119C  4EB9 00001350            156          JSR     WRITE_ASCII
+000011A2  6000 FF66                157          BRA     DECODE_DONE
+000011A6                           158          
+000011A6                           159  load_RTS:   * load and print RTS neumonic return to op loop
+000011A6  43F9 000014D5            160          LEA     _RTS,A1
+000011AC  4EB9 00001350            161          JSR     WRITE_ASCII
+000011B2  6000 FF56                162          BRA     DECODE_DONE
+000011B6                           163  
+000011B6                           164  load_ADDQ:  * load and print ADDQ neumonic return to op loop
+000011B6  43F9 000014F4            165          LEA     _ADDQ,A1
+000011BC  4EB9 00001350            166          JSR     WRITE_ASCII
+000011C2  6000 FF46                167          BRA     DECODE_DONE
+000011C6                           168          
+000011C6                           169  OP_6:   * could be BRA, BEQ, BGT, BLE
+000011C6  2602                     170          MOVE.L  D2,D3   * copy instruction word
+000011C8  0243 0F00                171          ANDI.W  #Nib2Mask,D3
+000011CC  0C43 0000                172          CMPI.W  #$0000,D3   * if nibble 2 is 0, instruction is BRA
+000011D0  6700 001A                173          BEQ     load_BRA
+000011D4  0C43 0700                174          CMPI.W  #$0700,D3   * if nibble 2 is 7, instruction is BEQ
+000011D8  6700 0022                175          BEQ     load_BEQ
+000011DC  0C43 0E00                176          CMPI.W  #$0E00,D3   * if nibble 2 is E, instruction is BGT
+000011E0  6700 002A                177          BEQ     load_BGT
+000011E4  0C43 0F00                178          CMPI.W  #$0F00,D3   * if nibble 2 is F, instruction is BLE
+000011E8  6700 0032                179          BEQ     load_BLE
+000011EC                           180          
+000011EC                           181  load_BRA:   * load and print BRA neumonic return to op loop
+000011EC  43F9 000014F9            182          LEA     _BRA,A1
+000011F2  4EB9 00001350            183          JSR     WRITE_ASCII
+000011F8  6000 FF10                184          BRA     DECODE_DONE
+000011FC                           185          
+000011FC                           186  load_BEQ:   * load and print BEQ neumonic return to op loop
+000011FC  43F9 000014FD            187          LEA     _BEQ,A1
+00001202  4EB9 00001350            188          JSR     WRITE_ASCII
+00001208  6000 FF00                189          BRA     DECODE_DONE
+0000120C                           190  
+0000120C                           191  load_BGT:   * load and print BGT neumonic return to op loop
+0000120C  43F9 00001501            192          LEA     _BGT,A1
+00001212  4EB9 00001350            193          JSR     WRITE_ASCII
+00001218  6000 FEF0                194          BRA     DECODE_DONE
+0000121C                           195          
+0000121C                           196  load_BLE:   * load and print BLE neumonic return to op loop
+0000121C  43F9 00001505            197          LEA     _BLE,A1
+00001222  4EB9 00001350            198          JSR     WRITE_ASCII
+00001228  6000 FEE0                199          BRA     DECODE_DONE
+0000122C                           200  
+0000122C                           201  
+0000122C                           202  ****       EA       ****
+0000122C                           203  MOVE_EA:
+0000122C  3602                     204          MOVE.W  D2,D3           *copy instruction to D3 for register
+0000122E  EC4B                     205          LSR.W   #6,D3
+00001230  0243 0007                206          ANDI.W  #$0007,D3
+00001234  C6FC 0006                207          MULU    #$6,D3 
+00001238  41F9 00001242            208          LEA     EATABLE,A0 
+0000123E  4EB0 3000                209          JSR     00(A0,D3)
+00001242                           210  
+00001242                           211  *         ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
+00001242                           212  *         JSR     DEA_MODE        *JMP to check for opmode
+00001242                           213  *         CLR     D3
+00001242                           214  *         MOVE.L  D2,D3
+00001242                           215  *         ANDI.W  #Bit1Mask,D3    *mask to isolate 3-bit opmode
+00001242                           216  *         JSR     DEA_REG          *JMP to check for reg #
+00001242                           217  *         CLR     D3
+00001242                           218  * MV_SRC:
+00001242                           219  
+00001242                           220  EATABLE:
+00001242  4EF9 00001252            221          JMP     DN_MODE
+00001248  4EF9 0000124E            222          JMP     BAD_DATA
+0000124E                           223  
+0000124E                           224  
+0000124E                           225  BAD_DATA:
+0000124E  6000 FEBA                226          BRA     DECODE_DONE
+00001252                           227  DN_MODE:
+00001252  6000 FEB6                228          BRA     DECODE_DONE
+00001256                           229          
+00001256                           230  *         RTS
+00001256                           231  
+00001256                           232  * DEA_MODE:
+00001256                           233  *         CMP.W   #cDR,D3         *000?
+00001256                           234  *         BEQ     DR_MODE         *branch to load Dn to buffer
+00001256                           235  *         CMP.W   #cAR,D3         *001?
+00001256                           236  *         BEQ     AR_MODE         *branch to load An to buffer
+00001256                           237  *         CMP.W   #cIND_AR,D3     *010?
+00001256                           238  *         BEQ     INDAR_MODE      *branch to load (An) to buffer
+00001256                           239  *         CMP.W   #cAR_POST,D3    *011?
+00001256                           240  *         BEQ     INDAR_POST_MODE *branch to load (An)+ to buffer 
+00001256                           241  *         CMP.W   #cAR_PRE,D3     *100?
+00001256                           242  *         BEQ     INDAR_PREC_MODE *branch to load -(An) to buffer
+00001256                           243  *         CMP.W   #cABS,D3        *111?
+00001256                           244  *         BEQ     ABS_MODE        *branch to load xxx.w/l to buffer
+00001256                           245  *         JSR     LOAD_MODE_ERR   *JMP to load error
+00001256                           246  *         RTS
+00001256                           247  
+00001256                           248  
+00001256                           249  * DEA_REG:
+00001256                           250  *         CMP.W   #$0E00,D3       *111
+00001256                           251  *         BEQ     SEV             *branch to load 7 to buffer
+00001256                           252  *         CMP.W   #$0C00,D3       *110
+00001256                           253  *         BEQ     SIX             *branch to load 6 to buffer
+00001256                           254  *         CMP.W   #$0A00,D3       *101
+00001256                           255  *         BEQ     FIVE            *branch to load 5 to buffer
+00001256                           256  *         CMP.W   #$0800,D3       *100
+00001256                           257  *         BEQ     FOUR            *branch to load 4 to buffer
+00001256                           258  *         CMP.W   #$0600,D3       *011
+00001256                           259  *         BEQ     THR             *branch to load 3 to buffer
+00001256                           260  *         CMP.W   #$0400,D3       *010
+00001256                           261  *         BEQ     TWO             *branch to load 2 to buffer
+00001256                           262  *         CMP.W   #$0200,D3       *001
+00001256                           263  *         BEQ     ONE             *branch to load 1 to buffer
+00001256                           264  *         CMP.W   #$0000,D3       *000
+00001256                           265  *         BEQ     ZER             *branch to load 0 to buffer
+00001256                           266  *         JSR     LOAD_REG_ERR    *branch to load error
+00001256                           267  *         RTS
+00001256                           268  
+00001256                           269  
+00001256                           270  ***       UTILS     ****
+00001256                           271  
+00001256                           272  LOAD_DATA_STR_INTO_BUF: * expects address to be in a5
+00001256  48A7 4000                273          MOVEM   D1,-(SP)
+0000125A  4EB9 000013BE            274          JSR     RESET_BUF_PTR
+00001260  220D                     275          MOVE.L  A5,D1
+00001262  4EB9 000012F8            276          JSR     WRITE_HEX_TO_ASCII * write memory address to buffer
+00001268  4EB9 0000137A            277          JSR     WRITE_TAB_A4    * wrtie a tab
+0000126E  43F9 00001606            278          LEA     DATA_MSG,A1     * Load template for data
+00001274  4EB9 00001350            279          JSR     WRITE_ASCII     * write 'DATA    $' to buffer
+0000127A  3215                     280          MOVE.W  (A5),D1   * load address contents of memory to d1 for printing
+0000127C  4EB9 000012F8            281          JSR     WRITE_HEX_TO_ASCII * save to buffer
+00001282  4C9F 0002                282          MOVEM   (SP)+,D1
+00001286  4E75                     283          RTS
+00001288                           284  
+00001288  103C 0009                285  DONE    MOVE.B  #9,D0       * Trap task 9 halt simulator
+0000128C  4E4F                     286          TRAP    #15
+0000128E                           287          
+0000128E                           288  * Converts ASCII string containing chars 0-9 and A-F uppercase to hexidecimal number
+0000128E                           289  * returns result in D6
+0000128E                           290  TO_HEX
+0000128E  48A7 E060                291          MOVEM   D0-D2/A1-A2,-(SP)   * save state of registers to be changed
+00001292  4282                     292          CLR.L   D2      * clear to hold digit magnitude
+00001294  4286                     293          CLR.L   D6      * clear to hold result
+00001296  5341                     294          SUBI    #1,D1    * subtract 1
+00001298  C2FC 0004                295          MULU    #4,D1   * multiply length by four to get length in binary
+0000129C                           296          
+0000129C                           297  TO_HEX_INTERNAL:
+0000129C  1019                     298          MOVE.B  (A1)+,D0     * Load char at A1 into D0
+0000129E  6700 001A                299          BEQ     END_H       * GOTO end if byte is zero (null terminated)
+000012A2  0C40 0039                300          CMPI    #$39,D0     * compare char value to 39
+000012A6  6F00 0004                301          BLE     _0_9        * GOTO 0_9 if <= 39
+000012AA  5F00                     302  A_F     SUBI.B  #$7,D0      * Subtract 7 from D0) for ASCII A-F
+000012AC  0200 000F                303  _0_9    ANDI.B  #$0F,D0     * AND with 00001111 to isolate left most 4 bits, converts to hex
+000012B0  2400                     304          MOVE.L  D0,D2        * put hex digit in D2
+000012B2  E3AA                     305          LSL.L   D1,D2       * shift hex digit final postion    
+000012B4  DC82                     306          ADD.L   D2,D6       * add to hex result
+000012B6  5981                     307          SUBI.L    #4,D1       * subract one hex digit of bits from remaining length 
+000012B8  60E2                     308          BRA     TO_HEX_INTERNAL   * convert next byte
+000012BA  4C9F 0607                309  END_H   MOVEM (SP)+,D0-D2/A1-A2
+000012BE  4E75                     310          RTS
+000012C0                           311  
+000012C0                           312  
+000012C0                           313  *   input address to hexadecimal saves output at A1
+000012C0                           314  IN_ADDR_TO_HEX:
+000012C0  48A7 0200                315          MOVEM   D6,-(SP)
+000012C4  0C41 0008                316          CMPI    #8,D1   * compare string input length to 8
+000012C8  6E00 000E                317          BGT     PADDR_IN_ERR    * if input greater than 8 bytes print input address error
+000012CC  4EB8 128E                318          JSR     TO_HEX          * else convert to hex
+000012D0  2286                     319          MOVE.L  D6,(A1)
+000012D2  4C9F 0040                320          MOVEM   (SP)+,D6
+000012D6  4E75                     321          RTS
+000012D8                           322          
+000012D8                           323          
+000012D8                           324  *   print address input error
+000012D8                           325  PADDR_IN_ERR: 
+000012D8  43F9 000015C3            326          LEA     ADR_IN_ERR,A1   * load address input error message 
+000012DE  4EF9 000012E8            327          JMP     PRINT_A1
+000012E4  6000 FD1A                328          BRA     START           * return to start of program
+000012E8                           329  
+000012E8                           330  PRINT_A1:
+000012E8  48A7 8000                331          MOVEM   D0,-(SP) * save register state
+000012EC  103C 000E                332          MOVE.B  #14,D0   * print A1
+000012F0  4E4F                     333          TRAP    #15
+000012F2  4C9F 0001                334          MOVEM   (SP)+,D0  *  restore register state
+000012F6  4E75                     335          RTS
+000012F8                           336  
+000012F8                           337  ****************************************************
+000012F8                           338  * Subroutines for printing and writing to and from
+000012F8                           339  * the string buffer at A4
+000012F8                           340  ****************************************************        
+000012F8                           341          
+000012F8                           342  WRITE_HEX_TO_ASCII: * write hex in d1 to a4 as ascii
+000012F8                           343          * may need to add case to handle sign extended shorts
+000012F8  48A7 3800                344          MOVEM   D2-D4,-(SP)
+000012FC  2401                     345          MOVE.L  D1,D2   * copy input to working temp var
+000012FE  0282 FFFF0000            346          ANDI.L  #$FFFF0000,D2   * mask for bits 31-16
+00001304  0C82 00000000            347          CMPI.L  #0,D2           * if masked value is 0 there is no value in long portion of register for unsigned ints
+0000130A  6700 000E                348          BEQ     h_short         * if no value must be non sign extended short  
+0000130E                           349          * setup params for ling processing
+0000130E  263C F0000000            350          MOVE.L  #$F0000000,D3   * init mask for isolating first long hex most significand digit
+00001314  781C                     351          MOVE.L  #28,D4          * init shift value for first long hex MSD
+00001316  6000 000A                352          BRA     h_a_loop
+0000131A                           353          
+0000131A                           354  h_short: * setup params for short processing
+0000131A  263C 0000F000            355          MOVE.L  #$F000,D3   * init mask for isolating first short hex most significand digit
+00001320  780C                     356          MOVE.L  #12,D4      * init shift value for first short hex MSD
+00001322                           357          
+00001322                           358  h_a_loop:
+00001322  0C84 00000000            359          CMPI.L  #0,D4   * compare shift value to 0
+00001328  6D00 0020                360          BLT     h_a_dne * done if less than 0
+0000132C  2401                     361          MOVE.L  D1,D2   * copy input to working temp var
+0000132E  C483                     362          AND.L   D3,D2   * isolate digit
+00001330  E8AA                     363          LSR.L   D4,D2   * shift to rightmost position
+00001332                           364          
+00001332  0C82 0000000A            365          CMPI.L  #$A,D2   * compare to A
+00001338  6D00 0004                366          BLT     h_a_low  * if less than A 0-9
+0000133C  5E42                     367          ADDI    #7,D2    * add an additional 7 to A-F     
+0000133E                           368  h_a_low:
+0000133E  0642 0030                369          ADDI    #$30,D2  * add $30 to convert to ascii
+00001342  18C2                     370          MOVE.B  D2,(A4)+ * write digit to pointer location
+00001344                           371          
+00001344  E88B                     372          LSR.L   #4,D3   * shift mask to isolate next hex digit
+00001346  5984                     373          SUBI.L  #4,D4   * subtract shift for next digit
+00001348  60D8                     374          BRA     h_a_loop    * return to loop start
+0000134A  4C9F 001C                375  h_a_dne MOVEM   (SP)+,D2-D4
+0000134E  4E75                     376          RTS
+00001350                           377  
+00001350                           378  WRITE_ASCII:    * copies null terminated string from A1 to A4 without null
+00001350  48A7 4040                379          MOVEM   D1/A1,-(SP)
+00001354                           380  w_a_loop:
+00001354  1219                     381          MOVE.B  (A1)+,D1    * load value at A1
+00001356  6700 0006                382          BEQ     w_a_done    * if 0(null) is moved copy is done
+0000135A  18C1                     383          MOVE.B  D1,(A4)+    * else copy value to A4
+0000135C  60F6                     384          BRA     w_a_loop
+0000135E                           385  w_a_done:
+0000135E  4C9F 0202                386          MOVEM   (SP)+,D1/A1
+00001362  4E75                     387          RTS
+00001364                           388  
+00001364                           389  WRITE_NULL_A4: * used to terminate a string in memory 
+00001364  18FC 0000                390          MOVE.B  #0,(A4)+
+00001368  4E75                     391          RTS
+0000136A                           392          
+0000136A                           393  WRITE_SPC_A4: * writes an ascii space at a4
+0000136A  18FC 0020                394          MOVE.B  #SPACE,(A4)+
+0000136E  4E75                     395          RTS 
+00001370                           396  
+00001370                           397  WRITE_NL_A4: * writes a newline at a4
+00001370  18FC 000D                398          MOVE.B  #CR,(A4)+
+00001374  18FC 000A                399          MOVE.B  #LF,(A4)+
+00001378  4E75                     400          RTS
+0000137A                           401          
+0000137A                           402  WRITE_TAB_A4:
+0000137A  18FC 0009                403          MOVE.B  #TAB,(A4)+
+0000137E  4E75                     404          RTS   
+00001380                           405  
+00001380                           406  NL_TERM_PNT_RST_BUF: * write newline, null then print contents then reset bufffer
+00001380  4EB8 1370                407          JSR     WRITE_NL_A4
+00001384  4EB8 1364                408          JSR     WRITE_NULL_A4
+00001388  4EB9 000013A8            409          JSR     PRINT_STR_BUF
+0000138E  4EB9 000013BE            410          JSR     RESET_BUF_PTR
+00001394  4E75                     411          RTS
+00001396                           412          
+00001396                           413  TERM_PNT_RST_BUF: * write null then print contents then reset bufffer pointer
+00001396  4EB8 1364                414          JSR     WRITE_NULL_A4
+0000139A  4EB9 000013A8            415          JSR     PRINT_STR_BUF
+000013A0  4EB9 000013BE            416          JSR     RESET_BUF_PTR
+000013A6  4E75                     417          RTS
+000013A8                           418          
+000013A8                           419  PRINT_STR_BUF: * prints string buffer contents to console
+000013A8  48A7 8040                420          MOVEM   D0/A1,-(SP)
+000013AC  43F9 000013DC            421          LEA     STR_BUF,A1  * load string buffer
+000013B2  303C 000E                422          MOVE    #14,D0       * print contents
+000013B6  4E4F                     423          TRAP    #15
+000013B8  4C9F 0201                424          MOVEM   (SP)+,D0/A1
+000013BC  4E75                     425          RTS
+000013BE                           426  
+000013BE                           427  RESET_BUF_PTR:  * sets a4 to start of string buffer
+000013BE  387C 13DC                428          MOVEA   #STR_BUF,A4
+000013C2  4E75                     429          RTS        
+000013C4                           430  
+000013C4                           431  ****    VARS    ****
+000013C4                           432  ST_ADDR DS.L    3   * allocate 3 longs for address ascii input needs 9 bytes to get 8 chars 
+000013D0                           433  E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for this
+000013DC= 00 00 00 00 00 00 ...    434  STR_BUF DCB.B   241,0  * buffer to hold 240 chars + null terminator. 3 80 char lines
+000014CD                           435           
+000014CD                           436  ****    CONST   ****
+000014CD  =0000000D                437  CR          EQU     $0D     * carraige return          
+000014CD  =0000000A                438  LF          EQU     $0A     * line feed
+000014CD  =00000020                439  SPACE       EQU     $20     * ascii space
+000014CD  =00000009                440  TAB         EQU     $09     * ascii tab character
+000014CD                           441  
+000014CD                           442  * masks for isolating nibbles with and 0 being least significant nibble
+000014CD  =0000F000                443  Nib3Mask    EQU     $F000 
+000014CD  =00000F00                444  Nib2Mask    EQU     $0F00
+000014CD  =000000F0                445  Nib1Mask    EQU     $00F0
+000014CD  =0000000F                446  Nib0Mask    EQU     $000F
+000014CD                           447  
+000014CD  =00000E00                448  Bit0Mask    EQU     $0E00
+000014CD  =000001C0                449  Bit1Mask    EQU     $01C0
+000014CD  =00000038                450  Bit2Mask    EQU     $0038
+000014CD  =00000007                451  Bit3Mask    EQU     $0007
+000014CD                           452  
+000014CD  =000000FF                453  Byte0Mask   EQU     $00FF
+000014CD  =0000FF00                454  Byte1Mask   EQU     $FF00
+000014CD                           455  
+000014CD                           456  ****    Instructions    ****
+000014CD= 4E 4F 54 00              457  _NOT    DC.B    'NOT',0
+000014D1= 4E 4F 50 00              458  _NOP    DC.B    'NOP',0
+000014D5= 52 54 53 00              459  _RTS    DC.B    'RTS',0
+000014D9= 4D 4F 56 45 4D 00        460  _MOVEM  DC.B    'MOVEM',0
+000014DF= 4D 4F 56 45 2E 42 00     461  _MOVE_B DC.B    'MOVE.B',0
+000014E6= 4D 4F 56 45 2E 4C 00     462  _MOVE_L DC.B    'MOVE.L',0
+000014ED= 4D 4F 56 45 2E 57 00     463  _MOVE_W DC.B    'MOVE.W',0
+000014F4= 41 44 44 51 00           464  _ADDQ   DC.B    'ADDQ',0
+000014F9= 42 52 41 00              465  _BRA    DC.B    'BRA',0
+000014FD= 42 45 51 00              466  _BEQ    DC.B    'BEQ',0
+00001501= 42 47 54 00              467  _BGT    DC.B    'BGT',0
+00001505= 42 4C 45 00              468  _BLE    DC.B    'BLE',0
+00001509                           469  
+00001509                           470  ****    Modes    ****
+00001509= 44 00                    471  _DR             DC.B   'D',0
+0000150B= 41 00                    472  _AR             DC.B   'A',0
+0000150D= 28 41 00                 473  _IND_AR1        DC.B   '(A',0
+00001510= 29 00                    474  _IND_AR2        DC.B   ')',0
+00001512= 28 41 00                 475  _AR_POST1       DC.B   '(A',0
+00001515= 29 2B 00                 476  _AR_POST2       DC.B   ')+',0
+00001518= 2D 28 41 00              477  _AR_PRE1        DC.B   '-(A',0
+0000151C= 29 00                    478  _AR_PRE2        DC.B   ')',0
+0000151E= 24 00                    479  _ABS            DC.B    '$',0
+00001520= 23 00                    480  _IMD            DC.B    '#',0
+00001522                           481  
+00001522                           482  ****    Numbers    ****
+00001522= 30 00                    483  _ZERO   DC.B    '0',0
+00001524= 31 00                    484  _ONE    DC.B    '1',0
+00001526= 32 00                    485  _TWO    DC.B    '2',0
+00001528= 33 00                    486  _THREE  DC.B    '3',0
+0000152A= 34 00                    487  _FOUR   DC.B    '4',0
+0000152C= 35 00                    488  _FIVE   DC.B    '5',0
+0000152E= 36 00                    489  _SIX    DC.B    '6',0
+00001530= 37 00                    490  _SEVEN  DC.B    '7',0
+00001532                           491  
+00001532                           492  ****    MODE CMP VALUES    ****
+00001532  =00000000                493  cDR             EQU     $0000
+00001532  =00000040                494  cAR             EQU     $0040
+00001532  =00000080                495  cIND_AR         EQU     $0080
+00001532  =000000C0                496  cAR_POST        EQU     $00C0
+00001532  =00000100                497  cAR_PRE         EQU     $0100
+00001532  =000001C0                498  cABS            EQU     $01C0
+00001532                           499  
+00001532                           500  ****    MESSAGES    ****
+00001532= 45 6E 74 65 72 20 ...    501  ST_A_MSG    DC.B    'Enter an address range in hexidecimal to be dissasembled',CR,LF * start address message
+0000156C= 56 61 6C 69 64 20 ...    502              DC.B    'Valid address chars: 0-1 A-F case insensitive',CR,LF  
+0000159B= 45 6E 74 65 72 20 ...    503              DC.B    'Enter start address:',0    
+000015B0                           504              
+000015B0= 45 6E 74 65 72 20 ...    505  E_A_MSG     DC.B    'Enter end address:',0    * end address message
+000015C3                           506  
+000015C3= 45 52 52 4F 52 20 ...    507  ADR_IN_ERR  DC.B    'ERROR INVALID ADDRESS: input must be 0-8 hexidecimal digits long',CR,LF,0    * address input error message
+00001606                           508  
+00001606= 44 41 54 41 20 20 ...    509  DATA_MSG    DC.B    'DATA   $',0
+0000160F                           510  
+0000160F= 43 4F 4E 56 45 52 ...    511  TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
+00001626                           512              
+00001626                           513              END     START        * last line of source
 
 No errors detected
 No warnings generated
@@ -429,81 +523,112 @@ No warnings generated
 SYMBOL TABLE INFORMATION
 Symbol-name         Value
 -------------------------
-ADR_IN_ERR          1576
-A_F                 1286
+ADR_IN_ERR          15C3
+A_F                 12AA
+BAD_DATA            124E
+BIT0MASK            E00
+BIT1MASK            1C0
+BIT2MASK            38
+BIT3MASK            7
 BYTE0MASK           FF
 BYTE1MASK           FF00
-CHK_DEST            122A
+CABS                1C0
+CAR                 40
+CAR_POST            C0
+CAR_PRE             100
+CDR                 0
 CHK_LFT_NIB         10CE
+CIND_AR             80
 CR                  D
-DATA_MSG            15B9
+DATA_MSG            1606
 DECODE_DONE         110A
-DONE                1264
-END_H               1296
-E_ADDR              13AC
-E_A_MSG             1563
-H_A_DNE             1326
-H_A_LOOP            12FE
-H_A_LOW             131A
-H_SHORT             12F6
-IN_ADDR_TO_HEX      129C
+DN_MODE             1252
+DONE                1288
+EATABLE             1242
+END_H               12BA
+E_ADDR              13D0
+E_A_MSG             15B0
+H_A_DNE             134A
+H_A_LOOP            1322
+H_A_LOW             133E
+H_SHORT             131A
+IN_ADDR_TO_HEX      12C0
 LF                  A
-LOAD_ADDQ           11B4
-LOAD_BEQ            11FA
-LOAD_BGT            120A
-LOAD_BLE            121A
-LOAD_BRA            11EA
-LOAD_DATA_STR_INTO_BUF  1232
+LOAD_ADDQ           11B6
+LOAD_BEQ            11FC
+LOAD_BGT            120C
+LOAD_BLE            121C
+LOAD_BRA            11EC
+LOAD_DATA_STR_INTO_BUF  1256
 LOAD_MOVE_B         1118
-LOAD_MOVE_L         112C
-LOAD_MOVE_W         1140
-LOAD_NOP            1194
-LOAD_NOT            116C
-LOAD_RTS            11A4
+LOAD_MOVE_L         112E
+LOAD_MOVE_W         1142
+LOAD_NOP            1196
+LOAD_NOT            116E
+LOAD_RTS            11A6
+MOVE_EA             122C
 NIB0MASK            F
 NIB1MASK            F0
 NIB2MASK            F00
 NIB3MASK            F000
-NL_TERM_PNT_RST_BUF  135C
-NOP_RTS             117A
-OP_4                1154
-OP_6                11C4
+NL_TERM_PNT_RST_BUF  1380
+NOP_RTS             117C
+OP_4                1156
+OP_6                11C6
 OP_CODES            10AC
 OP_DONE             1116
 OP_ERR              1104
 OP_START            10BE
-PADDR_IN_ERR        12B4
-PRINT_A1            12C4
-PRINT_STR_BUF       1384
-RESET_BUF_PTR       139A
+PADDR_IN_ERR        12D8
+PRINT_A1            12E8
+PRINT_STR_BUF       13A8
+RESET_BUF_PTR       13BE
 SPACE               20
 START               1000
-STR_BUF             13B8
-ST_ADDR             13A0
-ST_A_MSG            14E5
+STR_BUF             13DC
+ST_ADDR             13C4
+ST_A_MSG            1532
 TAB                 9
-TERM_PNT_RST_BUF    1372
-TEST_MSG            15C2
-TO_HEX              126A
-TO_HEX_INTERNAL     1278
-WRITE_ASCII         132C
-WRITE_HEX_TO_ASCII  12D4
-WRITE_NL_A4         134C
-WRITE_NULL_A4       1340
-WRITE_SPC_A4        1346
-WRITE_TAB_A4        1356
-W_A_DONE            133A
-W_A_LOOP            1330
-_0_9                1288
-_ADDQ               14D0
-_BEQ                14D9
-_BGT                14DD
-_BLE                14E1
-_BRA                14D5
-_MOVEM              14B5
-_MOVE_B             14BB
-_MOVE_L             14C2
-_MOVE_W             14C9
-_NOP                14AD
-_NOT                14A9
-_RTS                14B1
+TERM_PNT_RST_BUF    1396
+TEST_MSG            160F
+TO_HEX              128E
+TO_HEX_INTERNAL     129C
+WRITE_ASCII         1350
+WRITE_HEX_TO_ASCII  12F8
+WRITE_NL_A4         1370
+WRITE_NULL_A4       1364
+WRITE_SPC_A4        136A
+WRITE_TAB_A4        137A
+W_A_DONE            135E
+W_A_LOOP            1354
+_0_9                12AC
+_ABS                151E
+_ADDQ               14F4
+_AR                 150B
+_AR_POST1           1512
+_AR_POST2           1515
+_AR_PRE1            1518
+_AR_PRE2            151C
+_BEQ                14FD
+_BGT                1501
+_BLE                1505
+_BRA                14F9
+_DR                 1509
+_FIVE               152C
+_FOUR               152A
+_IMD                1520
+_IND_AR1            150D
+_IND_AR2            1510
+_MOVEM              14D9
+_MOVE_B             14DF
+_MOVE_L             14E6
+_MOVE_W             14ED
+_NOP                14D1
+_NOT                14CD
+_ONE                1524
+_RTS                14D5
+_SEVEN              1530
+_SIX                152E
+_THREE              1528
+_TWO                1526
+_ZERO               1522

@@ -201,55 +201,70 @@ load_BLE:   * load and print BLE neumonic return to op loop
 
 ****       EA       ****
 MOVE_EA:
-        MOVE.L  D2,D3           *copy instruction to D3 for register
-        ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
-        JSR     DEA_MODE        *JMP to check for opmode
-        CLR     D3
-        MOVE.L  D2,D3
-        ANDI.W  #Bit1Mask,D3    *mask to isolate 3-bit opmode
-        JSR     DEA_REG          *JMP to check for reg #
-        CLR     D3
-MV_SRC:
+        MOVE.W  D2,D3           *copy instruction to D3 for register
+        LSR.W   #6,D3
+        ANDI.W  #$0007,D3
+        MULU    #$6,D3 
+        LEA     EATABLE,A0 
+        JSR     00(A0,D3)
 
+*         ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
+*         JSR     DEA_MODE        *JMP to check for opmode
+*         CLR     D3
+*         MOVE.L  D2,D3
+*         ANDI.W  #Bit1Mask,D3    *mask to isolate 3-bit opmode
+*         JSR     DEA_REG          *JMP to check for reg #
+*         CLR     D3
+* MV_SRC:
+
+EATABLE:
+        JMP     DN_MODE
+        JMP     BAD_DATA
+
+
+BAD_DATA:
+        BRA     DECODE_DONE
+DN_MODE:
+        BRA     DECODE_DONE
         
-        RTS
+*         RTS
 
-DEA_MODE:
-        CMP.W   #cDR,D3         *000?
-        BEQ     DR_MODE         *branch to load Dn to buffer
-        CMP.W   #cAR,D3         *001?
-        BEQ     AR_MODE         *branch to load An to buffer
-        CMP.W   #cIND_AR,D3     *010?
-        BEQ     INDAR_MODE      *branch to load (An) to buffer
-        CMP.W   #cAR_POST,D3    *011?
-        BEQ     INDAR_POST_MODE *branch to load (An)+ to buffer 
-        CMP.W   #cAR_PRE,D3     *100?
-        BEQ     INDAR_PREC_MODE *branch to load -(An) to buffer
-        CMP.W   #cABS,D3        *111?
-        BEQ     ABS_MODE        *branch to load xxx.w/l to buffer
-        JSR     LOAD_MODE_ERR   *JMP to load error
-        RTS
+* DEA_MODE:
+*         CMP.W   #cDR,D3         *000?
+*         BEQ     DR_MODE         *branch to load Dn to buffer
+*         CMP.W   #cAR,D3         *001?
+*         BEQ     AR_MODE         *branch to load An to buffer
+*         CMP.W   #cIND_AR,D3     *010?
+*         BEQ     INDAR_MODE      *branch to load (An) to buffer
+*         CMP.W   #cAR_POST,D3    *011?
+*         BEQ     INDAR_POST_MODE *branch to load (An)+ to buffer 
+*         CMP.W   #cAR_PRE,D3     *100?
+*         BEQ     INDAR_PREC_MODE *branch to load -(An) to buffer
+*         CMP.W   #cABS,D3        *111?
+*         BEQ     ABS_MODE        *branch to load xxx.w/l to buffer
+*         JSR     LOAD_MODE_ERR   *JMP to load error
+*         RTS
 
 
-DEA_REG:
-        CMP.W   #$0E00,D3       *111
-        BEQ     SEV             *branch to load 7 to buffer
-        CMP.W   #$0C00,D3       *110
-        BEQ     SIX             *branch to load 6 to buffer
-        CMP.W   #$0A00,D3       *101
-        BEQ     FIVE            *branch to load 5 to buffer
-        CMP.W   #$0800,D3       *100
-        BEQ     FOUR            *branch to load 4 to buffer
-        CMP.W   #$0600,D3       *011
-        BEQ     THR             *branch to load 3 to buffer
-        CMP.W   #$0400,D3       *010
-        BEQ     TWO             *branch to load 2 to buffer
-        CMP.W   #$0200,D3       *001
-        BEQ     ONE             *branch to load 1 to buffer
-        CMP.W   #$0000,D3       *000
-        BEQ     ZER             *branch to load 0 to buffer
-        JSR     LOAD_REG_ERR    *branch to load error
-        RTS
+* DEA_REG:
+*         CMP.W   #$0E00,D3       *111
+*         BEQ     SEV             *branch to load 7 to buffer
+*         CMP.W   #$0C00,D3       *110
+*         BEQ     SIX             *branch to load 6 to buffer
+*         CMP.W   #$0A00,D3       *101
+*         BEQ     FIVE            *branch to load 5 to buffer
+*         CMP.W   #$0800,D3       *100
+*         BEQ     FOUR            *branch to load 4 to buffer
+*         CMP.W   #$0600,D3       *011
+*         BEQ     THR             *branch to load 3 to buffer
+*         CMP.W   #$0400,D3       *010
+*         BEQ     TWO             *branch to load 2 to buffer
+*         CMP.W   #$0200,D3       *001
+*         BEQ     ONE             *branch to load 1 to buffer
+*         CMP.W   #$0000,D3       *000
+*         BEQ     ZER             *branch to load 0 to buffer
+*         JSR     LOAD_REG_ERR    *branch to load error
+*         RTS
 
 
 ***       UTILS     ****
