@@ -88,12 +88,24 @@ CHK_LFT_NIB:
         BEQ     load_MOVE_L * will need to account for MOVEA
         CMPI.W  #$3000,D3   * if nibble3 == 3, branch to move word (3)
         BEQ     load_MOVE_W * will need to account for MOVEA        
-        CMPI.W  #$4000,D3   * if nibble3 == 4 branch to that set
+        CMPI.W  #$4000,D3   * if nibble3 == 4 branch to that set (not/nop/rts/jsr/movem/lea)
         BEQ     OP_4 
         CMPI.W  #$5000,D3   * if nibble3 == 5, branch to ADDQ (5)
         BEQ     load_ADDQ
-        CMPI.W  #$6000,D3   * if nibble3 == 6, branch to that set
+        CMPI.W  #$6000,D3   * if nibble3 == 6, branch to that set (bra, bcc)
         BEQ     OP_6
+        CMPI.W  #$7000,D3   * if nibble3 == 7, branch to MOVEQ
+        BEQ     load_MOVEQ
+        CMPI.W  #$8000,D3   * if nibble3 == 8, branch to that set (divu, or)
+        BEQ     OP_8
+        CMPI.W  #$9000,D3   * if nibble3 == 9, branch to SUB
+        BEQ     load_SUB
+        CMPI.W  #$C000,D3   * if nibble3 == C, branch to that set (muls, and)
+        BEQ     OP_C
+        CMPI.W  #$D000,D3   * if nibble3 == D, branch to that set (add, adda)
+        BEQ     OP_D
+        CMPI.W  #$E000,D3   * if nibble3 == E, branch to that set (asl, asr, lsl, lsr)
+        BEQ     OP_E
                        
 OP_ERR  JSR     LOAD_DATA_STR_INTO_BUF
         
@@ -127,7 +139,7 @@ OP_4:   * could be not, nop, rts, jsr, movem, lea
         BEQ     load_NOT
         CMPI.W  #$0E00,D3  * if nibble 2 is E could be nop or rts
         BEQ     NOP_RTS
-        * will need more subroutines for jsr, movem, lea
+        * will need more subroutines for jsr, movem, lea ***********
         
         BRA     OP_ERR  * return to error decoding
         
@@ -193,6 +205,28 @@ load_BLE:   * load and print BLE neumonic return to op loop
         LEA     _BLE,A1
         JSR     WRITE_ASCII
         BRA     DECODE_DONE
+        
+load_MOVEQ: * load and print MOVEQ neumonic return to op loop
+        LEA     _MOVEQ,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+OP_8:       * could be DIVU or OR
+        * unfinished *
+
+load_SUB:   * load and print SUB neumonic return to op loop
+        LEA     _SUB,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+
+OP_C:       * could be MULS or AND
+        * unfinished *
+
+OP_D        * could be ADD or ADDA
+        * unfinished *
+
+OP_E        * could be ASL, ASR, LSL, LSR
+        * unfinished *
 
 ****       EA       ****
 
@@ -392,6 +426,18 @@ _BRA    DC.B    'BRA',0
 _BEQ    DC.B    'BEQ',0
 _BGT    DC.B    'BGT',0
 _BLE    DC.B    'BLE',0
+_MOVEQ  DC.B    'MOVEQ',0
+_DIVU   DC.B    'DIVU',0
+_OR     DC.B    'OR',0
+_SUB    DC.B    'SUB',0
+_MULS   DC.B    'MULS',0
+_AND    DC.B    'AND',0
+_ADD    DC.B    'ADD',0
+_ADDA   DC.B    'ADDA',0
+_ASL    DC.B    'ASL',0
+_ASR    DC.B    'ASR',0
+_LSL    DC.B    'LSL',0
+_LSR    DC.B    'LSR',0
 
 ****    MESSAGES    ****
 ST_A_MSG    DC.B    'Enter an address range in hexidecimal to be dissasembled',CR,LF * start address message
@@ -407,6 +453,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     START        * last line of source
+
 
 
 *~Font name~Courier New~
