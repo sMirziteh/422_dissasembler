@@ -7,9 +7,19 @@
         ORG     $1000
 		
 ****    MAIN LOOP   ****
-START:  NOP
-        JSR     RESET_BUF_PTR   * move a4 to start of string buffer
+INIT:   NOP     * line for testing
+        JSR     RESET_BUF_PTR
+        LEA     WELCOME,A1      * print welcome message
+        JSR     WRITE_ASCII
+        JSR     TERM_PNT_RST_BUF
+        
+START:  
+        JSR     GET_CHOICE      * get choice from user to dissasemble or quit
+        CMPI    #QUIT_PROG,D6
+        BEQ     QUIT
+        
 
+INPUT_START:
         LEA     ST_A_MSG,A1     * load start address prompt message
         JSR     WRITE_ASCII     * write to string buffer
         JSR     TERM_PNT_RST_BUF * terminate string buffer and print reseting pointer at A4
@@ -38,7 +48,7 @@ START:  NOP
         CMPI.B  #1,D5           * if an error occured return to start
         BNE     ST_DIS          * branch to dissasembly if no errors
         JSR     WAIT_USR_INPUT    
-        BRA     START           * return to start
+        BRA     INPUT_START     * return to start
         
         * print converted addresses for testing purposes
         
@@ -67,8 +77,14 @@ ST_DIS  JSR     RESET_BUF_PTR         * move a4 to start of string buffer
         * end test printing converted numbers
         
         JSR     OP_CODES
-    
+        
+        JSR     NL_TERM_PNT_RST_BUF * print newline after op codes
+         
         BRA     START 
+
+
+QUIT    MOVE.B	#9,D0
+		TRAP	#15	* stop sim
 
 
 ****    OP-CODES    ****
@@ -207,6 +223,34 @@ load_BLE:   * load and print BLE neumonic return to op loop
 
 
 ***       UTILS     ****
+* prompts user for choice
+* sets d6 to valid choice
+GET_CHOICE: 
+        MOVEM   D0/D1/A1,-(SP)
+HC_INT_LP:
+        JSR     RESET_BUF_PTR   * move a4 to start of string buffer
+        LEA     CHOICE_PROMPT,A1
+        JSR     WRITE_ASCII
+        JSR     TERM_PNT_RST_BUF
+        MOVE.B  #4,D0   * read a number from keyboard into d1
+        TRAP    #15
+CHOICE_1:
+        CMPI    #DISSASEMBLE ,D1
+        BEQ     CHOICE_DNE    
+CHOICE_2:
+        CMPI    #QUIT_PROG,D1
+        BEQ     CHOICE_DNE    
+CHOICE_ERR:
+        LEA     INV_CHOICE,A1
+        JSR     WRITE_ASCII
+        JSR     TERM_PNT_RST_BUF
+        JSR     WAIT_USR_INPUT
+        BRA     HC_INT_LP
+        
+CHOICE_DNE:
+        MOVE.B  D1,D6
+        MOVEM   (SP)+,D0/D1/A1
+        RTS               
 
 * prompt user to press enter to continue
 WAIT_USR_INPUT:            
@@ -441,6 +485,8 @@ CR          EQU     $0D     * carraige return
 LF          EQU     $0A     * line feed
 SPACE       EQU     $20     * ascii space
 TAB         EQU     $09     * ascii tab character
+DISSASEMBLE EQU     $01     * dissasemble choice number
+QUIT_PROG   EQU     $02     * quit choice number
 
 * masks for isolating nibbles with and 0 being least significant nibble
 Nib3Mask    EQU     $F000 
@@ -469,10 +515,10 @@ _BLE    DC.B    'BLE',0
 
 WELCOME     DC.B    '*********************************************',CR,LF
             DC.B    '* Welcome to EASY 68K Disasembler by Nibble *',CR,LF
-            DC.B    '*********************************************',CR,LF,CR,LF,0
+            DC.B    '*********************************************',CR,LF,0
             
 CHOICE_PROMPT:
-            DC.B    'Enter number next to choice:',CR,LF
+            DC.B    'Enter a number to make a choice:',CR,LF
             DC.B    '1: Dissasemble an Address Range',CR,LF
             DC.B    '2: Exit Program',CR,LF,0
        
@@ -498,7 +544,9 @@ DATA_MSG    DC.B    'DATA   $',0
 
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
-		    END     START        * last line of source
+		    END     INIT        * last line of source
+
+
 
 
 
