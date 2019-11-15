@@ -7,9 +7,19 @@
         ORG     $1000
 		
 ****    MAIN LOOP   ****
-START:  NOP
-        JSR     RESET_BUF_PTR   * move a4 to start of string buffer
+INIT:   NOP     * line for testing
+        JSR     RESET_BUF_PTR
+        LEA     WELCOME,A1      * print welcome message
+        JSR     WRITE_ASCII
+        JSR     TERM_PNT_RST_BUF
+        
+START:  
+        JSR     GET_CHOICE      * get choice from user to dissasemble or quit
+        CMPI    #QUIT_PROG,D6
+        BEQ     QUIT
+        
 
+INPUT_START:
         LEA     ST_A_MSG,A1     * load start address prompt message
         JSR     WRITE_ASCII     * write to string buffer
         JSR     TERM_PNT_RST_BUF * terminate string buffer and print reseting pointer at A4
@@ -18,6 +28,7 @@ START:  NOP
         CLR.L   (A1)    * clear long at a1
         MOVE.B  #2,D0   * trap task 2 read a null terminated string from keyboard at A1 length at D1
         TRAP    #15
+        MOVE.B  D1,ST_LEN    * save start length to memory 
         
         JSR     IN_ADDR_TO_HEX  * convert start address to hex
              
@@ -29,12 +40,19 @@ START:  NOP
         CLR.L   (A1)    * clear long at end address
         MOVE.B  #2,D0   * trap task 2 read a null terminated string from keyboard at A1 length at D1
         TRAP    #15
+        MOVE.B  D1,E_LEN    * save end length to memory
         
         JSR     IN_ADDR_TO_HEX  * convert end address to hex
         
+        JSR     CHK_ST_E_ADRS   * check addresses for errors
+        CMPI.B  #1,D5           * if an error occured return to start
+        BNE     ST_DIS          * branch to dissasembly if no errors
+        JSR     WAIT_USR_INPUT    
+        BRA     INPUT_START     * return to start
+        
         * print converted addresses for testing purposes
         
-        JSR     RESET_BUF_PTR         * move a4 to start of string buffer
+ST_DIS  JSR     RESET_BUF_PTR         * move a4 to start of string buffer
         
         JSR     WRITE_NL_A4           * write newline to buffer
         
@@ -59,8 +77,14 @@ START:  NOP
         * end test printing converted numbers
         
         JSR     OP_CODES
-    
+        
+        JSR     NL_TERM_PNT_RST_BUF * print newline after op codes
+         
         BRA     START 
+
+
+QUIT    MOVE.B	#9,D0
+		TRAP	#15	* stop sim
 
 
 ****    OP-CODES    ****
@@ -199,6 +223,44 @@ load_BLE:   * load and print BLE neumonic return to op loop
 
 
 ***       UTILS     ****
+* prompts user for choice
+* sets d6 to valid choice
+GET_CHOICE: 
+        MOVEM   D0/D1/A1,-(SP)
+HC_INT_LP:
+        JSR     RESET_BUF_PTR   * move a4 to start of string buffer
+        LEA     CHOICE_PROMPT,A1
+        JSR     WRITE_ASCII
+        JSR     TERM_PNT_RST_BUF
+        MOVE.B  #4,D0   * read a number from keyboard into d1
+        TRAP    #15
+CHOICE_1:
+        CMPI    #DISSASEMBLE ,D1
+        BEQ     CHOICE_DNE    
+CHOICE_2:
+        CMPI    #QUIT_PROG,D1
+        BEQ     CHOICE_DNE    
+CHOICE_ERR:
+        LEA     INV_CHOICE,A1
+        JSR     WRITE_ASCII
+        JSR     TERM_PNT_RST_BUF
+        JSR     WAIT_USR_INPUT
+        BRA     HC_INT_LP
+        
+CHOICE_DNE:
+        MOVE.B  D1,D6
+        MOVEM   (SP)+,D0/D1/A1
+        RTS               
+
+* prompt user to press enter to continue
+WAIT_USR_INPUT:            
+        MOVEM   D0/D1/A1,-(SP)
+        LEA     ENT_TO_CONT,A1  * load and print prompt
+        JSR     PRINT_A1
+        MOVEQ.L #5,D0   * read in a char from keyboard
+        TRAP    #15
+        MOVEM   (SP)+,D0/D1/A1
+        RTS
 
 LOAD_DATA_STR_INTO_BUF: * expects address to be in a5
         MOVEM   D1,-(SP)
@@ -244,20 +306,72 @@ END_H   MOVEM (SP)+,D0-D2/A1-A2
 *   input address to hexadecimal saves output at A1
 IN_ADDR_TO_HEX:
         MOVEM   D6,-(SP)
-        CMPI    #8,D1   * compare string input length to 8
-        BGT     PADDR_IN_ERR    * if input greater than 8 bytes print input address error
         JSR     TO_HEX          * else convert to hex
         MOVE.L  D6,(A1)
         MOVEM   (SP)+,D6
         RTS
-        
-        
-*   print address input error
-PADDR_IN_ERR: 
-        LEA     ADR_IN_ERR,A1   * load address input error message 
-        JMP     PRINT_A1
-        BRA     START           * return to start of program
 
+* check start and end addresses for errors
+CHK_ST_E_ADRS: * sets D5 to 1 if an error has ocurred
+        MOVEM   D1/D4,-(SP)
+        MOVEQ   #0,D5       * clear error flag
+        MOVE.L  ST_ADDR,D2  * load start address
+        MOVE.L  E_ADDR,D3   * load end address
+        
+LEN_CHK:                    * check address length
+        MOVE.B  ST_LEN,D1   * load start and end address lengths
+        MOVE.B  E_LEN,D4
+        
+        CMPI.B  #8,D1       * check if start addr length is less than or equal to 8
+        BLE     E_LEN_CHK   * check end address if no length error
+        JSR     PLEN_ERR    * print length error message
+        MOVEQ   #1,D5       * set error flag
+        BRA     ODD_CHK     * skip end length check if start failed
+E_LEN_CHK:
+        CMPI.B  #8,D4
+        BLE     ODD_CHK     * if no error skip to odd checking
+        JSR     PLEN_ERR    * print length error message
+        MOVEQ   #1,D5       * set error flag
+
+ODD_CHK:                    * check if start address is odd
+        BTST.L  #0,D2       * test start addres LSB to see if even
+        BEQ     S_GT_E
+        JSR     PODD_ERR    * print odd start address error
+        MOVEQ   #1,D5       * set error flag
+        
+S_GT_E:                     * start address greater than or less than end
+        CMP.L   D1,D4       * check if end is greater than or equal to start
+        BGE     CHK_SEA_DONE   * skip to end if no error
+        JSR     PS_GT_ERR   * print start greater than end error
+        MOVEQ   #1,D5       * set error flag
+      
+CHK_SEA_DONE:
+        MOVEM   (SP)+,D1/D4
+        RTS             
+        
+*   print address length input error
+PLEN_ERR:
+        MOVEM   A1,-(SP) 
+        LEA     ADR_LEN_ERR,A1   * load address input error message 
+        JSR     PRINT_A1
+        MOVEM   (SP)+,A1
+        RTS         
+
+PODD_ERR: * print start address odd error
+        MOVEM   A1,-(SP) 
+        LEA     ADR_ODD_ERR,A1
+        JSR     PRINT_A1
+        MOVEM   (SP)+,A1
+        RTS
+
+PS_GT_ERR: * print start address greater than end address error
+        MOVEM   A1,-(SP) 
+        LEA     ADR_S_GT_E,A1
+        JSR     PRINT_A1
+        MOVEM   (SP)+,A1
+        RTS
+
+ 
 PRINT_A1:
         MOVEM   D0,-(SP) * save register state
         MOVE.B  #14,D0   * print A1
@@ -362,6 +476,8 @@ RESET_BUF_PTR:  * sets a4 to start of string buffer
 ****    VARS    ****
 ST_ADDR DS.L    3   * allocate 3 longs for address ascii input needs 9 bytes to get 8 chars 
 E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for this
+ST_LEN  DCB.B   1,0 * var to track start address length
+E_LEN   DC.B    1,0 * var to track end address length
 STR_BUF DCB.B   241,0  * buffer to hold 240 chars + null terminator. 3 80 char lines
          
 ****    CONST   ****
@@ -369,6 +485,8 @@ CR          EQU     $0D     * carraige return
 LF          EQU     $0A     * line feed
 SPACE       EQU     $20     * ascii space
 TAB         EQU     $09     * ascii tab character
+DISSASEMBLE EQU     $01     * dissasemble choice number
+QUIT_PROG   EQU     $02     * quit choice number
 
 * masks for isolating nibbles with and 0 being least significant nibble
 Nib3Mask    EQU     $F000 
@@ -394,19 +512,42 @@ _BGT    DC.B    'BGT',0
 _BLE    DC.B    'BLE',0
 
 ****    MESSAGES    ****
-ST_A_MSG    DC.B    'Enter an address range in hexidecimal to be dissasembled',CR,LF * start address message
+
+WELCOME     DC.B    '*********************************************',CR,LF
+            DC.B    '* Welcome to EASY 68K Disasembler by Nibble *',CR,LF
+            DC.B    '*********************************************',CR,LF,0
+            
+CHOICE_PROMPT:
+            DC.B    'Enter a number to make a choice:',CR,LF
+            DC.B    '1: Dissasemble an Address Range',CR,LF
+            DC.B    '2: Exit Program',CR,LF,0
+       
+INV_CHOICE  DC.B    'ERROR: INVALID selection',CR,LF,0
+
+ENT_TO_CONT DC.B    CR,LF,'Press enter to continue...',CR,LF,0
+
+ST_A_MSG    DC.B    CR,LF,'Enter an address range in hexidecimal to be dissasembled',CR,LF * start address message
             DC.B    'Valid address chars: 0-1 A-F case insensitive',CR,LF  
             DC.B    'Enter start address:',0    
             
 E_A_MSG     DC.B    'Enter end address:',0    * end address message
 
-ADR_IN_ERR  DC.B    'ERROR INVALID ADDRESS: input must be 0-8 hexidecimal digits long',CR,LF,0    * address input error message
+ADR_LEN_ERR DC.B    CR,LF,'ERROR INVALID ADDRESS: Input must be 0-8 hexidecimal digits long',CR,LF,0    * address input error message
 
+ADR_ODD_ERR DC.B    CR,LF,'ERROR INVALID ADDRESS: Start address must be even',CR,LF,0  * odd input address error message
+            
+ADR_S_GT_E  DC.B    CR,LF,'ERROR INVALID ADDRESS: Start address must come before end address',CR,LF,0 * start greater than end address error msg
+
+HEX_ERR     DC.B    CR,LF,'ERROR INVALID ADDRESS: Input must be 0-1 A-F case insensitive',CR,LF,0
+  
 DATA_MSG    DC.B    'DATA   $',0
 
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
-		    END     START        * last line of source
+		    END     INIT        * last line of source
+
+
+
 
 
 *~Font name~Courier New~
