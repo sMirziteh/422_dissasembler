@@ -258,57 +258,128 @@ OP_E        * could be ASL, ASR, LSL, LSR
 
 
 ****       EA       ****
+
+**** FIRST EA COMMAND *********
 MOVE_EA:
         MOVE.L  D2,D3           *copy instruction to D3 for register
+        MOVE.L  D2,D4           *copy instruction to D4 for mode
         ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
-        JSR     DEA_MODE        *JMP to check for opmode
-        CLR     D3
-        MOVE.L  D2,D3
-        ANDI.W  #Bit1Mask,D3    *mask to isolate 3-bit opmode
-        JSR     DEA_REG          *JMP to check for reg #
-        CLR     D3
-MV_SRC:
+        ANDI.W  #Bit1Mask,D4    *mask to isolate 3-bit opmode
+        **FIND OFFSETS FOR MODE AND REG
+        LEA     EA_MODE,A1
+        ** JUMP TO EA_MODE TABLE WITH D4
+        LEA     _COMMA
+        JSR     WRITE_ASCII
 
+        CLR     D3
+        CLR     D4 
+******* SECOND EA COMMAND **********
+        MOVE.L  D2,D3           *copy instruction to D3 for register
+        MOVE.L  D2,D4           *copy instruction to D4 for mode
+        ANDI.W  #Bit2Mask,D3    *mask to isolate 3-bit source mode
+        ANDI.W  #Bit3Mask,D4    *mask to isolate 3-bit source register
+        **FIND OFFSETS FOR MODE AND REG
+        LEA     EA_MODE,A1 
+        ** JUMP TO EA_MODE TABLE WITH D4
         
         RTS
 
-DEA_MODE:
-        CMP.W   #cDR,D3         *000?
-        BEQ     DR_MODE         *branch to load Dn to buffer
-        CMP.W   #cAR,D3         *001?
-        BEQ     AR_MODE         *branch to load An to buffer
-        CMP.W   #cIND_AR,D3     *010?
-        BEQ     INDAR_MODE      *branch to load (An) to buffer
-        CMP.W   #cAR_POST,D3    *011?
-        BEQ     INDAR_POST_MODE *branch to load (An)+ to buffer 
-        CMP.W   #cAR_PRE,D3     *100?
-        BEQ     INDAR_PREC_MODE *branch to load -(An) to buffer
-        CMP.W   #cABS,D3        *111?
-        BEQ     ABS_MODE        *branch to load xxx.w/l to buffer
-        JSR     LOAD_MODE_ERR   *JMP to load error
-        RTS
 
+******** JUMP TABLE FOR EA MODES *********
+EA_MODE:
+        JMP     EA000
+        JMP     EA001
+        JMP     EA010
+        JMP     EA011
+        JMP     EA100
+        JMP     EA101
+        JMP     EA111
 
-DEA_REG:
-        CMP.W   #$0E00,D3       *111
-        BEQ     SEV             *branch to load 7 to buffer
-        CMP.W   #$0C00,D3       *110
-        BEQ     SIX             *branch to load 6 to buffer
-        CMP.W   #$0A00,D3       *101
-        BEQ     FIVE            *branch to load 5 to buffer
-        CMP.W   #$0800,D3       *100
-        BEQ     FOUR            *branch to load 4 to buffer
-        CMP.W   #$0600,D3       *011
-        BEQ     THR             *branch to load 3 to buffer
-        CMP.W   #$0400,D3       *010
-        BEQ     TWO             *branch to load 2 to buffer
-        CMP.W   #$0200,D3       *001
-        BEQ     ONE             *branch to load 1 to buffer
-        CMP.W   #$0000,D3       *000
-        BEQ     ZER             *branch to load 0 to buffer
-        JSR     LOAD_REG_ERR    *branch to load error
-        RTS
+EA000:
+        LEA     _DR,A1 
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        ** JSR TO REG JUMP WITH D3
+        RTS     
+EA001:
+        LEA     _AR,A1 
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        ** JSR TO REG JUMP WITH D3
+        RTS     
+EA010:
+        LEA     _IND_AR1,A1 
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        ** JSR TO REG JUMP WITH D3
+        LEA     _IND_AR2,A1
+        JSR     WRITE_ASCII
+        RTS     
+    
+EA011:
+        LEA     _AR_POST1,A1 
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        ** JSR TO REG JUMP WITH D3
+        LEA     _AR_POST2,A1
+        JSR     WRITE_ASCII
+        RTS     
+    
+EA100:
+        LEA     _AR_PRE1,A1 
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        ** JSR TO REG JUMP WITH D3
+        LEA     _AR_PRE2,A1
+        JSR     WRITE_ASCII
+        RTS     
+    
 
+********* JUMP TABLE FOR REGISTERS ******
+EA_REG:
+        JMP     REG000
+        JMP     REG001
+        JMP     REG010
+        JMP     REG011
+        JMP     REG100
+        JMP     REG101
+        JMP     REG110
+        JMP     REG111
+
+REG000:
+        LEA     _ZERO,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG001:
+        LEA     _ONE,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG010:
+        LEA     _TWO,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG011:
+        LEA     _THREE,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG100:
+        LEA     _FOUR,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG101:
+        LEA     _FIVE,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG110:
+        LEA     _SIX,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG111:
+        LEA     _SEVEN,A1 
+        JSR     WRITE_ASCII
+        RTS   
+  
+ _
 
 ***       UTILS     ****
 * prompts user for choice
@@ -637,6 +708,7 @@ _FOUR   DC.B    '4',0
 _FIVE   DC.B    '5',0
 _SIX    DC.B    '6',0
 _SEVEN  DC.B    '7',0
+_COMMA  DC.B    ',',0
 
 ****    MODE CMP VALUES    ****
 cDR             EQU     $0000
