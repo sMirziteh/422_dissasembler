@@ -103,7 +103,7 @@ OP_START:
         
         
 CHK_LFT_NIB:
-        MOVE.L  D2,D3   * copy to d2
+        MOVE.L  D2,D3   * copy to d3
         
         ANDI.W  #Nib3Mask,D3 * clear all but left four bits
         CMPI.W  #$1000,D3   * if nibble3 == 1, branch to move byte (1)
@@ -144,16 +144,20 @@ OP_DONE RTS
 load_MOVE_B:    * load and print MOVE.B neumonic return to op loop
         LEA     _MOVE_B,A1
         JSR     WRITE_ASCII
+        CLR     D3
+        JSR     MOVE_EA
         BRA     DECODE_DONE
 
 load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
         LEA     _MOVE_L,A1
         JSR     WRITE_ASCII
+        JSR     MOVE_EA
         BRA     DECODE_DONE
         
 load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
         LEA     _MOVE_W,A1
         JSR     WRITE_ASCII
+        JSR     MOVE_EA
         BRA     DECODE_DONE
 
 OP_4:   * could be not, nop, rts, jsr, movem, lea
@@ -252,8 +256,58 @@ OP_D        * could be ADD or ADDA
 OP_E        * could be ASL, ASR, LSL, LSR
         * unfinished *
 
-****       EA       ****
 
+****       EA       ****
+MOVE_EA:
+        MOVE.L  D2,D3           *copy instruction to D3 for register
+        ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
+        JSR     DEA_MODE        *JMP to check for opmode
+        CLR     D3
+        MOVE.L  D2,D3
+        ANDI.W  #Bit1Mask,D3    *mask to isolate 3-bit opmode
+        JSR     DEA_REG          *JMP to check for reg #
+        CLR     D3
+MV_SRC:
+
+        
+        RTS
+
+DEA_MODE:
+        CMP.W   #cDR,D3         *000?
+        BEQ     DR_MODE         *branch to load Dn to buffer
+        CMP.W   #cAR,D3         *001?
+        BEQ     AR_MODE         *branch to load An to buffer
+        CMP.W   #cIND_AR,D3     *010?
+        BEQ     INDAR_MODE      *branch to load (An) to buffer
+        CMP.W   #cAR_POST,D3    *011?
+        BEQ     INDAR_POST_MODE *branch to load (An)+ to buffer 
+        CMP.W   #cAR_PRE,D3     *100?
+        BEQ     INDAR_PREC_MODE *branch to load -(An) to buffer
+        CMP.W   #cABS,D3        *111?
+        BEQ     ABS_MODE        *branch to load xxx.w/l to buffer
+        JSR     LOAD_MODE_ERR   *JMP to load error
+        RTS
+
+
+DEA_REG:
+        CMP.W   #$0E00,D3       *111
+        BEQ     SEV             *branch to load 7 to buffer
+        CMP.W   #$0C00,D3       *110
+        BEQ     SIX             *branch to load 6 to buffer
+        CMP.W   #$0A00,D3       *101
+        BEQ     FIVE            *branch to load 5 to buffer
+        CMP.W   #$0800,D3       *100
+        BEQ     FOUR            *branch to load 4 to buffer
+        CMP.W   #$0600,D3       *011
+        BEQ     THR             *branch to load 3 to buffer
+        CMP.W   #$0400,D3       *010
+        BEQ     TWO             *branch to load 2 to buffer
+        CMP.W   #$0200,D3       *001
+        BEQ     ONE             *branch to load 1 to buffer
+        CMP.W   #$0000,D3       *000
+        BEQ     ZER             *branch to load 0 to buffer
+        JSR     LOAD_REG_ERR    *branch to load error
+        RTS
 
 
 ***       UTILS     ****
@@ -528,6 +582,11 @@ Nib2Mask    EQU     $0F00
 Nib1Mask    EQU     $00F0
 Nib0Mask    EQU     $000F
 
+Bit0Mask    EQU     $0E00
+Bit1Mask    EQU     $01C0
+Bit2Mask    EQU     $0038
+Bit3Mask    EQU     $0007
+
 Byte0Mask   EQU     $00FF
 Byte1Mask   EQU     $FF00
 
@@ -556,6 +615,36 @@ _ASL    DC.B    'ASL',0
 _ASR    DC.B    'ASR',0
 _LSL    DC.B    'LSL',0
 _LSR    DC.B    'LSR',0
+
+****    Modes    ****
+_DR             DC.B   'D',0
+_AR             DC.B   'A',0
+_IND_AR1        DC.B   '(A',0
+_IND_AR2        DC.B   ')',0
+_AR_POST1       DC.B   '(A',0
+_AR_POST2       DC.B   ')+',0
+_AR_PRE1        DC.B   '-(A',0
+_AR_PRE2        DC.B   ')',0
+_ABS            DC.B    '$',0
+_IMD            DC.B    '#',0
+
+****    Numbers    ****
+_ZERO   DC.B    '0',0
+_ONE    DC.B    '1',0
+_TWO    DC.B    '2',0
+_THREE  DC.B    '3',0
+_FOUR   DC.B    '4',0
+_FIVE   DC.B    '5',0
+_SIX    DC.B    '6',0
+_SEVEN  DC.B    '7',0
+
+****    MODE CMP VALUES    ****
+cDR             EQU     $0000
+cAR             EQU     $0040
+cIND_AR         EQU     $0080
+cAR_POST        EQU     $00C0
+cAR_PRE         EQU     $0100
+cABS            EQU     $01C0
 
 ****    MESSAGES    ****
 
