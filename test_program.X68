@@ -15,6 +15,7 @@ START	NOP	* first instruction NOP for testing
         JSR     TEST_LEA
         JSR     TEST_ADDQ
         JSR     TEST_BRA
+        JSR     TEST_BCC
     
     SIMHALT  
 
@@ -307,21 +308,72 @@ RETURN_16:
 RETURN_32:
 * cannot get 32 displacement to work
     RTS
-    
+* label to branch to for 8 bit displacement   
 _8BIT:
     BRA RETURN_8BIT
-    
+  
 TEST_BCC:
+    * test branch instructions 
+    * CCR is set so branch is not taken
+    MOVE.B  #$FF,D1
+    BCS     _8BIT
+    BVS     _8BIT
+    BEQ     _8BIT
+    BGE     _8BIT
+    BGT     _8BIT
+    BPL     _8BIT
+    BLS     _8BIT
+    
+    BCS     _16BIT
+    BVS     _16BIT
+    BEQ     _16BIT
+    BGE     _16BIT
+    BGT     _16BIT
+    BPL     _16BIT
+    BLS     _16BIT
+    
+    LSL.B   #1,D1
+    BCC     _8BIT
+    BHI     _8BIT
+    
+    BCC     _16BIT
+    BHI     _16BIT
+    
+    MOVE.B  #0,D1
+    BMI     _8BIT
+    BNE     _8BIT  
+    
+    BMI     _16BIT
+    BNE     _16BIT 
+    
+    MOVE.B  #$7F,D1
+    ADD.B   #$7F,D1
+    BVC     _8BIT
+    BLE     _8BIT
+    BLT     _8BIT
+    
+    BVC     _16BIT
+    BLE     _16BIT
+    BLT     _16BIT
+
+    
+    RTS
+    
+    
+    
+    
+    
     
     ORG $9000
+    * label to branch to for 16 bit displacement  
 _16BIT:
      BRA RETURN_16
-
-               
-
+     
+    
 	END	START
 	
 	
+
 
 
 *~Font name~Courier New~
