@@ -13,6 +13,8 @@ START	NOP	* first instruction NOP for testing
         NOP     * test nop
         JSR     TEST_MOVEM
         JSR     TEST_LEA
+        JSR     TEST_ADDQ
+        JSR     TEST_BRA
     
     SIMHALT  
 
@@ -266,11 +268,56 @@ TEST_LEA:
     RTS     
 
 TEST_ADDQ:
+    LEA     $7000,A5
+    
+    ADDQ    #2,A3 * when adding to address register entire register is used reguardless of size
+    * test byte
+    ADDQ.B  #1,D5
+    ADDQ.B  #3,(A5)
+    ADDQ.B  #4,(A5)+
+    ADDQ.B  #5,-(A5)
+    ADDQ.B  #6,$7000
+    ADDQ.B  #7,$00010000
 
+    * test word
+    ADDQ.W  #1,D5
+    ADDQ.W  #3,(A5)
+    ADDQ.W  #4,(A5)+
+    ADDQ.W  #5,-(A5)
+    ADDQ.W  #6,$7000
+    ADDQ.W  #7,$00010000
+    
+    * test long
+    ADDQ.L  #1,D5
+    ADDQ.L  #3,(A5)
+    ADDQ.L  #4,(A5)+
+    ADDQ.L  #5,-(A5)
+    ADDQ.L  #6,$7000
+    ADDQ.L  #7,$00010000
+    
+    RTS
+    
+    
 TEST_BRA:
-
+    * test branch always with 8,16, and 32bit displacement
+    BRA.B _8BIT
+RETURN_8BIT:
+    BRA.W _16BIT
+RETURN_16:
+RETURN_32:
+* cannot get 32 displacement to work
+    RTS
+    
+_8BIT:
+    BRA RETURN_8BIT
+    
 TEST_BCC:
+    
+    ORG $9000
+_16BIT:
+     BRA RETURN_16
 
+               
 
 	END	START
 	
