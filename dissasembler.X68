@@ -60,6 +60,7 @@ ST_DIS  JSR     RESET_BUF_PTR         * move a4 to start of string buffer
         JSR     WRITE_ASCII
         
         MOVE.L  ST_ADDR,D1    * test print from string buffer
+        MOVEQ   #0,D5   * set hex length to word
         JSR     WRITE_HEX_TO_ASCII    * call conversion subroutine
 
         JSR     WRITE_NL_A4           * write newline to buffer
@@ -68,6 +69,7 @@ ST_DIS  JSR     RESET_BUF_PTR         * move a4 to start of string buffer
         JSR     WRITE_ASCII           * copy test_msg to buffer  
         
         MOVE.L  E_ADDR,D1             * write end address to buffer
+        MOVEQ   #0,D5   * set hex length to word
         JSR     WRITE_HEX_TO_ASCII
         
 
@@ -96,6 +98,7 @@ OP_CODES:
 OP_START:
         * write address and a tab to str buffer
         MOVE.L  A5,D1   * load address from A5 into D1
+        MOVEQ   #32,D5   * set hex length to long for address printing
         JSR     WRITE_HEX_TO_ASCII
         JSR     WRITE_TAB_A4
         
@@ -300,11 +303,13 @@ LOAD_DATA_STR_INTO_BUF: * expects address to be in a5
         MOVEM   D1,-(SP)
         JSR     RESET_BUF_PTR
         MOVE.L  A5,D1
+        MOVEQ   #32,D5   * set hex length to long for address
         JSR     WRITE_HEX_TO_ASCII * write memory address to buffer
         JSR     WRITE_TAB_A4    * wrtie a tab
         LEA     DATA_MSG,A1     * Load template for data
         JSR     WRITE_ASCII     * write 'DATA    $' to buffer
         MOVE.W  (A5),D1   * load address contents of memory to d1 for printing
+        MOVEQ   #0,D5   * set hex length to word for memory contents
         JSR     WRITE_HEX_TO_ASCII * save to buffer
         MOVEM   (SP)+,D1
         RTS
@@ -417,15 +422,16 @@ PRINT_A1:
 * Subroutines for printing and writing to and from
 * the string buffer at A4
 ****************************************************        
-        
+
+* d5 is a flag for hex value length d5==32 long is used
+* any other value short is used        
 WRITE_HEX_TO_ASCII: * write hex in d1 to a4 as ascii
         * may need to add case to handle sign extended shorts
         MOVEM   D2-D4,-(SP)
         MOVE.L  D1,D2   * copy input to working temp var
-        ANDI.L  #$FFFF0000,D2   * mask for bits 31-16
-        CMPI.L  #0,D2           * if masked value is 0 there is no value in long portion of register for unsigned ints
-        BEQ     h_short         * if no value must be non sign extended short  
-        * setup params for ling processing
+        CMPI.L  #32,D5           * if masked value is 0 there is no value in long portion of register for unsigned ints
+        BNE     h_short         * if not 32 hex value is short else long
+        * setup params for long processing
         MOVE.L  #$F0000000,D3   * init mask for isolating first long hex most significand digit
         MOVE.L  #28,D4          * init shift value for first long hex MSD
         BRA     h_a_loop
@@ -591,6 +597,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
 
 
 
