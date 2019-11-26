@@ -22,6 +22,12 @@ START	NOP	* first instruction NOP for testing
         JSR     TEST_SUB
         JSR     TEST_MULS
         JSR     TEST_AND
+        JSR     TEST_ADD
+        JSR     TEST_ADDA
+        JSR     TEST_ASR_ASL_REG
+        JSR     TEST_ASL_ASR_MEM
+        JSR     TEST_LSR_LSL_REG
+        JSR     TEST_LSL_LSR_MEM
     
     SIMHALT  
 
@@ -598,7 +604,255 @@ TEST_AND:
     AND.L    D4,(A3)
     
     RTS
+    
+TEST_ADD:
+    LEA     $7000,A1
+    LEA     $7002,A0
+    LEA     $7000,A5
+	LEA		$7000,A4
+    
+    * test long
+    
+    ADD.L    D7,D0
+	ADD.L    A5,D7
+    ADD.L    (A4),D1
+    ADD.L    (A1)+,D2
+    ADD.L    -(A0),D3
+    ADD.L    $7004,D4
+    ADD.L    $00010000,D5
+    ADD.L    #$10FF01,D6
 
+    ADD.L    D7,$00010000
+    ADD.L    D6,$7000
+    ADD.L    D5,-(A0)
+    ADD.L    D4,(A1)+
+    ADD.L    D4,(A4)
+    
+    * test word
+    
+    ADD.W    D7,D0
+	ADD.W    A5,D7
+    ADD.W    (A4),D1
+    ADD.W    (A1)+,D2
+    ADD.W    -(A0),D3
+    ADD.W    $7004,D4
+    ADD.W    $00010000,D5
+    ADD.W    #$10AA,D6
+
+    ADD.W    D7,$00010000
+    ADD.W    D6,$7000
+    ADD.W    D5,-(A0)
+    ADD.W    D4,(A1)+
+    ADD.W    D4,(A4)
+    
+    * test byte
+    
+    ADD.B    D7,D0
+    ADD.B    (A4),D1
+    ADD.B    (A1)+,D2
+    ADD.B    -(A0),D3
+    ADD.B    $7004,D4
+    ADD.B    $00010000,D5
+    ADD.B    #$27,D6
+
+    ADD.B    D7,$00010000
+    ADD.B    D6,$7000
+    ADD.B    D5,-(A0)
+    ADD.B    D4,(A1)+
+    ADD.B    D4,(A4)
+
+    RTS
+
+TEST_ADDA:
+    * init data to even addresses
+    LEA     $7000,A0
+    LEA     $7004,A1
+    LEA     $7050,A2
+    LEA     $7050,A3
+    LEA     $7050,A4
+    LEA     $7050,A5
+    LEA     $7050,A6
+    
+    * init even value at address
+    MOVE.L  #$222,$7050
+    
+    * test long
+    ADDA.L    D5,A0
+	ADDA.L    A0,A3
+    ADDA.L    (A3),A1
+    ADDA.L    (A2)+,A4
+    ADDA.L    -(A6),A5
+    ADDA.L    $7050,A6
+    ADDA.L    $00010000,A5
+    ADDA.L    #$AAA,A2
+    
+    * reset to even addresses
+    LEA     $7000,A0
+    LEA     $7004,A1
+    LEA     $7050,A2
+    LEA     $7050,A3
+    LEA     $7050,A4
+    LEA     $7050,A5
+    LEA     $7050,A6
+    
+    * test word
+    ADDA.W    D5,A0
+	ADDA.W    A0,A3
+    ADDA.W    (A3),A1
+    ADDA.W    (A2)+,A4
+    ADDA.W    -(A6),A5
+    ADDA.W    $7050,A6
+    ADDA.W    $00010000,A5
+    ADDA.W    #$AAA,A2
+    
+    RTS
+
+TEST_LSR_LSL_REG:
+    * test lsl byte imediate
+    LSR.B   #1,D0
+    LSR.B   #2,D1
+    LSR.B   #3,D2
+    LSR.B   #4,D3
+    LSR.B   #5,D4
+    LSR.B   #6,D5
+    LSR.B   #7,D6
+    LSR.B   #8,D7
+    
+    LSL.B   #1,D0
+    LSL.B   #2,D1
+    LSL.B   #3,D2
+    LSL.B   #4,D3
+    LSL.B   #5,D4
+    LSL.B   #6,D5
+    LSL.B   #7,D6
+    LSL.B   #8,D7
+    
+    * test lsl lsr byte register
+    
+    LSR.B   D0,D7
+    LSR.B   D1,D0
+    LSR.B   D2,D1
+    LSR.B   D3,D2
+    LSR.B   D4,D3
+    LSR.B   D5,D4
+    LSR.B   D6,D5
+    LSR.B   D7,D6
+    
+    LSL.B   D0,D7
+    LSL.B   D1,D0
+    LSL.B   D2,D1
+    LSL.B   D3,D2
+    LSL.B   D4,D3
+    LSL.B   D5,D4
+    LSL.B   D6,D5
+    LSL.B   D7,D6
+    
+    * test word and long no need to test all different registers for each size
+    LSR.W   D0,D1
+    LSL.W   D2,D3
+
+    LSR.L   D0,D1
+    LSL.L   D2,D3
+    
+    RTS
+
+TEST_LSL_LSR_MEM:
+    LEA   $7000,A1
+    LEA   $7000,A6
+    LEA   $7000,A3
+    
+    LSR   (A1)
+    LSR   (A6)+
+    LSR   -(A3)
+    LSR   $7000
+    LSR   $00010000
+    
+    LEA   $7000,A0
+    LEA   $7000,A5
+    LEA   $7000,A2
+        
+    LSL   (A0)
+    LSL   (A5)+
+    LSL   -(A2)
+    LSL   $7000
+    LSL   $00010000
+       
+    RTS
+    
+TEST_ASR_ASL_REG:
+    * test ASL byte imediate
+    ASR.B   #1,D0
+    ASR.B   #2,D1
+    ASR.B   #3,D2
+    ASR.B   #4,D3
+    ASR.B   #5,D4
+    ASR.B   #6,D5
+    ASR.B   #7,D6
+    ASR.B   #8,D7
+    
+    ASL.B   #1,D0
+    ASL.B   #2,D1
+    ASL.B   #3,D2
+    ASL.B   #4,D3
+    ASL.B   #5,D4
+    ASL.B   #6,D5
+    ASL.B   #7,D6
+    ASL.B   #8,D7
+    
+    * test ASL ASR byte register
+    
+    ASR.B   D0,D7
+    ASR.B   D1,D0
+    ASR.B   D2,D1
+    ASR.B   D3,D2
+    ASR.B   D4,D3
+    ASR.B   D5,D4
+    ASR.B   D6,D5
+    ASR.B   D7,D6
+    
+    ASL.B   D0,D7
+    ASL.B   D1,D0
+    ASL.B   D2,D1
+    ASL.B   D3,D2
+    ASL.B   D4,D3
+    ASL.B   D5,D4
+    ASL.B   D6,D5
+    ASL.B   D7,D6
+    
+    * test word and long no need to test all different registers for each size
+    ASR.W   D0,D1
+    ASL.W   D2,D3
+
+    ASR.L   D0,D1
+    ASL.L   D2,D3
+    
+    RTS
+
+TEST_ASL_ASR_MEM:
+    LEA   $7000,A1
+    LEA   $7000,A6
+    LEA   $7000,A3
+    
+    ASR   (A1)
+    ASR   (A6)+
+    ASR   -(A3)
+    ASR   $7000
+    ASR   $00010000
+    
+    LEA   $7000,A0
+    LEA   $7000,A5
+    LEA   $7000,A2
+        
+    ASL   (A0)
+    ASL   (A5)+
+    ASL   -(A2)
+    ASL   $7000
+    ASL   $00010000
+       
+    RTS
+
+    
+    
     ORG $9000
     * label to branch to for 16 bit displacement  
 _16BIT:
