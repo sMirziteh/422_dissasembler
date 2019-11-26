@@ -16,6 +16,9 @@ START	NOP	* first instruction NOP for testing
         JSR     TEST_ADDQ
         JSR     TEST_BRA
         JSR     TEST_BCC
+        JSR     TEST_MOVEQ
+        JSR     TEST_DIVU
+        JSR     TEST_OR
     
     SIMHALT  
 
@@ -263,17 +266,25 @@ TEST_MOVEM:
     
 
 TEST_LEA:
-    LEA     (A2),A1
-    LEA     $7000,A3
-    LEA     $00010000,A4
+    * test lea with different eas annd registers
+    LEA     (A6),A0
+    LEA     $7000,A1
+    LEA     $00010000,A2
+    LEA     (A4),A3
+    LEA     $7000,A4
+    LEA     $00010000,A5
+    LEA     (A2),A6
+
     RTS     
 
 TEST_ADDQ:
     LEA     $7000,A5
-    
+    LEA     $7000,A2
+    LEA     $7000,A6
+
     ADDQ    #2,A3 * when adding to address register entire register is used reguardless of size
     * test byte
-    ADDQ.B  #1,D5
+    ADDQ.B  #1,D1
     ADDQ.B  #3,(A5)
     ADDQ.B  #4,(A5)+
     ADDQ.B  #5,-(A5)
@@ -282,17 +293,17 @@ TEST_ADDQ:
 
     * test word
     ADDQ.W  #1,D5
-    ADDQ.W  #3,(A5)
-    ADDQ.W  #4,(A5)+
-    ADDQ.W  #5,-(A5)
+    ADDQ.W  #3,(A2)
+    ADDQ.W  #4,(A2)+
+    ADDQ.W  #5,-(A2)
     ADDQ.W  #6,$7000
     ADDQ.W  #7,$00010000
     
     * test long
-    ADDQ.L  #1,D5
-    ADDQ.L  #3,(A5)
-    ADDQ.L  #4,(A5)+
-    ADDQ.L  #5,-(A5)
+    ADDQ.L  #1,D3
+    ADDQ.L  #3,(A6)
+    ADDQ.L  #4,(A6)+
+    ADDQ.L  #5,-(A6)
     ADDQ.L  #6,$7000
     ADDQ.L  #7,$00010000
     
@@ -358,10 +369,96 @@ TEST_BCC:
 
     
     RTS
+
+TEST_MOVEQ:
+    * test moveq with different values and registers
+    MOVEQ   #0,D0  
+    MOVEQ   #08,D1  
+    MOVEQ   #$0B,D2  
+    MOVEQ   #$0F,D3  
+    MOVEQ   #$12,D4  
+    MOVEQ   #$70,D5  
+    MOVEQ   #$AB,D6
+    MOVEQ   #$FE,D7
     
+    RTS      
+
+TEST_DIVU:
+    LEA     $7000,A3
+    LEA     $7000,A2
+    LEA     $7002,A1
     
+    DIVU    D7,D0
+    DIVU    (A1),D1
+    DIVU    (A2)+,D2
+    DIVU    -(A3),D3
+    DIVU    $7000,D4
+    DIVU    $00010000,D5
+    DIVU    #123,D6
     
+    RTS
+
+TEST_OR:
+    * test or with different opmodes eas and registers
+    * init address registers
+    LEA     $7000,A6
+    LEA     $7002,A2
+    LEA     $7000,A0
     
+    * test byte
+    OR.B    D7,D0
+    OR.B    (A6),D1
+    OR.B    (A0)+,D2
+    OR.B    -(A2),D3
+    OR.B    $7004,D4
+    OR.B    $00010000,D5
+    OR.B    #$1A,D6
+
+    OR.B    D7,$00010000
+    OR.B    D6,$7000
+    OR.B    D5,-(A2)
+    OR.B    D4,(A0)+
+    OR.B    D4,(A6)
+    
+    * test word
+    LEA     $7000,A6
+    LEA     $7002,A2
+    LEA     $7000,A0
+    
+    OR.W    D7,D0
+    OR.W    (A6),D1
+    OR.W    (A0)+,D2
+    OR.W    -(A2),D3
+    OR.W    $7004,D4
+    OR.W    $00010000,D5
+    OR.W    #$1A,D6
+
+    OR.W    D7,$00010000
+    OR.W    D6,$7000
+    OR.W    D5,-(A2)
+    OR.W    D4,(A0)+
+    OR.W    D4,(A6)
+
+    * test long        
+    LEA     $7000,A6
+    LEA     $7002,A2
+    LEA     $7000,A0
+    
+    OR.L    D7,D0
+    OR.L    (A6),D1
+    OR.L    (A0)+,D2
+    OR.L    -(A2),D3
+    OR.L    $7004,D4
+    OR.L    $00010000,D5
+    OR.L    #$1A,D6
+
+    OR.L    D7,$00010000
+    OR.L    D6,$7000
+    OR.L    D5,-(A2)
+    OR.L    D4,(A0)+
+    OR.L    D4,(A6)
+    
+    RTS
     
     
     ORG $9000
