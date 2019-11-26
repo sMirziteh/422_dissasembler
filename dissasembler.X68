@@ -268,7 +268,7 @@ MOVE_EA:
         **FIND OFFSETS FOR MODE AND REG
         LEA     EA_MODE,A1
         ** JUMP TO EA_MODE TABLE WITH D4
-        LEA     _COMMA
+        LEA     _COMMA,A1
         JSR     WRITE_ASCII
 
         CLR     D3
@@ -292,7 +292,6 @@ EA_MODE:
         JMP     EA010
         JMP     EA011
         JMP     EA100
-        JMP     EA101
         JMP     EA111
 
 EA000:
@@ -332,7 +331,9 @@ EA100:
         ** JSR TO REG JUMP WITH D3
         LEA     _AR_PRE2,A1
         JSR     WRITE_ASCII
-        RTS     
+        RTS    
+
+EA111:  RTS 
     
 
 ********* JUMP TABLE FOR REGISTERS ******
@@ -379,8 +380,7 @@ REG111:
         JSR     WRITE_ASCII
         RTS   
   
- _
-
+ 
 ***       UTILS     ****
 * prompts user for choice
 * sets d6 to valid choice
@@ -752,6 +752,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
 
 
 
