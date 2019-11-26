@@ -7,9 +7,19 @@
         ORG     $1000
 		
 ****    MAIN LOOP   ****
-START:  NOP
-        JSR     RESET_BUF_PTR   * move a4 to start of string buffer
+INIT:   NOP     * line for testing
+        JSR     RESET_BUF_PTR
+        LEA     WELCOME,A1      * print welcome message
+        JSR     WRITE_ASCII
+        JSR     TERM_PNT_RST_BUF
+        
+START:  
+        JSR     GET_CHOICE      * get choice from user to dissasemble or quit
+        CMPI    #QUIT_PROG,D6
+        BEQ     QUIT
+        
 
+INPUT_START:
         LEA     ST_A_MSG,A1     * load start address prompt message
         JSR     WRITE_ASCII     * write to string buffer
         JSR     TERM_PNT_RST_BUF * terminate string buffer and print reseting pointer at A4
@@ -18,6 +28,7 @@ START:  NOP
         CLR.L   (A1)    * clear long at a1
         MOVE.B  #2,D0   * trap task 2 read a null terminated string from keyboard at A1 length at D1
         TRAP    #15
+        MOVE.B  D1,ST_LEN    * save start length to memory 
         
         JSR     IN_ADDR_TO_HEX  * convert start address to hex
              
@@ -29,12 +40,19 @@ START:  NOP
         CLR.L   (A1)    * clear long at end address
         MOVE.B  #2,D0   * trap task 2 read a null terminated string from keyboard at A1 length at D1
         TRAP    #15
+        MOVE.B  D1,E_LEN    * save end length to memory
         
         JSR     IN_ADDR_TO_HEX  * convert end address to hex
         
+        JSR     CHK_ST_E_ADRS   * check addresses for errors
+        CMPI.B  #1,D5           * if an error occured return to start
+        BNE     ST_DIS          * branch to dissasembly if no errors
+        JSR     WAIT_USR_INPUT    
+        BRA     INPUT_START     * return to start
+        
         * print converted addresses for testing purposes
         
-        JSR     RESET_BUF_PTR         * move a4 to start of string buffer
+ST_DIS  JSR     RESET_BUF_PTR         * move a4 to start of string buffer
         
         JSR     WRITE_NL_A4           * write newline to buffer
         
@@ -59,8 +77,14 @@ START:  NOP
         * end test printing converted numbers
         
         JSR     OP_CODES
-    
+        
+        JSR     NL_TERM_PNT_RST_BUF * print newline after op codes
+         
         BRA     START 
+
+
+QUIT    MOVE.B	#9,D0
+		TRAP	#15	* stop sim
 
 
 ****    OP-CODES    ****
@@ -88,12 +112,24 @@ CHK_LFT_NIB:
         BEQ     load_MOVE_L * will need to account for MOVEA
         CMPI.W  #$3000,D3   * if nibble3 == 3, branch to move word (3)
         BEQ     load_MOVE_W * will need to account for MOVEA        
-        CMPI.W  #$4000,D3   * if nibble3 == 4 branch to that set
+        CMPI.W  #$4000,D3   * if nibble3 == 4 branch to that set (not/nop/rts/jsr/movem/lea)
         BEQ     OP_4 
         CMPI.W  #$5000,D3   * if nibble3 == 5, branch to ADDQ (5)
         BEQ     load_ADDQ
-        CMPI.W  #$6000,D3   * if nibble3 == 6, branch to that set
+        CMPI.W  #$6000,D3   * if nibble3 == 6, branch to that set (bra, bcc)
         BEQ     OP_6
+        CMPI.W  #$7000,D3   * if nibble3 == 7, branch to MOVEQ
+        BEQ     load_MOVEQ
+        CMPI.W  #$8000,D3   * if nibble3 == 8, branch to that set (divu, or)
+        BEQ     OP_8
+        CMPI.W  #$9000,D3   * if nibble3 == 9, branch to SUB
+        BEQ     load_SUB
+        CMPI.W  #$C000,D3   * if nibble3 == C, branch to that set (muls, and)
+        BEQ     OP_C
+        CMPI.W  #$D000,D3   * if nibble3 == D, branch to that set (add, adda)
+        BEQ     OP_D
+        CMPI.W  #$E000,D3   * if nibble3 == E, branch to that set (asl, asr, lsl, lsr)
+        BEQ     OP_E
                        
 OP_ERR  JSR     LOAD_DATA_STR_INTO_BUF
         
@@ -131,7 +167,7 @@ OP_4:   * could be not, nop, rts, jsr, movem, lea
         BEQ     load_NOT
         CMPI.W  #$0E00,D3  * if nibble 2 is E could be nop or rts
         BEQ     NOP_RTS
-        * will need more subroutines for jsr, movem, lea
+        * will need more subroutines for jsr, movem, lea ***********
         
         BRA     OP_ERR  * return to error decoding
         
@@ -197,77 +233,193 @@ load_BLE:   * load and print BLE neumonic return to op loop
         LEA     _BLE,A1
         JSR     WRITE_ASCII
         BRA     DECODE_DONE
+        
+load_MOVEQ: * load and print MOVEQ neumonic return to op loop
+        LEA     _MOVEQ,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+OP_8:       * could be DIVU or OR
+        * unfinished *
+
+load_SUB:   * load and print SUB neumonic return to op loop
+        LEA     _SUB,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+
+OP_C:       * could be MULS or AND
+        * unfinished *
+
+OP_D        * could be ADD or ADDA
+        * unfinished *
+
+OP_E        * could be ASL, ASR, LSL, LSR
+        * unfinished *
 
 
 ****       EA       ****
+
+**** FIRST EA COMMAND *********
 MOVE_EA:
-        MOVE.W  D2,D3           *copy instruction to D3 for register
-        LSR.W   #6,D3
-        ANDI.W  #$0007,D3
-        MULU    #$6,D3 
-        LEA     EATABLE,A0 
-        JSR     00(A0,D3)
+        MOVE.L  D2,D3           *copy instruction to D3 for register
+        MOVE.L  D2,D4           *copy instruction to D4 for mode
+        ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
+        ANDI.W  #Bit1Mask,D4    *mask to isolate 3-bit opmode
+        **FIND OFFSETS FOR MODE AND REG
+        LEA     EA_MODE,A1
+        ** JUMP TO EA_MODE TABLE WITH D4
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
 
-*         ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
-*         JSR     DEA_MODE        *JMP to check for opmode
-*         CLR     D3
-*         MOVE.L  D2,D3
-*         ANDI.W  #Bit1Mask,D3    *mask to isolate 3-bit opmode
-*         JSR     DEA_REG          *JMP to check for reg #
-*         CLR     D3
-* MV_SRC:
-
-EATABLE:
-        JMP     DN_MODE
-        JMP     BAD_DATA
-
-
-BAD_DATA:
-        BRA     DECODE_DONE
-DN_MODE:
-        BRA     DECODE_DONE
+        CLR     D3
+        CLR     D4 
+******* SECOND EA COMMAND **********
+        MOVE.L  D2,D3           *copy instruction to D3 for register
+        MOVE.L  D2,D4           *copy instruction to D4 for mode
+        ANDI.W  #Bit2Mask,D3    *mask to isolate 3-bit source mode
+        ANDI.W  #Bit3Mask,D4    *mask to isolate 3-bit source register
+        **FIND OFFSETS FOR MODE AND REG
+        LEA     EA_MODE,A1 
+        ** JUMP TO EA_MODE TABLE WITH D4
         
-*         RTS
-
-* DEA_MODE:
-*         CMP.W   #cDR,D3         *000?
-*         BEQ     DR_MODE         *branch to load Dn to buffer
-*         CMP.W   #cAR,D3         *001?
-*         BEQ     AR_MODE         *branch to load An to buffer
-*         CMP.W   #cIND_AR,D3     *010?
-*         BEQ     INDAR_MODE      *branch to load (An) to buffer
-*         CMP.W   #cAR_POST,D3    *011?
-*         BEQ     INDAR_POST_MODE *branch to load (An)+ to buffer 
-*         CMP.W   #cAR_PRE,D3     *100?
-*         BEQ     INDAR_PREC_MODE *branch to load -(An) to buffer
-*         CMP.W   #cABS,D3        *111?
-*         BEQ     ABS_MODE        *branch to load xxx.w/l to buffer
-*         JSR     LOAD_MODE_ERR   *JMP to load error
-*         RTS
+        RTS
 
 
-* DEA_REG:
-*         CMP.W   #$0E00,D3       *111
-*         BEQ     SEV             *branch to load 7 to buffer
-*         CMP.W   #$0C00,D3       *110
-*         BEQ     SIX             *branch to load 6 to buffer
-*         CMP.W   #$0A00,D3       *101
-*         BEQ     FIVE            *branch to load 5 to buffer
-*         CMP.W   #$0800,D3       *100
-*         BEQ     FOUR            *branch to load 4 to buffer
-*         CMP.W   #$0600,D3       *011
-*         BEQ     THR             *branch to load 3 to buffer
-*         CMP.W   #$0400,D3       *010
-*         BEQ     TWO             *branch to load 2 to buffer
-*         CMP.W   #$0200,D3       *001
-*         BEQ     ONE             *branch to load 1 to buffer
-*         CMP.W   #$0000,D3       *000
-*         BEQ     ZER             *branch to load 0 to buffer
-*         JSR     LOAD_REG_ERR    *branch to load error
-*         RTS
+******** JUMP TABLE FOR EA MODES *********
+EA_MODE:
+        JMP     EA000
+        JMP     EA001
+        JMP     EA010
+        JMP     EA011
+        JMP     EA100
+        JMP     EA111
 
+EA000:
+        LEA     _DR,A1 
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        ** JSR TO REG JUMP WITH D3
+        RTS     
+EA001:
+        LEA     _AR,A1 
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        ** JSR TO REG JUMP WITH D3
+        RTS     
+EA010:
+        LEA     _IND_AR1,A1 
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        ** JSR TO REG JUMP WITH D3
+        LEA     _IND_AR2,A1
+        JSR     WRITE_ASCII
+        RTS     
+    
+EA011:
+        LEA     _AR_POST1,A1 
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        ** JSR TO REG JUMP WITH D3
+        LEA     _AR_POST2,A1
+        JSR     WRITE_ASCII
+        RTS     
+    
+EA100:
+        LEA     _AR_PRE1,A1 
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        ** JSR TO REG JUMP WITH D3
+        LEA     _AR_PRE2,A1
+        JSR     WRITE_ASCII
+        RTS    
 
+EA111:  RTS 
+    
+
+********* JUMP TABLE FOR REGISTERS ******
+EA_REG:
+        JMP     REG000
+        JMP     REG001
+        JMP     REG010
+        JMP     REG011
+        JMP     REG100
+        JMP     REG101
+        JMP     REG110
+        JMP     REG111
+
+REG000:
+        LEA     _ZERO,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG001:
+        LEA     _ONE,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG010:
+        LEA     _TWO,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG011:
+        LEA     _THREE,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG100:
+        LEA     _FOUR,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG101:
+        LEA     _FIVE,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG110:
+        LEA     _SIX,A1 
+        JSR     WRITE_ASCII
+        RTS   
+REG111:
+        LEA     _SEVEN,A1 
+        JSR     WRITE_ASCII
+        RTS   
+  
+ 
 ***       UTILS     ****
+* prompts user for choice
+* sets d6 to valid choice
+GET_CHOICE: 
+        MOVEM   D0/D1/A1,-(SP)
+HC_INT_LP:
+        JSR     RESET_BUF_PTR   * move a4 to start of string buffer
+        LEA     CHOICE_PROMPT,A1
+        JSR     WRITE_ASCII
+        JSR     TERM_PNT_RST_BUF
+        MOVE.B  #4,D0   * read a number from keyboard into d1
+        TRAP    #15
+CHOICE_1:
+        CMPI    #DISSASEMBLE ,D1
+        BEQ     CHOICE_DNE    
+CHOICE_2:
+        CMPI    #QUIT_PROG,D1
+        BEQ     CHOICE_DNE    
+CHOICE_ERR:
+        LEA     INV_CHOICE,A1
+        JSR     WRITE_ASCII
+        JSR     TERM_PNT_RST_BUF
+        JSR     WAIT_USR_INPUT
+        BRA     HC_INT_LP
+        
+CHOICE_DNE:
+        MOVE.B  D1,D6
+        MOVEM   (SP)+,D0/D1/A1
+        RTS               
+
+* prompt user to press enter to continue
+WAIT_USR_INPUT:            
+        MOVEM   D0/D1/A1,-(SP)
+        LEA     ENT_TO_CONT,A1  * load and print prompt
+        JSR     PRINT_A1
+        MOVEQ.L #5,D0   * read in a char from keyboard
+        TRAP    #15
+        MOVEM   (SP)+,D0/D1/A1
+        RTS
 
 LOAD_DATA_STR_INTO_BUF: * expects address to be in a5
         MOVEM   D1,-(SP)
@@ -313,20 +465,72 @@ END_H   MOVEM (SP)+,D0-D2/A1-A2
 *   input address to hexadecimal saves output at A1
 IN_ADDR_TO_HEX:
         MOVEM   D6,-(SP)
-        CMPI    #8,D1   * compare string input length to 8
-        BGT     PADDR_IN_ERR    * if input greater than 8 bytes print input address error
         JSR     TO_HEX          * else convert to hex
         MOVE.L  D6,(A1)
         MOVEM   (SP)+,D6
         RTS
-        
-        
-*   print address input error
-PADDR_IN_ERR: 
-        LEA     ADR_IN_ERR,A1   * load address input error message 
-        JMP     PRINT_A1
-        BRA     START           * return to start of program
 
+* check start and end addresses for errors
+CHK_ST_E_ADRS: * sets D5 to 1 if an error has ocurred
+        MOVEM   D1/D4,-(SP)
+        MOVEQ   #0,D5       * clear error flag
+        MOVE.L  ST_ADDR,D2  * load start address
+        MOVE.L  E_ADDR,D3   * load end address
+        
+LEN_CHK:                    * check address length
+        MOVE.B  ST_LEN,D1   * load start and end address lengths
+        MOVE.B  E_LEN,D4
+        
+        CMPI.B  #8,D1       * check if start addr length is less than or equal to 8
+        BLE     E_LEN_CHK   * check end address if no length error
+        JSR     PLEN_ERR    * print length error message
+        MOVEQ   #1,D5       * set error flag
+        BRA     ODD_CHK     * skip end length check if start failed
+E_LEN_CHK:
+        CMPI.B  #8,D4
+        BLE     ODD_CHK     * if no error skip to odd checking
+        JSR     PLEN_ERR    * print length error message
+        MOVEQ   #1,D5       * set error flag
+
+ODD_CHK:                    * check if start address is odd
+        BTST.L  #0,D2       * test start addres LSB to see if even
+        BEQ     S_GT_E
+        JSR     PODD_ERR    * print odd start address error
+        MOVEQ   #1,D5       * set error flag
+        
+S_GT_E:                     * start address greater than or less than end
+        CMP.L   D1,D4       * check if end is greater than or equal to start
+        BGE     CHK_SEA_DONE   * skip to end if no error
+        JSR     PS_GT_ERR   * print start greater than end error
+        MOVEQ   #1,D5       * set error flag
+      
+CHK_SEA_DONE:
+        MOVEM   (SP)+,D1/D4
+        RTS             
+        
+*   print address length input error
+PLEN_ERR:
+        MOVEM   A1,-(SP) 
+        LEA     ADR_LEN_ERR,A1   * load address input error message 
+        JSR     PRINT_A1
+        MOVEM   (SP)+,A1
+        RTS         
+
+PODD_ERR: * print start address odd error
+        MOVEM   A1,-(SP) 
+        LEA     ADR_ODD_ERR,A1
+        JSR     PRINT_A1
+        MOVEM   (SP)+,A1
+        RTS
+
+PS_GT_ERR: * print start address greater than end address error
+        MOVEM   A1,-(SP) 
+        LEA     ADR_S_GT_E,A1
+        JSR     PRINT_A1
+        MOVEM   (SP)+,A1
+        RTS
+
+ 
 PRINT_A1:
         MOVEM   D0,-(SP) * save register state
         MOVE.B  #14,D0   * print A1
@@ -431,6 +635,8 @@ RESET_BUF_PTR:  * sets a4 to start of string buffer
 ****    VARS    ****
 ST_ADDR DS.L    3   * allocate 3 longs for address ascii input needs 9 bytes to get 8 chars 
 E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for this
+ST_LEN  DCB.B   1,0 * var to track start address length
+E_LEN   DC.B    1,0 * var to track end address length
 STR_BUF DCB.B   241,0  * buffer to hold 240 chars + null terminator. 3 80 char lines
          
 ****    CONST   ****
@@ -438,6 +644,8 @@ CR          EQU     $0D     * carraige return
 LF          EQU     $0A     * line feed
 SPACE       EQU     $20     * ascii space
 TAB         EQU     $09     * ascii tab character
+DISSASEMBLE EQU     $01     * dissasemble choice number
+QUIT_PROG   EQU     $02     * quit choice number
 
 * masks for isolating nibbles with and 0 being least significant nibble
 Nib3Mask    EQU     $F000 
@@ -466,6 +674,18 @@ _BRA    DC.B    'BRA',0
 _BEQ    DC.B    'BEQ',0
 _BGT    DC.B    'BGT',0
 _BLE    DC.B    'BLE',0
+_MOVEQ  DC.B    'MOVEQ',0
+_DIVU   DC.B    'DIVU',0
+_OR     DC.B    'OR',0
+_SUB    DC.B    'SUB',0
+_MULS   DC.B    'MULS',0
+_AND    DC.B    'AND',0
+_ADD    DC.B    'ADD',0
+_ADDA   DC.B    'ADDA',0
+_ASL    DC.B    'ASL',0
+_ASR    DC.B    'ASR',0
+_LSL    DC.B    'LSL',0
+_LSR    DC.B    'LSR',0
 
 ****    Modes    ****
 _DR             DC.B   'D',0
@@ -488,6 +708,7 @@ _FOUR   DC.B    '4',0
 _FIVE   DC.B    '5',0
 _SIX    DC.B    '6',0
 _SEVEN  DC.B    '7',0
+_COMMA  DC.B    ',',0
 
 ****    MODE CMP VALUES    ****
 cDR             EQU     $0000
@@ -498,19 +719,44 @@ cAR_PRE         EQU     $0100
 cABS            EQU     $01C0
 
 ****    MESSAGES    ****
-ST_A_MSG    DC.B    'Enter an address range in hexidecimal to be dissasembled',CR,LF * start address message
+
+WELCOME     DC.B    '*********************************************',CR,LF
+            DC.B    '* Welcome to EASY 68K Disasembler by Nibble *',CR,LF
+            DC.B    '*********************************************',CR,LF,0
+            
+CHOICE_PROMPT:
+            DC.B    'Enter a number to make a choice:',CR,LF
+            DC.B    '1: Dissasemble an Address Range',CR,LF
+            DC.B    '2: Exit Program',CR,LF,0
+       
+INV_CHOICE  DC.B    'ERROR: INVALID selection',CR,LF,0
+
+ENT_TO_CONT DC.B    CR,LF,'Press enter to continue...',CR,LF,0
+
+ST_A_MSG    DC.B    CR,LF,'Enter an address range in hexidecimal to be dissasembled',CR,LF * start address message
             DC.B    'Valid address chars: 0-1 A-F case insensitive',CR,LF  
             DC.B    'Enter start address:',0    
             
 E_A_MSG     DC.B    'Enter end address:',0    * end address message
 
-ADR_IN_ERR  DC.B    'ERROR INVALID ADDRESS: input must be 0-8 hexidecimal digits long',CR,LF,0    * address input error message
+ADR_LEN_ERR DC.B    CR,LF,'ERROR INVALID ADDRESS: Input must be 0-8 hexidecimal digits long',CR,LF,0    * address input error message
 
+ADR_ODD_ERR DC.B    CR,LF,'ERROR INVALID ADDRESS: Start address must be even',CR,LF,0  * odd input address error message
+            
+ADR_S_GT_E  DC.B    CR,LF,'ERROR INVALID ADDRESS: Start address must come before end address',CR,LF,0 * start greater than end address error msg
+
+HEX_ERR     DC.B    CR,LF,'ERROR INVALID ADDRESS: Input must be 0-1 A-F case insensitive',CR,LF,0
+  
 DATA_MSG    DC.B    'DATA   $',0
 
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
-		    END     START        * last line of source
+		    END     INIT        * last line of source
+
+
+
+
+
 
 
 *~Font name~Courier New~
