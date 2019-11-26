@@ -497,11 +497,13 @@ load_LSL_REG:   * load and print LSL neumonic return to op loop
 MOVE_EA:
         MOVE.L  D2,D3           *copy instruction to D3 for register
         MOVE.L  D2,D4           *copy instruction to D4 for mode
-        ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
-        ANDI.W  #Bit1Mask,D4    *mask to isolate 3-bit opmode
-        **FIND OFFSETS FOR MODE AND REG
+        ANDI.W  #Bit2Mask,D4    *mask to isolate 3-bit source mode
+        ANDI.W  #Bit3Mask,D3    *mask to isolate 3-bit source register
+        LSR.L   #3,D4
+        MULU    #6,D4
+        MULU    #6,D3
         LEA     EA_MODE,A1
-        ** JUMP TO EA_MODE TABLE WITH D4
+        JSR     (A1,D4)
         LEA     _COMMA,A1
         JSR     WRITE_ASCII
 
@@ -509,13 +511,17 @@ MOVE_EA:
         CLR     D4 
 ******* SECOND EA COMMAND **********
         MOVE.L  D2,D3           *copy instruction to D3 for register
-        MOVE.L  D2,D4           *copy instruction to D4 for mode
-        ANDI.W  #Bit2Mask,D3    *mask to isolate 3-bit source mode
-        ANDI.W  #Bit3Mask,D4    *mask to isolate 3-bit source register
-        **FIND OFFSETS FOR MODE AND REG
+        MOVE.L  D2,D4           *copy instruction to D4 for modE
+        ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
+        ANDI.W  #Bit1Mask,D4    *mask to isolate 3-bit opmode
+        MOVE.B  #9, D5
+        LSR     D5,D3
+        MULU   #6,D3 
+        LSR.L   #6,D4
+        MULU   #6,D4
+       
         LEA     EA_MODE,A1 
-        ** JUMP TO EA_MODE TABLE WITH D4
-        
+        JSR     (A1,D4)
         RTS
 
 
@@ -526,25 +532,27 @@ EA_MODE:
         JMP     EA010
         JMP     EA011
         JMP     EA100
+        JMP     EA101
+        JMP     EA110
         JMP     EA111
 
 EA000:
         LEA     _DR,A1 
         JSR     WRITE_ASCII
         LEA     EA_REG,A1
-        ** JSR TO REG JUMP WITH D3
+        JSR     (A1,D3)
         RTS     
 EA001:
         LEA     _AR,A1 
         JSR     WRITE_ASCII
         LEA     EA_REG,A1
-        ** JSR TO REG JUMP WITH D3
+        JSR     (A1,D3)
         RTS     
 EA010:
         LEA     _IND_AR1,A1 
         JSR     WRITE_ASCII
         LEA     EA_REG,A1
-        ** JSR TO REG JUMP WITH D3
+        JSR     (A1,D3)
         LEA     _IND_AR2,A1
         JSR     WRITE_ASCII
         RTS     
@@ -553,19 +561,24 @@ EA011:
         LEA     _AR_POST1,A1 
         JSR     WRITE_ASCII
         LEA     EA_REG,A1
-        ** JSR TO REG JUMP WITH D3
+        JSR     (A1,D3)
         LEA     _AR_POST2,A1
         JSR     WRITE_ASCII
-        RTS     
+        RTS
+     
     
 EA100:
         LEA     _AR_PRE1,A1 
         JSR     WRITE_ASCII
         LEA     EA_REG,A1
-        ** JSR TO REG JUMP WITH D3
+        JSR     (A1,D3)
         LEA     _AR_PRE2,A1
         JSR     WRITE_ASCII
-        RTS    
+        RTS   
+
+EA101:  RTS
+
+EA110:  RTS 
 
 EA111:  RTS 
     
@@ -996,6 +1009,8 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
+
 
 
 
