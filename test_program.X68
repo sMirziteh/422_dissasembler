@@ -19,6 +19,9 @@ START	NOP	* first instruction NOP for testing
         JSR     TEST_MOVEQ
         JSR     TEST_DIVU
         JSR     TEST_OR
+        JSR     TEST_SUB
+        JSR     TEST_MULS
+        JSR     TEST_AND
     
     SIMHALT  
 
@@ -431,7 +434,7 @@ TEST_OR:
     OR.W    -(A2),D3
     OR.W    $7004,D4
     OR.W    $00010000,D5
-    OR.W    #$1A,D6
+    OR.W    #$310,D6
 
     OR.W    D7,$00010000
     OR.W    D6,$7000
@@ -450,7 +453,7 @@ TEST_OR:
     OR.L    -(A2),D3
     OR.L    $7004,D4
     OR.L    $00010000,D5
-    OR.L    #$1A,D6
+    OR.L    #$A001A,D6
 
     OR.L    D7,$00010000
     OR.L    D6,$7000
@@ -460,7 +463,142 @@ TEST_OR:
     
     RTS
     
+TEST_SUB:
+    LEA     $7000,A1
+    LEA     $7002,A0
+    LEA     $7000,A5
+	LEA		$7000,A4
     
+    * test long
+    
+    SUB.L    D7,D0
+	SUB.L    A5,D7
+    SUB.L    (A4),D1
+    SUB.L    (A1)+,D2
+    SUB.L    -(A0),D3
+    SUB.L    $7004,D4
+    SUB.L    $00010000,D5
+    SUB.L    #$10FF01,D6
+
+    SUB.L    D7,$00010000
+    SUB.L    D6,$7000
+    SUB.L    D5,-(A0)
+    SUB.L    D4,(A1)+
+    SUB.L    D4,(A4)
+    
+    * test word
+    
+    SUB.W    D7,D0
+	SUB.W    A5,D7
+    SUB.W    (A4),D1
+    SUB.W    (A1)+,D2
+    SUB.W    -(A0),D3
+    SUB.W    $7004,D4
+    SUB.W    $00010000,D5
+    SUB.W    #$10AA,D6
+
+    SUB.W    D7,$00010000
+    SUB.W    D6,$7000
+    SUB.W    D5,-(A0)
+    SUB.W    D4,(A1)+
+    SUB.W    D4,(A4)
+    
+    * test byte
+    
+    SUB.B    D7,D0
+    SUB.B    (A4),D1
+    SUB.B    (A1)+,D2
+    SUB.B    -(A0),D3
+    SUB.B    $7004,D4
+    SUB.B    $00010000,D5
+    SUB.B    #$27,D6
+
+    SUB.B    D7,$00010000
+    SUB.B    D6,$7000
+    SUB.B    D5,-(A0)
+    SUB.B    D4,(A1)+
+    SUB.B    D4,(A4)
+
+    RTS
+    
+TEST_MULS:
+    LEA     $7002,A5
+    LEA     $7000,A4
+	LEA		$7000,A3
+    
+    MULS.W    D7,D6
+    MULS.W    (A4),D5
+    MULS.W    (A3)+,D4
+    MULS.W    -(A5),D3
+    MULS.W    $7004,D2
+    MULS.W    $00010000,D1
+    MULS.W    #$10B,D0
+
+    RTS
+    
+TEST_AND:
+
+    * test and with different opmodes eas and registers
+    * init address registers
+    LEA     $7000,A0
+    LEA     $7002,A1
+    LEA     $7000,A2
+    
+    * test byte
+    AND.B    D7,D0
+    AND.B    (A0),D1
+    AND.B    (A2)+,D2
+    AND.B    -(A1),D3
+    AND.B    $7004,D4
+    AND.B    $00010000,D5
+    AND.B    #$1A,D6
+
+    AND.B    D7,$00010000
+    AND.B    D6,$7000
+    AND.B    D5,-(A1)
+    AND.B    D4,(A2)+
+    AND.B    D4,(A0)
+    
+        * test word
+    LEA     $7000,A3
+    LEA     $7002,A4
+    LEA     $7000,A5
+    
+    AND.W    D7,D0
+    AND.W    (A3),D1
+    AND.W    (A5)+,D2
+    AND.W    -(A4),D3
+    AND.W    $7004,D4
+    AND.W    $00010000,D5
+    AND.W    #$310,D6
+
+    AND.W    D7,$00010000
+    AND.W    D6,$7000
+    AND.W    D5,-(A4)
+    AND.W    D4,(A5)+
+    AND.W    D4,(A3)
+    
+    * test long        
+    LEA     $7000,A3
+    LEA     $7002,A6
+    LEA     $7000,A5
+    
+    AND.L    D7,D0
+    AND.L    (A3),D1
+    AND.L    (A5)+,D2
+    AND.L    -(A6),D3
+    AND.L    $7004,D4
+    AND.L    $00010000,D5
+    AND.L    #$A501A,D6
+
+    AND.L    D7,$00010000
+    AND.L    D6,$7000
+    AND.L    D5,-(A6)
+    AND.L    D4,(A5)+
+    AND.L    D4,(A3)
+    
+    RTS
+
     ORG $9000
     * label to branch to for 16 bit displacement  
 _16BIT:
