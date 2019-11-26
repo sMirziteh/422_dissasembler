@@ -111,11 +111,13 @@ CHK_LFT_NIB:
         ANDI.W  #Nib3Mask,D3 * clear all but left four bits
         CMPI.W  #$1000,D3   * if nibble3 == 1, branch to move byte (1)
         BEQ     load_MOVE_B
-        CMPI.W  #$2000,D3   * if nibble3 == 2, branch to move long (2)
-        BEQ     load_MOVE_L * will need to account for MOVEA
-        CMPI.W  #$3000,D3   * if nibble3 == 3, branch to move word (3)
-        BEQ     load_MOVE_W * will need to account for MOVEA        
-        CMPI.W  #$4000,D3   * if nibble3 == 4 branch to that set (not/nop/rts/jsr/MOVEM.L/lea)
+
+        CMPI.W  #$2000,D3   * if nibble3 == 2, branch to that set (move.l, movea.l)
+        BEQ     OP_2
+        CMPI.W  #$3000,D3   * if nibble3 == 3, branch to that set (move.w, movea.w)
+        BEQ     OP_3              
+        CMPI.W  #$4000,D3   * if nibble3 == 4 branch to that set (not/nop/rts/jsr/movem/lea)
+
         BEQ     OP_4 
         CMPI.W  #$5000,D3   * if nibble3 == 5, branch to ADDQ (5)
         BEQ     load_ADDQ
@@ -150,6 +152,19 @@ load_MOVE_B:    * load and print MOVE.B neumonic return to op loop
         CLR     D3
         JSR     MOVE_EA
         BRA     DECODE_DONE
+       
+OP_2:   * could be MOVE.L or MOVEA.L
+        MOVE.L  D2,D3   * copy instruction word
+        ANDI.W  #Bit1Mask,D3    * mask, isolate distinguishing bits 8-6
+        CMPI.W  #0040,D3        * if bits 8-6 are 001, instruction is MOVEA.L
+        BEQ     load_MOVEA_L
+        CMPI.W  #0040,D3        * if bits 8-6 are NOT 001, instruction is MOVE.L
+        BNE     load_MOVE_L
+        
+load_MOVEA_L:   * load and print MOVEA.L neumonic return to op loop
+        LEA     _MOVEA_L,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
 
 load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
         LEA     _MOVE_L,A1
@@ -157,6 +172,19 @@ load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
         JSR     MOVE_EA
         BRA     DECODE_DONE
         
+OP_3:   * could be MOVE.W or MOVEA.W
+        MOVE.L  D2,D3   * copy instruction word
+        ANDI.W  #Bit1Mask,D3    * mask, isolate distinguishing bits 8-6
+        CMPI.W  #0040,D3        * if bits 8-6 are 001, instruction is MOVEA.W
+        BEQ     load_MOVEA_W
+        CMPI.W  #0040,D3        * if bits 8-6 are NOT 001, instruction is MOVE.W
+        BNE     load_MOVE_W
+        
+load_MOVEA_W:   * load and print MOVEA.W neumonic return to op loop
+        LEA     _MOVEA_W,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+
 load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
         LEA     _MOVE_W,A1
         JSR     WRITE_ASCII
@@ -168,9 +196,24 @@ OP_4:   * could be not, nop, rts, jsr, MOVEM.L, lea
         ANDI.W  #Nib2Mask,D3
         CMPI.W  #$0600,D3   * if nibble 2 is 6, instruction is NOT
         BEQ     load_NOT
-        CMPI.W  #$0E00,D3  * if nibble 2 is E could be nop or rts
-        BEQ     NOP_RTS
-        * will need more subroutines for jsr, MOVEM.L, lea ***********
+
+        CMPI.W  #$0E00,D3  * if nibble 2 is E could be nop or rts or jsr
+        BEQ     NOP_RTS_JSR
+        
+        * try for LEA
+        MOVE.L  D2,D3
+        ANDI.W  #Bit1Mask,D3    * mask, isolate bits 8-6
+        CMPI.W  #$01C0,D3       * if bits 8-6 are 111, instruction is LEA
+        BEQ     load_LEA
+        
+        * try for MOVEM.W or MOVEM.L
+        MOVE.L  D2,D3
+        ANDI.W  #Bit1Mask,D3    * mask, isolate bits 8-6 for size
+        CMPI.W  #$0080,D3       * if bits 8-6 are 010, instruction is MOVEM.W
+        BEQ     load_MOVEM_W
+        CMPI.W  #$00C0,D3       * if bits 8-6 are 011, instruction is MOVEM.L
+        BEQ     load_MOVEM_L
+
         
         BRA     OP_ERR  * return to error decoding
         
@@ -179,7 +222,12 @@ load_NOT:   * load and print NOT neumonic return to op loop
         JSR     WRITE_ASCII
         BRA     DECODE_DONE
 
-NOP_RTS: * could be NOP or RTS     
+NOP_RTS_JSR: * could be NOP or RTS or JSR
+        MOVE.L  D2,D3
+        ANDI.W  #Bit1Mask,D3    * mask, isolate bits 8-6
+        CMPI.W  #$0080,D3       * if bits 8-6 are 010, instruction is JSR
+        BEQ     load_JSR
+    
         MOVE.L  D2,D3       *copy instruction word
         ANDI.W  #Byte0Mask,D3 * isolate right most byte
         
@@ -197,6 +245,26 @@ load_NOP:   * load and print NOP neumonic return to op loop
         
 load_RTS:   * load and print RTS neumonic return to op loop
         LEA     _RTS,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+load_LEA:   * load and print LEA neumonic return to op loop
+        LEA     _LEA,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+load_JSR:   * load and print JSR neumonic return to op loop
+        LEA     _JSR,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+load_MOVEM_W:   * load and print MOVEM.W neumonic return to op loop
+        LEA     _MOVEM_W,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+load_MOVEM_L:   * load and print MOVEM.L neumonic return to op loop
+        LEA     _MOVEM_L,A1
         JSR     WRITE_ASCII
         BRA     DECODE_DONE
 
@@ -243,7 +311,22 @@ load_MOVEQ: * load and print MOVEQ neumonic return to op loop
         BRA     DECODE_DONE
         
 OP_8:       * could be DIVU or OR
-        * unfinished *
+        MOVE.L  D2,D3       * copy instruction word
+        ANDI.W  #Bit1Mask,D3   * mask, isolate distinguishing bits 8-6
+        CMPI.W  #$00C0,D3       * if bits 8-6 are 011, instruction is DIVU
+        BEQ     load_DIVU
+        CMPI.W  #$00C0,D3       * if bits 8-6 are NOT 011, instruction is OR
+        BNE     load_OR
+
+load_DIVU:  * load and print DIVU neumonic return to op loop
+        LEA     _DIVU,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+load_OR:    * load and print DIVU neuomnic return to op loop
+        LEA     _OR,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
 
 load_SUB:   * load and print SUB neumonic return to op loop
         LEA     _SUB,A1
@@ -251,13 +334,161 @@ load_SUB:   * load and print SUB neumonic return to op loop
         BRA     DECODE_DONE
 
 OP_C:       * could be MULS or AND
-        * unfinished *
+        MOVE.L  D2,D3       * copy instruction word
+        ANDI.W  #Bit1Mask,D3    * mask, isolate distinguishing bits 8-6
+        CMPI.W  #$01C0,D3       * if bits 8-6 are 111, instruction is MULS
+        BEQ     load_MULS
+        CMPI.W  #$01C0,D3       * if bits 8-6 are NOT 111, instruction is AND
+        BNE     load_AND
+        
+load_MULS:  * load and print MULS neumonic return to op loop
+        LEA     _MULS,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+load_AND:   * load and print AND neumonic return to op loop
+        LEA     _AND,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
 
-OP_D        * could be ADD or ADDA
-        * unfinished *
+OP_D:       * could be ADD or ADDA
+        MOVE.L  D2,D3       * copy instruction word
+        ANDI.W  #Bit1Mask,D3    * mask, isolate bits 8-6 (opmode but distinguishes instr.)
+        CMPI.W  #$00C0,D3       * if bits 8-6 are 011, instruction is ADDA
+        BEQ     load_ADDA
+        CMPI.W  #$01C0,D3       * if bits 8-6 are 111, instruction is also ADDA
+        BEQ     load_ADDA
+        BNE     load_ADD        * if bits 8-6 are not either, instruction is ADD
+        
+load_ADDA:  * load and print ADDA neumonic return to op loop
+        LEA     _ADDA,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
 
-OP_E        * could be ASL, ASR, LSL, LSR
-        * unfinished *
+load_ADD:   * load and print ADD neumonic return to op loop
+        LEA     _ADD,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+
+OP_E:       * could be ASL, ASR, LSL, LSR (memory or register)
+        MOVE.L  D2,D3       * copy instruction word
+        ANDI.L  #$FFFF00FF,D3   * mask, isolate bits 7-6
+        CMPI.W  #$00C0,D3       * if bits 7-6 are 11, instruction is MEMORY shift
+        BEQ     MEMORY_shift
+        CMPI.W  #$00C0,D3       * if bits 7-6 are NOT 11, instruction is REG shift
+        BNE     REG_shift
+        
+MEMORY_shift:   * could be ASL, ASR, LSL, LSR (memory)
+        MOVE.L  D2,D3       * copy instruction word
+        ANDI.W  #Bit0Mask,D3    * mask, isolate bits 11-9
+        CMPI.W  #$0000,D3       * if bits 11-9 are 000, instruction is ASL or ASR (memory)
+        BEQ     ASL_ASR_MEM
+        CMPI.W  #$0200,D3       * if bits 11-9 are 001, instruction is LSL or LSR (memory)
+        BEQ     LSL_LSR_MEM
+        
+ASL_ASR_MEM:    * could be ASL or ASR (memory)
+        MOVE.L  D2,D3       * copy instruction word
+        ANDI.W  #Bit1Mask,D3    * mask, isolate bits 8-6
+        CMPI.W  #$00C0,D3       * if bits 8-6 are 011, instruction is ASR memory
+        BEQ     load_ASR_MEM
+        CMPI.W  #$01C0,D3       * if bits 8-6 are 111, instruction is ASL memory
+        BEQ     load_ASL_MEM
+        
+load_ASR_MEM:   * load and print ASR neumonic return to op loop
+        LEA     _ASR,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+load_ASL_MEM:   * load and print ASL neumonic return to op loop
+        LEA     _ASL,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+
+LSL_LSR_MEM:    * could be LSL or LSR (memory)
+        MOVE.L  D2,D3       * copy instruction word
+        ANDI.W  #Bit1Mask,D3    * mask, isolate bits 8-6
+        CMPI.W  #$00C0,D3       * if bits 8-6 are 011, instruction is LSR memory
+        BEQ     load_LSR_MEM
+        CMPI.W  #$01C0,D3       * if bits 8-6 are 111, instruction is LSL memory
+        BEQ     load_LSL_MEM 
+        
+load_LSR_MEM:   * load and print LSR neumonic return to op loop
+        LEA     _LSR,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+load_LSL_MEM:   * load and print LSL neumonic return to op loop
+        LEA     _LSL,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+
+REG_shift:      * could be ASL, ASR, LSL, LSR (register)
+        MOVE.L  D2,D3       * copy instruction word
+        ANDI.W  #Bit2Mask,D3    * mask, isolate bits 5-3
+        CMPI.W  #$0000,D3        * if bits 5-3 are 000, instruction is ASL or ASR (reg)
+        BEQ     ASL_ASR_REG
+        CMPI.W  #$0020,D3       * if bits 5-3 are 100, instruction is ASL or ASR (reg)
+        BEQ     ASL_ASR_REG
+        CMPI.W  #$0008,D3       * if bits 5-3 are 001, instruction is LSL or LSR (reg)
+        BEQ     LSL_LSR_REG
+        CMPI.W  #$0028,D3       * if bits 5-3 are 101, instruction is LSL or LSR (reg)
+        BEQ     LSL_LSR_REG
+        
+ASL_ASR_REG:    * could be ASL or ASR (register)
+        MOVE.L  D2,D3       * copy instruction word
+        ANDI.L  #Bit1Mask,D3    * mask, isolate bits 8-6
+        
+        CMPI.W  #$0000,D3       * if bits 8-6 are 000, instruction is ASR register
+        BEQ     load_ASR_REG
+        CMPI.W  #$0040,D3       * if bits 8-6 are 001, instruction is ASR register
+        BEQ     load_ASR_REG
+        CMPI.W  #$0080,D3       * if bits 8-6 are 010, instruction is ASR register
+        BEQ     load_ASR_REG
+        
+        CMPI.W  #$0100,D3       * if bits 8-6 are 100, instruction is ASL register
+        BEQ     load_ASL_REG
+        CMPI.W  #$0140,D3       * if bits 8-6 are 101, instruction is ASL register
+        BEQ     load_ASL_REG
+        CMPI.W  #$0180,D3       * if bits 8-6 are 110, instruction is ASL register
+        BEQ     load_ASL_REG
+
+load_ASR_REG:   * load and print ASR neumonic return to op loop
+        LEA     _ASR,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+load_ASL_REG:   * load and print ASL neumonic return to op loop
+        LEA     _ASL,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+
+LSL_LSR_REG:    * could be LSL or LSR (register)
+        MOVE.L  D2,D3       * copy instruction word
+        ANDI.L  #Bit1Mask,D3    * mask, isolate bits 8-6
+        
+        CMPI.W  #$0000,D3       * if bits 8-6 are 000, instruction is LSR register
+        BEQ     load_LSR_REG
+        CMPI.W  #$0040,D3       * if bits 8-6 are 001, instruction is LSR register
+        BEQ     load_LSR_REG
+        CMPI.W  #$0080,D3       * if bits 8-6 are 010, instruction is LSR register
+        BEQ     load_LSR_REG
+        
+        CMPI.W  #$0100,D3       * if bits 8-6 are 100, instruction is LSL register
+        BEQ     load_LSL_REG
+        CMPI.W  #$0140,D3       * if bits 8-6 are 101, instruction is LSL register
+        BEQ     load_LSL_REG
+        CMPI.W  #$0180,D3       * if bits 8-6 are 110, instruction is LSL register
+        BEQ     load_LSL_REG
+
+load_LSR_REG:   * load and print LSR neumonic return to op loop
+        LEA     _LSR,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
+        
+load_LSL_REG:   * load and print LSL neumonic return to op loop
+        LEA     _LSL,A1
+        JSR     WRITE_ASCII
+        BRA     DECODE_DONE
 
 
 ****       EA       ****
@@ -671,10 +902,17 @@ Byte1Mask   EQU     $FF00
 _NOT    DC.B    'NOT',0
 _NOP    DC.B    'NOP',0
 _RTS    DC.B    'RTS',0
-_MOVEM.L  DC.B    'MOVEM.L',0
+
+_MOVEM_W DC.B   'MOVEM.W',0
+_MOVEM_L DC.B   'MOVEM.L',0
+
 _MOVE_B DC.B    'MOVE.B',0
 _MOVE_L DC.B    'MOVE.L',0
 _MOVE_W DC.B    'MOVE.W',0
+_MOVEA_L DC.B   'MOVEA.L',0
+_MOVEA_W DC.B   'MOVEA.W',0
+_JSR    DC.B    'JSR',0
+_LEA    DC.B    'LEA',0
 _ADDQ   DC.B    'ADDQ',0
 _BRA    DC.B    'BRA',0
 _BEQ    DC.B    'BEQ',0
