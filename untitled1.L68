@@ -1,0 +1,43 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.16.01
+Created On: 11/11/2019 8:09:17 PM
+
+00000000                             1  *-----------------------------------------------------------
+00000000                             2  * Title      :
+00000000                             3  * Written by :
+00000000                             4  * Date       :
+00000000                             5  * Description:
+00000000                             6  *-----------------------------------------------------------
+00001000                             7      ORG    $1000
+00001000                             8  START:                  ; first instruction of program
+00001000                             9  
+00001000                            10  * Put program code here
+00001000                            11  
+00001000  343C 1203                 12          MOVE.W  #$1203,D2
+00001004  E04A                      13          LSR.W   #8,D2
+00001006  E84A                      14          LSR.W   #4,D2
+00001008  0242 0007                 15          ANDI.W  #$0007,D2
+0000100C  C6FC 0006                 16          MULU    #$6,D3
+00001010  41F8 1200                 17          LEA     $1200,A0
+00001014  4EB0 2000                 18          JSR 0(A0,D2)
+00001018                            19          
+00001018                            20          
+00001018                            21  TABLE:
+00001018  1A04                      22          MOVE.B D4,D5
+0000101A                            23          
+0000101A                            24  
+0000101A  FFFF FFFF                 25      SIMHALT             ; halt simulator
+0000101E                            26  
+0000101E                            27  * Put variables and constants here
+0000101E                            28  
+0000101E                            29      END    START        ; last line of source
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+START               1000
+TABLE               1018
