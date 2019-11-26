@@ -112,7 +112,7 @@ CHK_LFT_NIB:
         BEQ     load_MOVE_L * will need to account for MOVEA
         CMPI.W  #$3000,D3   * if nibble3 == 3, branch to move word (3)
         BEQ     load_MOVE_W * will need to account for MOVEA        
-        CMPI.W  #$4000,D3   * if nibble3 == 4 branch to that set (not/nop/rts/jsr/movem/lea)
+        CMPI.W  #$4000,D3   * if nibble3 == 4 branch to that set (not/nop/rts/jsr/MOVEM.L/lea)
         BEQ     OP_4 
         CMPI.W  #$5000,D3   * if nibble3 == 5, branch to ADDQ (5)
         BEQ     load_ADDQ
@@ -156,14 +156,14 @@ load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
         JSR     WRITE_ASCII
         BRA     DECODE_DONE
 
-OP_4:   * could be not, nop, rts, jsr, movem, lea
+OP_4:   * could be not, nop, rts, jsr, MOVEM.L, lea
         MOVE.L  D2,D3   * copy instruction word
         ANDI.W  #Nib2Mask,D3
         CMPI.W  #$0600,D3   * if nibble 2 is 6, instruction is NOT
         BEQ     load_NOT
         CMPI.W  #$0E00,D3  * if nibble 2 is E could be nop or rts
         BEQ     NOP_RTS
-        * will need more subroutines for jsr, movem, lea ***********
+        * will need more subroutines for jsr, MOVEM.L, lea ***********
         
         BRA     OP_ERR  * return to error decoding
         
@@ -260,7 +260,7 @@ OP_E        * could be ASL, ASR, LSL, LSR
 * prompts user for choice
 * sets d6 to valid choice
 GET_CHOICE: 
-        MOVEM   D0/D1/A1,-(SP)
+        MOVEM.L   D0/D1/A1,-(SP)
 HC_INT_LP:
         JSR     RESET_BUF_PTR   * move a4 to start of string buffer
         LEA     CHOICE_PROMPT,A1
@@ -283,21 +283,21 @@ CHOICE_ERR:
         
 CHOICE_DNE:
         MOVE.B  D1,D6
-        MOVEM   (SP)+,D0/D1/A1
+        MOVEM.L   (SP)+,D0/D1/A1
         RTS               
 
 * prompt user to press enter to continue
 WAIT_USR_INPUT:            
-        MOVEM   D0/D1/A1,-(SP)
+        MOVEM.L   D0/D1/A1,-(SP)
         LEA     ENT_TO_CONT,A1  * load and print prompt
         JSR     PRINT_A1
         MOVEQ.L #5,D0   * read in a char from keyboard
         TRAP    #15
-        MOVEM   (SP)+,D0/D1/A1
+        MOVEM.L   (SP)+,D0/D1/A1
         RTS
 
 LOAD_DATA_STR_INTO_BUF: * expects address to be in a5
-        MOVEM   D1,-(SP)
+        MOVEM.L   D1,-(SP)
         JSR     RESET_BUF_PTR
         MOVE.L  A5,D1
         JSR     WRITE_HEX_TO_ASCII * write memory address to buffer
@@ -306,7 +306,7 @@ LOAD_DATA_STR_INTO_BUF: * expects address to be in a5
         JSR     WRITE_ASCII     * write 'DATA    $' to buffer
         MOVE.W  (A5),D1   * load address contents of memory to d1 for printing
         JSR     WRITE_HEX_TO_ASCII * save to buffer
-        MOVEM   (SP)+,D1
+        MOVEM.L   (SP)+,D1
         RTS
 
 DONE    MOVE.B  #9,D0       * Trap task 9 halt simulator
@@ -315,7 +315,7 @@ DONE    MOVE.B  #9,D0       * Trap task 9 halt simulator
 * Converts ASCII string containing chars 0-9 and A-F uppercase to hexidecimal number
 * returns result in D6
 TO_HEX
-        MOVEM   D0-D2/A1-A2,-(SP)   * save state of registers to be changed
+        MOVEM.L   D0-D2/A1-A2,-(SP)   * save state of registers to be changed
         CLR.L   D2      * clear to hold digit magnitude
         CLR.L   D6      * clear to hold result
         SUBI    #1,D1    * subtract 1
@@ -333,21 +333,21 @@ _0_9    ANDI.B  #$0F,D0     * AND with 00001111 to isolate left most 4 bits, con
         ADD.L   D2,D6       * add to hex result
         SUBI.L    #4,D1       * subract one hex digit of bits from remaining length 
         BRA     TO_HEX_INTERNAL   * convert next byte
-END_H   MOVEM (SP)+,D0-D2/A1-A2
+END_H   MOVEM.L (SP)+,D0-D2/A1-A2
         RTS
 
 
 *   input address to hexadecimal saves output at A1
 IN_ADDR_TO_HEX:
-        MOVEM   D6,-(SP)
+        MOVEM.L   D6,-(SP)
         JSR     TO_HEX          * else convert to hex
         MOVE.L  D6,(A1)
-        MOVEM   (SP)+,D6
+        MOVEM.L   (SP)+,D6
         RTS
 
 * check start and end addresses for errors
 CHK_ST_E_ADRS: * sets D5 to 1 if an error has ocurred
-        MOVEM   D1/D4,-(SP)
+        MOVEM.L   D1/D4,-(SP)
         MOVEQ   #0,D5       * clear error flag
         MOVE.L  ST_ADDR,D2  * load start address
         MOVE.L  E_ADDR,D3   * load end address
@@ -380,37 +380,37 @@ S_GT_E:                     * start address greater than or less than end
         MOVEQ   #1,D5       * set error flag
       
 CHK_SEA_DONE:
-        MOVEM   (SP)+,D1/D4
+        MOVEM.L   (SP)+,D1/D4
         RTS             
         
 *   print address length input error
 PLEN_ERR:
-        MOVEM   A1,-(SP) 
+        MOVEM.L   A1,-(SP) 
         LEA     ADR_LEN_ERR,A1   * load address input error message 
         JSR     PRINT_A1
-        MOVEM   (SP)+,A1
+        MOVEM.L   (SP)+,A1
         RTS         
 
 PODD_ERR: * print start address odd error
-        MOVEM   A1,-(SP) 
+        MOVEM.L   A1,-(SP) 
         LEA     ADR_ODD_ERR,A1
         JSR     PRINT_A1
-        MOVEM   (SP)+,A1
+        MOVEM.L   (SP)+,A1
         RTS
 
 PS_GT_ERR: * print start address greater than end address error
-        MOVEM   A1,-(SP) 
+        MOVEM.L   A1,-(SP) 
         LEA     ADR_S_GT_E,A1
         JSR     PRINT_A1
-        MOVEM   (SP)+,A1
+        MOVEM.L   (SP)+,A1
         RTS
 
  
 PRINT_A1:
-        MOVEM   D0,-(SP) * save register state
+        MOVEM.L   D0,-(SP) * save register state
         MOVE.B  #14,D0   * print A1
         TRAP    #15
-        MOVEM   (SP)+,D0  *  restore register state
+        MOVEM.L   (SP)+,D0  *  restore register state
         RTS
 
 ****************************************************
@@ -420,7 +420,7 @@ PRINT_A1:
         
 WRITE_HEX_TO_ASCII: * write hex in d1 to a4 as ascii
         * may need to add case to handle sign extended shorts
-        MOVEM   D2-D4,-(SP)
+        MOVEM.L   D2-D4,-(SP)
         MOVE.L  D1,D2   * copy input to working temp var
         ANDI.L  #$FFFF0000,D2   * mask for bits 31-16
         CMPI.L  #0,D2           * if masked value is 0 there is no value in long portion of register for unsigned ints
@@ -451,18 +451,18 @@ h_a_low:
         LSR.L   #4,D3   * shift mask to isolate next hex digit
         SUBI.L  #4,D4   * subtract shift for next digit
         BRA     h_a_loop    * return to loop start
-h_a_dne MOVEM   (SP)+,D2-D4
+h_a_dne MOVEM.L   (SP)+,D2-D4
         RTS
 
 WRITE_ASCII:    * copies null terminated string from A1 to A4 without null
-        MOVEM   D1/A1,-(SP)
+        MOVEM.L   D1/A1,-(SP)
 w_a_loop:
         MOVE.B  (A1)+,D1    * load value at A1
         BEQ     w_a_done    * if 0(null) is moved copy is done
         MOVE.B  D1,(A4)+    * else copy value to A4
         BRA     w_a_loop
 w_a_done:
-        MOVEM   (SP)+,D1/A1
+        MOVEM.L   (SP)+,D1/A1
         RTS
 
 WRITE_NULL_A4: * used to terminate a string in memory 
@@ -496,11 +496,11 @@ TERM_PNT_RST_BUF: * write null then print contents then reset bufffer pointer
         RTS
         
 PRINT_STR_BUF: * prints string buffer contents to console
-        MOVEM   D0/A1,-(SP)
+        MOVEM.L   D0/A1,-(SP)
         LEA     STR_BUF,A1  * load string buffer
         MOVE    #14,D0       * print contents
         TRAP    #15
-        MOVEM   (SP)+,D0/A1
+        MOVEM.L   (SP)+,D0/A1
         RTS
 
 RESET_BUF_PTR:  * sets a4 to start of string buffer
@@ -535,7 +535,7 @@ Byte1Mask   EQU     $FF00
 _NOT    DC.B    'NOT',0
 _NOP    DC.B    'NOP',0
 _RTS    DC.B    'RTS',0
-_MOVEM  DC.B    'MOVEM',0
+_MOVEM.L  DC.B    'MOVEM.L',0
 _MOVE_B DC.B    'MOVE.B',0
 _MOVE_L DC.B    'MOVE.L',0
 _MOVE_W DC.B    'MOVE.W',0
@@ -591,6 +591,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
 
 
 
