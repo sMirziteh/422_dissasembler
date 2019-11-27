@@ -748,8 +748,8 @@ ODD_CHK:                    * check if start address is odd
         MOVEQ   #1,D5       * set error flag
         
 S_GT_E:                     * start address greater than or less than end
-        CMP.L   D1,D4       * check if end is greater than or equal to start
-        BGE     CHK_SEA_DONE   * skip to end if no error
+        CMP.L   D3,D2      * check if end is greater than or equal to start
+        BLT     CHK_SEA_DONE   * skip to end if no error
         JSR     PS_GT_ERR   * print start greater than end error
         MOVEQ   #1,D5       * set error flag
       
