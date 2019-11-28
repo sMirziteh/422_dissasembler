@@ -149,6 +149,7 @@ OP_DONE RTS
 load_MOVE_B:    * load and print MOVE.B neumonic return to op loop
         LEA     _MOVE_B,A1
         JSR     WRITE_ASCII
+		MOVE.B  #BYTE,INST_SZ	* save instruction size
         CLR     D3
         JSR     MOVE_EA
         BRA     DECODE_DONE
@@ -164,11 +165,13 @@ OP_2:   * could be MOVE.L or MOVEA.L
 load_MOVEA_L:   * load and print MOVEA.L neumonic return to op loop
         LEA     _MOVEA_L,A1
         JSR     WRITE_ASCII
+		MOVE.B  #LONG,INST_SZ	* save instruction size
         BRA     DECODE_DONE
 
 load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
         LEA     _MOVE_L,A1
         JSR     WRITE_ASCII
+		MOVE.B  #LONG,INST_SZ	* save instruction size
         JSR     MOVE_EA
         BRA     DECODE_DONE
         
@@ -183,11 +186,13 @@ OP_3:   * could be MOVE.W or MOVEA.W
 load_MOVEA_W:   * load and print MOVEA.W neumonic return to op loop
         LEA     _MOVEA_W,A1
         JSR     WRITE_ASCII
+		MOVE.B  #WORD,INST_SZ	* save instruction size
         BRA     DECODE_DONE
 
 load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
         LEA     _MOVE_W,A1
         JSR     WRITE_ASCII
+		MOVE.B  #WORD,INST_SZ	* save instruction size
         JSR     MOVE_EA
         BRA     DECODE_DONE
 
@@ -261,11 +266,13 @@ load_JSR:   * load and print JSR neumonic return to op loop
 load_MOVEM_W:   * load and print MOVEM.W neumonic return to op loop
         LEA     _MOVEM_W,A1
         JSR     WRITE_ASCII
+		MOVE.B  #WORD,INST_SZ	* save instruction size
         BRA     DECODE_DONE
         
 load_MOVEM_L:   * load and print MOVEM.L neumonic return to op loop
         LEA     _MOVEM_L,A1
         JSR     WRITE_ASCII
+		MOVE.B  #LONG,INST_SZ	* save instruction size
         BRA     DECODE_DONE
 
 load_ADDQ:  * load and print ADDQ neumonic return to op loop
@@ -580,8 +587,29 @@ EA101:  RTS
 
 EA110:  RTS 
 
-EA111:  RTS 
-    
+EA111:  	
+		DIVU	#6,D3	* divide register num by 6 to undo jmp table multiplication
+		
+		CMP		#0,D3	* if reg 0 load word from mem
+		BNE		EA111_R1
+		LEA		_ABS,A1
+		JSR		WRITE_ASCII		* write $ to buffer
+		JSR		NEXT_MEM_WORD_TO_BUF
+		RTS
+EA111_R1:
+		CMP		#1,D3	* if reg 1 load long from mem
+		BNE		EA111_R4
+		LEA		_ABS,A1
+		JSR		WRITE_ASCII		* write $ to buffer
+		JSR		NEXT_MEM_LONG_TO_BUF
+		RTS
+EA111_R4:		
+		CMP		#%100,D3  * if reg 4 load immediate value
+		* will need to know instruction size to propperly grab this
+*		BNE	    TODO EA ERROR
+		JSR		ADD_IMMEDIATE_TO_BUF
+		RTS
+		
 
 ********* JUMP TABLE FOR REGISTERS ******
 EA_REG:
@@ -629,6 +657,50 @@ REG111:
   
  
 ***       UTILS     ****
+
+ADD_IMMEDIATE_TO_BUF:
+		MOVEM.L	D1/A1,-(SP)
+		MOVE.B	INST_SZ,D1	* load instruction size
+		CMPI.B	#BYTE,D1
+		BEQ		IN_IM_W		* if byte goto word since behavior is the same
+     	CMPI.B  #WORD,D1
+		BNE		CMP_IM_L	* if not equal to word branch compare to long
+IN_IM_W:
+		LEA		_IMD,A1		* print next mem word as imediate data to buffer
+		JSR		WRITE_ASCII
+		JSR		NEXT_MEM_WORD_TO_BUF
+		MOVEM.L (SP)+,D1/A1
+		RTS
+CMP_IM_L:
+		CMPI.B  #LONG,D1
+*		TODO BNE		EA ERROR
+		LEA		_IMD,A1      * print next mem long as imediate data to buffer
+		JSR		WRITE_ASCII
+		JSR     NEXT_MEM_LONG_TO_BUF
+		MOVEM.L (SP)+,D1/A1
+		RTS
+
+* read next word of memory to str_buffer advancing current pointer
+NEXT_MEM_WORD_TO_BUF:
+		MOVEM.L	D1/D5,-(SP)
+		ADDA.L	#2,A5	* advance pointer
+		MOVE.W	(A5),D1	* load next word of memory
+		MOVEQ.L #0,D5	* set hex length to word
+		JSR 	WRITE_HEX_TO_ASCII
+		MOVEM.L (SP)+,D1/D5
+		RTS
+		
+* read next Long of memory to str_buffer advancing current pointer
+NEXT_MEM_LONG_TO_BUF:
+		MOVEM.L	D1/D5,-(SP)
+		ADDA.L	#2,A5 * advance pointer
+		MOVE.L	(A5),D1
+		ADDA.L	#2,A5 * advance pointer again to account for long
+		MOVEQ.L #32,D5	* set hex length to long
+		JSR 	WRITE_HEX_TO_ASCII
+		MOVEM.L (SP)+,D1/D5
+		RTS
+
 * prompts user for choice
 * sets d6 to valid choice
 GET_CHOICE: 
@@ -749,7 +821,7 @@ ODD_CHK:                    * check if start address is odd
         
 S_GT_E:                     * start address greater than or less than end
         CMP.L   D3,D2      * check if end is greater than or equal to start
-        BLT     CHK_SEA_DONE   * skip to end if no error
+        BLE     CHK_SEA_DONE   * skip to end if no error
         JSR     PS_GT_ERR   * print start greater than end error
         MOVEQ   #1,D5       * set error flag
       
@@ -888,6 +960,7 @@ E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for th
 ST_LEN  DCB.B   1,0 * var to track start address length
 E_LEN   DC.B    1,0 * var to track end address length
 STR_BUF DCB.B   241,0  * buffer to hold 240 chars + null terminator. 3 80 char lines
+INST_SZ	DC.B	1,0		* used to store instuction size
          
 ****    CONST   ****
 CR          EQU     $0D     * carraige return          
@@ -896,6 +969,9 @@ SPACE       EQU     $20     * ascii space
 TAB         EQU     $09     * ascii tab character
 DISSASEMBLE EQU     $01     * dissasemble choice number
 QUIT_PROG   EQU     $02     * quit choice number
+BYTE		EQU		%01
+WORD		EQU		%11
+LONG		EQU		%10
 
 * masks for isolating nibbles with and 0 being least significant nibble
 Nib3Mask    EQU     $F000 
@@ -916,33 +992,33 @@ _NOT    DC.B    'NOT',0
 _NOP    DC.B    'NOP',0
 _RTS    DC.B    'RTS',0
 
-_MOVEM_W DC.B   'MOVEM.W',0
-_MOVEM_L DC.B   'MOVEM.L',0
+_MOVEM_W DC.B   'MOVEM.W ',0
+_MOVEM_L DC.B   'MOVEM.L ',0
 
-_MOVE_B DC.B    'MOVE.B',0
-_MOVE_L DC.B    'MOVE.L',0
-_MOVE_W DC.B    'MOVE.W',0
-_MOVEA_L DC.B   'MOVEA.L',0
-_MOVEA_W DC.B   'MOVEA.W',0
-_JSR    DC.B    'JSR',0
-_LEA    DC.B    'LEA',0
-_ADDQ   DC.B    'ADDQ',0
-_BRA    DC.B    'BRA',0
-_BEQ    DC.B    'BEQ',0
-_BGT    DC.B    'BGT',0
-_BLE    DC.B    'BLE',0
-_MOVEQ  DC.B    'MOVEQ',0
-_DIVU   DC.B    'DIVU',0
-_OR     DC.B    'OR',0
-_SUB    DC.B    'SUB',0
-_MULS   DC.B    'MULS',0
-_AND    DC.B    'AND',0
-_ADD    DC.B    'ADD',0
-_ADDA   DC.B    'ADDA',0
-_ASL    DC.B    'ASL',0
-_ASR    DC.B    'ASR',0
-_LSL    DC.B    'LSL',0
-_LSR    DC.B    'LSR',0
+_MOVE_B DC.B    'MOVE.B ',0
+_MOVE_L DC.B    'MOVE.L ',0
+_MOVE_W DC.B    'MOVE.W ',0
+_MOVEA_L DC.B   'MOVEA.L ',0
+_MOVEA_W DC.B   'MOVEA.W ',0
+_JSR    DC.B    'JSR ',0
+_LEA    DC.B    'LEA ',0
+_ADDQ   DC.B    'ADDQ ',0
+_BRA    DC.B    'BRA ',0
+_BEQ    DC.B    'BEQ ',0
+_BGT    DC.B    'BGT ',0
+_BLE    DC.B    'BLE ',0
+_MOVEQ  DC.B    'MOVEQ ',0
+_DIVU   DC.B    'DIVU ',0
+_OR     DC.B    'OR ',0
+_SUB    DC.B    'SUB ',0
+_MULS   DC.B    'MULS ',0
+_AND    DC.B    'AND ',0
+_ADD    DC.B    'ADD ',0
+_ADDA   DC.B    'ADDA ',0
+_ASL    DC.B    'ASL ',0
+_ASR    DC.B    'ASR ',0
+_LSL    DC.B    'LSL ',0
+_LSR    DC.B    'LSR ',0
 
 ****    Modes    ****
 _DR             DC.B   'D',0
