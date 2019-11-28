@@ -580,8 +580,25 @@ EA101:  RTS
 
 EA110:  RTS 
 
-EA111:  RTS 
-    
+EA111:  
+		LEA		_ABS,A1
+		JSR		WRITE_ASCII
+		DIVU	#6,D3
+		CMP		#0,D3
+		BNE		EA111_R1
+		JSR		NEXT_MEM_WORD_TO_BUF
+		RTS
+EA111_R1:
+		CMP		#1,D3
+		BNE		EA111_R4
+		JSR		NEXT_MEM_LONG_TO_BUF
+		RTS
+EA111_R4:
+		CMP		#%100,D3
+*		BNE	    TODO EA ERROR
+
+		RTS
+		
 
 ********* JUMP TABLE FOR REGISTERS ******
 EA_REG:
@@ -629,6 +646,28 @@ REG111:
   
  
 ***       UTILS     ****
+
+* read next word of memory to str_buffer advancing current pointer
+NEXT_MEM_WORD_TO_BUF:
+		MOVEM.L	D1/D5,-(SP)
+		ADDA.L	#2,A5	* advance pointer
+		MOVE.W	(A5),D1	* load next word of memory
+		MOVEQ.L #0,D5	* set hex length to word
+		JSR 	WRITE_HEX_TO_ASCII
+		MOVEM.L (SP)+,D1/D5
+		RTS
+		
+* read next Long of memory to str_buffer advancing current pointer
+NEXT_MEM_LONG_TO_BUF:
+		MOVEM.L	D1/D5,-(SP)
+		ADDA.L	#2,A5 * advance pointer
+		MOVE.L	(A5),D1
+		ADDA.L	#2,A5 * advance pointer again to account for long
+		MOVEQ.L #32,D5	* set hex length to long
+		JSR 	WRITE_HEX_TO_ASCII
+		MOVEM.L (SP)+,D1/D5
+		RTS
+
 * prompts user for choice
 * sets d6 to valid choice
 GET_CHOICE: 
@@ -749,7 +788,7 @@ ODD_CHK:                    * check if start address is odd
         
 S_GT_E:                     * start address greater than or less than end
         CMP.L   D3,D2      * check if end is greater than or equal to start
-        BLT     CHK_SEA_DONE   * skip to end if no error
+        BLE     CHK_SEA_DONE   * skip to end if no error
         JSR     PS_GT_ERR   * print start greater than end error
         MOVEQ   #1,D5       * set error flag
       
@@ -916,33 +955,33 @@ _NOT    DC.B    'NOT',0
 _NOP    DC.B    'NOP',0
 _RTS    DC.B    'RTS',0
 
-_MOVEM_W DC.B   'MOVEM.W',0
-_MOVEM_L DC.B   'MOVEM.L',0
+_MOVEM_W DC.B   'MOVEM.W ',0
+_MOVEM_L DC.B   'MOVEM.L ',0
 
-_MOVE_B DC.B    'MOVE.B',0
-_MOVE_L DC.B    'MOVE.L',0
-_MOVE_W DC.B    'MOVE.W',0
-_MOVEA_L DC.B   'MOVEA.L',0
-_MOVEA_W DC.B   'MOVEA.W',0
-_JSR    DC.B    'JSR',0
-_LEA    DC.B    'LEA',0
-_ADDQ   DC.B    'ADDQ',0
-_BRA    DC.B    'BRA',0
-_BEQ    DC.B    'BEQ',0
-_BGT    DC.B    'BGT',0
-_BLE    DC.B    'BLE',0
-_MOVEQ  DC.B    'MOVEQ',0
-_DIVU   DC.B    'DIVU',0
-_OR     DC.B    'OR',0
-_SUB    DC.B    'SUB',0
-_MULS   DC.B    'MULS',0
-_AND    DC.B    'AND',0
-_ADD    DC.B    'ADD',0
-_ADDA   DC.B    'ADDA',0
-_ASL    DC.B    'ASL',0
-_ASR    DC.B    'ASR',0
-_LSL    DC.B    'LSL',0
-_LSR    DC.B    'LSR',0
+_MOVE_B DC.B    'MOVE.B ',0
+_MOVE_L DC.B    'MOVE.L ',0
+_MOVE_W DC.B    'MOVE.W ',0
+_MOVEA_L DC.B   'MOVEA.L ',0
+_MOVEA_W DC.B   'MOVEA.W ',0
+_JSR    DC.B    'JSR ',0
+_LEA    DC.B    'LEA ',0
+_ADDQ   DC.B    'ADDQ ',0
+_BRA    DC.B    'BRA ',0
+_BEQ    DC.B    'BEQ ',0
+_BGT    DC.B    'BGT ',0
+_BLE    DC.B    'BLE ',0
+_MOVEQ  DC.B    'MOVEQ ',0
+_DIVU   DC.B    'DIVU ',0
+_OR     DC.B    'OR ',0
+_SUB    DC.B    'SUB ',0
+_MULS   DC.B    'MULS ',0
+_AND    DC.B    'AND ',0
+_ADD    DC.B    'ADD ',0
+_ADDA   DC.B    'ADDA ',0
+_ASL    DC.B    'ASL ',0
+_ASR    DC.B    'ASR ',0
+_LSL    DC.B    'LSL ',0
+_LSR    DC.B    'LSR ',0
 
 ****    Modes    ****
 _DR             DC.B   'D',0
