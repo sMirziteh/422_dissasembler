@@ -582,19 +582,22 @@ EA110:  RTS
 
 EA111:  
 		LEA		_ABS,A1
-		JSR		WRITE_ASCII
-		DIVU	#6,D3
-		CMP		#0,D3
+		JSR		WRITE_ASCII		* write $ to buffer
+		
+		DIVU	#6,D3	* divide register num by 6 to undo jmp table multiplication
+		
+		CMP		#0,D3	* if reg 0 load word from mem
 		BNE		EA111_R1
 		JSR		NEXT_MEM_WORD_TO_BUF
 		RTS
 EA111_R1:
-		CMP		#1,D3
+		CMP		#1,D3	* if reg 1 load long from mem
 		BNE		EA111_R4
 		JSR		NEXT_MEM_LONG_TO_BUF
 		RTS
-EA111_R4:
-		CMP		#%100,D3
+EA111_R4:		
+		CMP		#%100,D3  * if reg 4 load immediate value
+		* will need to know instruction size to propperly grab this
 *		BNE	    TODO EA ERROR
 
 		RTS
