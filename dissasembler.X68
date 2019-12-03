@@ -587,7 +587,7 @@ load_LSL_L_REG:   * load and print LSL.L neumonic return to op loop
 * prompts user for choice
 * sets d6 to valid choice
 GET_CHOICE: 
-        MOVEM   D0/D1/A1,-(SP)
+        MOVEM.L D0/D1/A1,-(SP)
 HC_INT_LP:
         JSR     RESET_BUF_PTR   * move a4 to start of string buffer
         LEA     CHOICE_PROMPT,A1
@@ -610,17 +610,17 @@ CHOICE_ERR:
         
 CHOICE_DNE:
         MOVE.B  D1,D6
-        MOVEM   (SP)+,D0/D1/A1
+        MOVEM.L (SP)+,D0/D1/A1
         RTS               
 
 * prompt user to press enter to continue
 WAIT_USR_INPUT:            
-        MOVEM   D0/D1/A1,-(SP)
+        MOVEM.L D0/D1/A1,-(SP)
         LEA     ENT_TO_CONT,A1  * load and print prompt
         JSR     PRINT_A1
         MOVEQ.L #5,D0   * read in a char from keyboard
         TRAP    #15
-        MOVEM   (SP)+,D0/D1/A1
+        MOVEM.L (SP)+,D0/D1/A1
         RTS
 
 LOAD_DATA_STR_INTO_BUF: * expects address to be in a5
