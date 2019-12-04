@@ -309,6 +309,11 @@ load_JSR:   * load and print JSR neumonic return to op loop
         LEA     _JSR,A1
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
+        * check for invalid eas
+        JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
+        JSR     SRC_AN_PINC_INVALID     * -(AN) invalid
+        JSR     SRC_AN_PDEC_INVALID     * (AN)+ invalid
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
         
 load_MOVEM_W:   * load and print MOVEM.W neumonic return to op loop
@@ -543,7 +548,7 @@ load_ASL_MEM:   * load and print ASL neumonic return to op loop
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
 
-LSL_LSR_MEM:    * could be LSL or LSR (memory)
+LSL_LSR_MEM:    * could be LSL or LSR (memory) 
         MOVE.L  D2,D3       * copy instruction word
         ANDI.W  #Bit1Mask,D3    * mask, isolate bits 8-6
         CMPI.W  #$00C0,D3       * if bits 8-6 are 011, instruction is LSR memory
@@ -869,17 +874,10 @@ REG111:
 * invalid codes for all instructions
 BASE_EA_ERR_CHK:
         MOVEM.L D6-D7,-(SP)
-        CLR.L   D6
-        CLR.L   D7
-        * load source modes and registers
-        MOVE.B  SRC_MODE,D6
-        MOVE.B  SRC_REG,D7
+        JSR LOAD_SRC_EA_D6_D7
         JSR GLOBAL_INVALID_EAS
-        * load destination modes and registers
-        MOVE.B  DEST_MODE,D6
-        MOVE.B  DEST_REG,D7
+        JSR LOAD_DEST_EA_D6_D7
         JSR GLOBAL_INVALID_EAS
-
         MOVEM.L (SP)+,D6-D7
         RTS
      
@@ -899,6 +897,22 @@ LOAD_EA_ERR_MSG:
         RTS
 
 
+LOAD_SRC_EA_D6_D7:
+        CLR.L   D6
+        CLR.L   D7
+        * load source modes and registers
+        MOVE.B  SRC_MODE,D6
+        MOVE.B  SRC_REG,D7
+        RTS
+
+LOAD_DEST_EA_D6_D7:
+        CLR.L   D6
+        CLR.L   D7
+        * load destination modes and registers
+        MOVE.B  DEST_MODE,D6
+        MOVE.B  DEST_REG,D7
+        RTS
+
 *** EA ERROR groups ***
 
 * load d6 with mode, d7 with register
@@ -910,6 +924,49 @@ GLOBAL_INVALID_EAS:
         JSR MODE_7_EA_CHK * error on invalid mode 7 reg values
         RTS
 
+* SRC bits 0-5 
+SRC_GLOBAL_INVALID:
+        MOVEM.L D6-D7,-(SP)
+        JSR     LOAD_SRC_EA_D6_D7
+        JSR     GLOBAL_INVALID_EAS
+        MOVEM.L (SP)+,D6-D7
+        RTS
+
+* destination (bits 6-11) address register and imediate mode are invalid eas
+DEST_AN_IM_INVALID:
+        MOVEM.L D6-D7,-(SP)
+        JSR     LOAD_DEST_EA_D6_D7
+        JSR     IM_DATA_EA_CHK
+        JSR     AN_EA_CHK
+        MOVEM.L (SP)+,D6-D7
+        RTS
+
+* error for  DN, AN, or Imediate modes for source ea bits 0-5
+SRC_DN_AN_IM_INVALID:
+        MOVEM.L D6-D7,-(SP)
+        JSR     LOAD_SRC_EA_D6_D7
+        JSR     IM_DATA_EA_CHK
+        JSR     AN_EA_CHK
+        JSR     DN_EA_CHK
+        MOVEM.L (SP)+,D6-D7
+        RTS
+
+* error for -(AN) in source mode bits 3-5
+SRC_AN_PDEC_INVALID:
+        MOVEM.L D6-D7,-(SP)
+        JSR     LOAD_SRC_EA_D6_D7
+        JSR     AN_PDEC_EA_CHK
+        MOVEM.L (SP)+,D6-D7
+        RTS
+
+* error for (AN)+ in source mode bits 3-5
+SRC_AN_PINC_INVALID:
+        MOVEM.L D6-D7,-(SP)
+        JSR     LOAD_SRC_EA_D6_D7
+        JSR     AN_PINC_EA_CHK
+        MOVEM.L (SP)+,D6-D7
+        RTS
+
 *** Checks for individual EA modes
 
 * prints ea error to buffer if DN mode detected
@@ -917,7 +974,7 @@ GLOBAL_INVALID_EAS:
 DN_EA_CHK:
         CMP.B #%000,D6
         BNE   END_DN_EA_CHK
-        JSR EA_ERR
+        JSR   EA_ERR
 END_DN_EA_CHK:
         RTS
 
@@ -1044,27 +1101,6 @@ MODE_7_EA_CHK:
         BRA   END_MODE_7_EA_CHK
 M7_ERR  JSR   EA_ERR
 END_MODE_7_EA_CHK:
-        RTS
-
-* destination adress register and imediate mode are invalid eas
-DEST_AN_IM_INVALID:
-        MOVEM.L D0-D1,-(SP)
-        * load source modes and registers
-  * load destination modes and registers
-        MOVE.B  DEST_MODE,D0
-        MOVE.B  DEST_REG,D1
-        CMP.B   #1,D0   * if address register mode error
-        BNE     AN_IM_01
-        JSR     EA_ERR
-        BRA     AN_IM_02
-AN_IM_01:
-        CMP.B   #7,D0    * if immediate data error
-        BNE     AN_IM_02
-        CMP.B   #4,D1
-        BNE     AN_IM_02
-        JSR     EA_ERR     
-AN_IM_02: 
-        MOVEM.L (SP)+,D0-D1
         RTS
 
 ***       UTILS     ****
@@ -1534,6 +1570,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
 
 
 
