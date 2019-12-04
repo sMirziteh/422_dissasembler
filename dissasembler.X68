@@ -1069,8 +1069,12 @@ STR_BUF DCB.B   241,0  * buffer to hold 240 chars + null terminator. 3 80 char l
 INST_SZ	DCB.B	1,0		* used to store instuction size
 DEST_MODE:
         DCB.B   1,0     * var for destination ea mode
+DEST_REG:
+        DCB.B   1,0     * var to save destination register in
 SRC_MODE:
         DCB.B   1,0     * var for source ea mode
+SRC_REG: 
+        DCB.B   1,0     * var to save source register in
          
 ****    CONST   ****
 CR          EQU     $0D     * carraige return          
