@@ -152,6 +152,7 @@ OP_2:   * could be MOVE.L or MOVEA.L
 load_MOVEA_L:   * load and print MOVEA.L neumonic return to op loop
         LEA     _MOVEA_L,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ	* save instruction size
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
@@ -178,6 +179,7 @@ OP_3:   * could be MOVE.W or MOVEA.W
 load_MOVEA_W:   * load and print MOVEA.W neumonic return to op loop
         LEA     _MOVEA_W,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ	* save instruction size
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
@@ -233,6 +235,7 @@ NOT_:   * instruction is not, determine size
 load_NOT_B:   * load and print NOT.B neumonic return to op loop
         LEA     _NOT_B,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
@@ -242,6 +245,7 @@ load_NOT_B:   * load and print NOT.B neumonic return to op loop
 load_NOT_W:   * load and print NOT.W neumonic return to op loop
         LEA     _NOT_W,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
@@ -251,6 +255,7 @@ load_NOT_W:   * load and print NOT.W neumonic return to op loop
 load_NOT_L:   * load and print NOT.L neumonic return to op loop
         LEA     _NOT_L,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ   * save instruction size
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
@@ -276,16 +281,19 @@ NOP_RTS_JSR: * could be NOP or RTS or JSR
 load_NOP:   * load and print NOP neumonic return to op loop
         LEA     _NOP,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         BRA     DECODE_DONE
         
 load_RTS:   * load and print RTS neumonic return to op loop
         LEA     _RTS,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         BRA     DECODE_DONE
         
 load_LEA:   * load and print LEA neumonic return to op loop
         LEA     _LEA,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
@@ -294,11 +302,13 @@ load_LEA:   * load and print LEA neumonic return to op loop
 load_JSR:   * load and print JSR neumonic return to op loop
         LEA     _JSR,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         BRA     DECODE_DONE
         
 load_MOVEM_W:   * load and print MOVEM.W neumonic return to op loop
         LEA     _MOVEM_W,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
 	MOVE.B  #WORD,INST_SZ	* save instruction size
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
@@ -308,6 +318,7 @@ load_MOVEM_W:   * load and print MOVEM.W neumonic return to op loop
 load_MOVEM_L:   * load and print MOVEM.L neumonic return to op loop
         LEA     _MOVEM_L,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ	* save instruction size
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
@@ -327,6 +338,7 @@ ADDQ_:  * instruction is addq, determine size
 load_ADDQ_B:  * load and print ADDQ.B neumonic return to op loop
         LEA     _ADDQ_B,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
@@ -336,6 +348,7 @@ load_ADDQ_B:  * load and print ADDQ.B neumonic return to op loop
 load_ADDQ_W:  * load and print ADDQ.W neumonic return to op loop
         LEA     _ADDQ_W,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
@@ -345,6 +358,7 @@ load_ADDQ_W:  * load and print ADDQ.W neumonic return to op loop
 load_ADDQ_L:  * load and print ADDQ.L neumonic return to op loop
         LEA     _ADDQ_L,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
@@ -366,28 +380,31 @@ OP_6:   * could be BRA, BEQ, BGT, BLE
 load_BRA:   * load and print BRA neumonic return to op loop
         LEA     _BRA,A1
         JSR     WRITE_ASCII
-
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         BRA     DECODE_DONE
         
 load_BEQ:   * load and print BEQ neumonic return to op loop
         LEA     _BEQ,A1
         JSR     WRITE_ASCII
-
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         BRA     DECODE_DONE
 
 load_BGT:   * load and print BGT neumonic return to op loop
         LEA     _BGT,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         BRA     DECODE_DONE
         
 load_BLE:   * load and print BLE neumonic return to op loop
         LEA     _BLE,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         BRA     DECODE_DONE
         
 load_MOVEQ: * load and print MOVEQ neumonic return to op loop
         LEA     _MOVEQ,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         BRA     DECODE_DONE
         
 OP_8:       * could be DIVU or OR
@@ -401,6 +418,7 @@ OP_8:       * could be DIVU or OR
 load_DIVU:  * load and print DIVU neumonic return to op loop
         LEA     _DIVU,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
@@ -409,6 +427,7 @@ load_DIVU:  * load and print DIVU neumonic return to op loop
 load_OR:    * load and print DIVU neuomnic return to op loop
         LEA     _OR,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
@@ -417,6 +436,7 @@ load_OR:    * load and print DIVU neuomnic return to op loop
 load_SUB:   * load and print SUB neumonic return to op loop
         LEA     _SUB,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
@@ -433,6 +453,7 @@ OP_C:       * could be MULS or AND
 load_MULS:  * load and print MULS neumonic return to op loop
         LEA     _MULS,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
@@ -441,6 +462,7 @@ load_MULS:  * load and print MULS neumonic return to op loop
 load_AND:   * load and print AND neumonic return to op loop
         LEA     _AND,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
@@ -458,6 +480,7 @@ OP_D:       * could be ADD or ADDA
 load_ADDA:  * load and print ADDA neumonic return to op loop
         LEA     _ADDA,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
@@ -466,6 +489,7 @@ load_ADDA:  * load and print ADDA neumonic return to op loop
 load_ADD:   * load and print ADD neumonic return to op loop
         LEA     _ADD,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
@@ -498,6 +522,7 @@ ASL_ASR_MEM:    * could be ASL or ASR (memory)
 load_ASR_MEM:   * load and print ASR neumonic return to op loop
         LEA     _ASR,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
@@ -506,6 +531,7 @@ load_ASR_MEM:   * load and print ASR neumonic return to op loop
 load_ASL_MEM:   * load and print ASL neumonic return to op loop
         LEA     _ASL,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
@@ -522,6 +548,7 @@ LSL_LSR_MEM:    * could be LSL or LSR (memory)
 load_LSR_MEM:   * load and print LSR neumonic return to op loop
         LEA     _LSR,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
@@ -530,6 +557,7 @@ load_LSR_MEM:   * load and print LSR neumonic return to op loop
 load_LSL_MEM:   * load and print LSL neumonic return to op loop
         LEA     _LSL,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
@@ -568,36 +596,42 @@ ASL_ASR_REG:    * could be ASL or ASR (register)
 load_ASR_B_REG:   * load and print ASR.B neumonic return to op loop
         LEA     _ASR_B,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
         BRA     DECODE_DONE
         
 load_ASR_W_REG:   * load and print ASR.W neumonic return to op loop
         LEA     _ASR_W,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
         BRA     DECODE_DONE
         
 load_ASR_L_REG:   * load and print ASR.L neumonic return to op loop
         LEA     _ASR_L,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ   * save instruction size
         BRA     DECODE_DONE
         
 load_ASL_B_REG:   * load and print ASL.B neumonic return to op loop
         LEA     _ASL_B,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
         BRA     DECODE_DONE
         
 load_ASL_W_REG:   * load and print ASL.W neumonic return to op loop
         LEA     _ASL_W,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
         BRA     DECODE_DONE
         
 load_ASL_L_REG:   * load and print ASL.L neumonic return to op loop
         LEA     _ASL_L,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ   * save instruction size
         BRA     DECODE_DONE
 
@@ -622,36 +656,42 @@ LSL_LSR_REG:    * could be LSL or LSR (register)
 load_LSR_B_REG:   * load and print LSR.B neumonic return to op loop
         LEA     _LSR_B,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
         BRA     DECODE_DONE
         
 load_LSR_W_REG:   * load and print LSR.W neumonic return to op loop
         LEA     _LSR_W,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
         BRA     DECODE_DONE
         
 load_LSR_L_REG:   * load and print LSR.L neumonic return to op loop
         LEA     _LSR_L,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ   * save instruction size
         BRA     DECODE_DONE
         
 load_LSL_B_REG:   * load and print LSL.B neumonic return to op loop
         LEA     _LSL_B,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
         BRA     DECODE_DONE
         
 load_LSL_W_REG:   * load and print LSL.W neumonic return to op loop
         LEA     _LSL_W,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
         BRA     DECODE_DONE
         
 load_LSL_L_REG:   * load and print LSL.L neumonic return to op loop
         LEA     _LSL_L,A1
         JSR     WRITE_ASCII
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ   * save instruction size
         BRA     DECODE_DONE
 
