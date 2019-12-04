@@ -96,6 +96,7 @@ OP_CODES:
         MOVE.L  E_ADDR,A6   * load ending address into a6
         
 OP_START:
+        MOVE.L  SP,SP_COPY * save copy of stack pointer so it can be reset when an error occurs            
         * write address and a tab to str buffer
         MOVE.L  A5,D1   * load address from A5 into D1
         MOVEQ   #32,D5   * set hex length to long for address printing
@@ -138,6 +139,8 @@ OP_ERR  JSR     LOAD_DATA_STR_INTO_BUF
         
 
 DECODE_DONE:    * print newline then check if op-code loop is done
+        JSR     BASE_EA_ERR_CHK     * check for standard EA errors
+EA_ERR_DONE:
         JSR     NL_TERM_PNT_RST_BUF * write newline then print
         ADD.L   #2,A5   * increment current address pointer by 2 bytes 
         CMP.L   A6,A5  * loop if start is less than or equal to end
@@ -755,6 +758,58 @@ REG111:
         RTS   
   
  
+***      EA ERRORS      ***
+
+* invalid codes for all instructions
+BASE_EA_ERR_CHK:
+        MOVEM.L D0-D1/A0,-(SP)
+        * load modes and registers
+        MOVE.B  SRC_MODE,D0
+        MOVE.B  SRC_REG,D1
+        MOVE.B  DEST_MODE,D0
+        MOVE.B  DEST_REG,D1
+
+
+        MOVEM.L (SP)+,D0-D1/A0
+        RTS
+* jmp table to handle base ea errors        
+BASE_EA_ERR_MODES:
+        * NOP slide to catch good modes
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        RTS * return on good modes
+        NOP * 2 extra words needed for ofset to jmps
+        NOP
+        JMP EA_ERR      * mode (d16,An)      
+        JMP EA_ERR      * mode (d8,An,Xn)
+        JMP MODE_7_CHK
+
+        
+* write error to string buffer and move on to next instruction
+EA_ERR:
+        *TODO write error message
+        * reset stack pointer in case of error so that stack does not slowly fill due to rts not being called
+        MOVEA.L SP_COPY,SP 
+        BRA EA_ERR_DONE
+
+* check mode 7 for invalid reg values
+MODE_7_CHK:
+        CMP.B #%010,D1 * check for (d16,PC) 
+        BEQ   EA_ERR
+        CMP.B #%011,D1 * check for (d8,PC,Xn)
+        BEQ   EA_ERR
+        RTS   
+
 ***       UTILS     ****
 
 ADD_IMMEDIATE_TO_BUF:
@@ -1061,6 +1116,8 @@ RESET_BUF_PTR:  * sets a4 to start of string buffer
 ****    VARS    ****
 ST_ADDR DS.L    3   * allocate 3 longs for address ascii input needs 9 bytes to get 8 chars 
 E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for this
+
+SP_COPY DCB.L   1,0   * var to save stack pointer
 
 END_OP_CODE_PTR:
         DCB.L   1,0 * pointer to end of opcode neumonic in the string buffer, used for ea errors
