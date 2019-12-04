@@ -52,33 +52,7 @@ INPUT_START:
         
         * print converted addresses for testing purposes
         
-ST_DIS  JSR     RESET_BUF_PTR         * move a4 to start of string buffer
-        
-        JSR     WRITE_NL_A4           * write newline to buffer
-        
-        LEA     TEST_MSG,A1
-        JSR     WRITE_ASCII
-        
-        MOVE.L  ST_ADDR,D1    * test print from string buffer
-        MOVEQ   #0,D5   * set hex length to word
-        JSR     WRITE_HEX_TO_ASCII    * call conversion subroutine
-
-        JSR     WRITE_NL_A4           * write newline to buffer
-        
-        LEA     TEST_MSG,A1
-        JSR     WRITE_ASCII           * copy test_msg to buffer  
-        
-        MOVE.L  E_ADDR,D1             * write end address to buffer
-        MOVEQ   #0,D5   * set hex length to word
-        JSR     WRITE_HEX_TO_ASCII
-        
-
-        JSR     WRITE_NL_A4           * write newline to buffer
-        JSR     NL_TERM_PNT_RST_BUF   * print buffer contents
-        
-        * end test printing converted numbers
-        
-        JSR     OP_CODES
+ST_DIS  JSR     OP_CODES
         
         JSR     NL_TERM_PNT_RST_BUF * print newline after op codes
          
@@ -104,7 +78,12 @@ OP_START:
         JSR     WRITE_TAB_A4
         
         MOVE.W (A5),D2 * load word of memory into D1
-        
+
+        * clear ea mode and register values
+        MOVE.B #0,SRC_REG
+        MOVE.B #0,DEST_REG
+        MOVE.B #0,SRC_MODE
+        MOVE.B #0,DEST_MODE
         
 CHK_LFT_NIB:
         MOVE.L  D2,D3   * copy to d2
@@ -763,12 +742,23 @@ REG111:
 * invalid codes for all instructions
 BASE_EA_ERR_CHK:
         MOVEM.L D0-D1/A0,-(SP)
-        * load modes and registers
+        * load source modes and registers
         MOVE.B  SRC_MODE,D0
         MOVE.B  SRC_REG,D1
+        CMPI.B  #8,D0
+        BGE     EA_ERR
+        MULU   #6,D0       
+        LEA     BASE_EA_ERR_MODES,A1 
+        JSR     (A1,D0)
+
+        * load destination modes and registers
         MOVE.B  DEST_MODE,D0
         MOVE.B  DEST_REG,D1
-
+        CMPI.B  #8,D0
+        BGE     EA_ERR
+        MULU   #6,D0       
+        LEA     BASE_EA_ERR_MODES,A1 
+        JSR     (A1,D0)
 
         MOVEM.L (SP)+,D0-D1/A0
         RTS
@@ -797,7 +787,9 @@ BASE_EA_ERR_MODES:
         
 * write error to string buffer and move on to next instruction
 EA_ERR:
-        *TODO write error message
+        * load error message to buffer
+        LEA     EA_ERR_MSG,A1
+        JSR     WRITE_ASCII
         * reset stack pointer in case of error so that stack does not slowly fill due to rts not being called
         MOVEA.L SP_COPY,SP 
         BRA EA_ERR_DONE
