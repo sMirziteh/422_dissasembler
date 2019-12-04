@@ -301,8 +301,9 @@ load_LEA:   * load and print LEA neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
+        JSR     SRC_PINC_PDEC_INVALID   * -(AN) invalid and (AN)+ invalid
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
         
 load_JSR:   * load and print JSR neumonic return to op loop
@@ -311,8 +312,7 @@ load_JSR:   * load and print JSR neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         * check for invalid eas
         JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
-        JSR     SRC_AN_PINC_INVALID     * -(AN) invalid
-        JSR     SRC_AN_PDEC_INVALID     * (AN)+ invalid
+        JSR     SRC_PINC_PDEC_INVALID    * -(AN) invalid and (AN)+ invalid
         JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
         
@@ -322,8 +322,10 @@ load_MOVEM_W:   * load and print MOVEM.W neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
 	MOVE.B  #WORD,INST_SZ	* save instruction size
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+         * check for invalid eas
+        JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
+        JSR     SRC_GLOBAL_INVALID
+        * TODO ADD direction specific errors
         BRA     DECODE_DONE
         
 load_MOVEM_L:   * load and print MOVEM.L neumonic return to op loop
@@ -332,8 +334,10 @@ load_MOVEM_L:   * load and print MOVEM.L neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ	* save instruction size
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        *  check for invalid eas
+        JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
+        JSR     SRC_GLOBAL_INVALID
+        * TODO ADD direction specific errors
         BRA     DECODE_DONE
 
 ADDQ_:  * instruction is addq, determine size
@@ -352,8 +356,9 @@ load_ADDQ_B:  * load and print ADDQ.B neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+         *  check for invalid eas
+        JSR     SRC_IM_INVALID
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
       
 load_ADDQ_W:  * load and print ADDQ.W neumonic return to op loop
@@ -362,8 +367,9 @@ load_ADDQ_W:  * load and print ADDQ.W neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+         *  check for invalid eas
+        JSR     SRC_IM_INVALID
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
         
 load_ADDQ_L:  * load and print ADDQ.L neumonic return to op loop
@@ -372,8 +378,9 @@ load_ADDQ_L:  * load and print ADDQ.L neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+         *  check for invalid eas
+        JSR     SRC_IM_INVALID
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
         
 OP_6:   * could be BRA, BEQ, BGT, BLE
@@ -964,6 +971,23 @@ SRC_AN_PINC_INVALID:
         MOVEM.L D6-D7,-(SP)
         JSR     LOAD_SRC_EA_D6_D7
         JSR     AN_PINC_EA_CHK
+        MOVEM.L (SP)+,D6-D7
+        RTS
+
+* -(AN) invalid and (AN)+ invalid bits 3-5
+SRC_PINC_PDEC_INVALID:
+        MOVEM.L D6-D7,-(SP)
+        JSR     LOAD_SRC_EA_D6_D7
+        JSR     AN_PINC_EA_CHK
+        JSR     AN_PDEC_EA_CHK
+        MOVEM.L (SP)+,D6-D7
+        RTS
+
+* error for  Imediate modes for source ea bits 0-5
+SRC_IM_INVALID:
+        MOVEM.L D6-D7,-(SP)
+        JSR     LOAD_SRC_EA_D6_D7
+        JSR     IM_DATA_EA_CHK
         MOVEM.L (SP)+,D6-D7
         RTS
 
@@ -1570,6 +1594,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
 
 
 
