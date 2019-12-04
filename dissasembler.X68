@@ -139,6 +139,7 @@ load_MOVE_B:    * load and print MOVE.B neumonic return to op loop
         **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        JSR     DEST_AN_IM_INVALID * check specific invalid EAS
         BRA     DECODE_DONE
        
 OP_2:   * could be MOVE.L or MOVEA.L
@@ -166,6 +167,7 @@ load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
         MOVE.B  #LONG,INST_SZ	* save instruction size
         JSR     MOVE_EA
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        JSR     DEST_AN_IM_INVALID * check specific invalid EAS
         BRA     DECODE_DONE
         
 OP_3:   * could be MOVE.W or MOVEA.W
@@ -193,6 +195,7 @@ load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
         MOVE.B  #WORD,INST_SZ	* save instruction size
         JSR     MOVE_EA
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        JSR     DEST_AN_IM_INVALID * check specific invalid EAS
         BRA     DECODE_DONE
 
 OP_4:   * could be not, nop, rts, jsr, MOVEM.L, lea
@@ -240,6 +243,7 @@ load_NOT_B:   * load and print NOT.B neumonic return to op loop
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        JSR     DEST_AN_IM_INVALID * check specific invalid EAS
         BRA     DECODE_DONE
         
 load_NOT_W:   * load and print NOT.W neumonic return to op loop
@@ -250,6 +254,7 @@ load_NOT_W:   * load and print NOT.W neumonic return to op loop
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        JSR     DEST_AN_IM_INVALID * check specific invalid EAS
         BRA     DECODE_DONE
         
 load_NOT_L:   * load and print NOT.L neumonic return to op loop
@@ -260,6 +265,7 @@ load_NOT_L:   * load and print NOT.L neumonic return to op loop
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        JSR     DEST_AN_IM_INVALID * check specific invalid EAS
         BRA     DECODE_DONE
 
 NOP_RTS_JSR: * could be NOP or RTS or JSR
@@ -721,12 +727,12 @@ MOVE_EA:
         ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
         ANDI.W  #Bit1Mask,D4    *mask to isolate 3-bit mode
         MOVE.B  #9, D5
-        LSR     D5,D3
-        MULU   #6,D3 
+        LSR     D5,D3 
         LSR.L   #6,D4
         MOVE.B  D4,DEST_MODE     * save destination ea mode to memory
         MOVE.B  D3,DEST_REG      * save destination register to memory 
         MULU   #6,D4
+        MULU   #6,D3
        
         LEA     EA_MODE,A1 
         JSR     (A1,D4)
@@ -930,6 +936,27 @@ MODE_7_CHK:
         BEQ   EA_ERR
         MOVEM.L (SP)+,D1
         RTS   
+
+* destination adress register and imediate mode are invalid eas
+DEST_AN_IM_INVALID:
+        MOVEM.L D0-D1,-(SP)
+        * load source modes and registers
+  * load destination modes and registers
+        MOVE.B  DEST_MODE,D0
+        MOVE.B  DEST_REG,D1
+        CMP.B   #1,D0   * if address register mode error
+        BNE     AN_IM_01
+        JSR     EA_ERR
+        BRA     AN_IM_02
+AN_IM_01:
+        CMP.B   #7,D0    * if immediate data error
+        BNE     AN_IM_02
+        CMP.B   #4,D1
+        BNE     AN_IM_02
+        JSR     EA_ERR     
+AN_IM_02: 
+        MOVEM.L (SP)+,D0-D1
+        RTS
 
 ***       UTILS     ****
 
