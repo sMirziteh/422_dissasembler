@@ -136,6 +136,9 @@ load_MOVE_B:    * load and print MOVE.B neumonic return to op loop
         MOVE.B  #BYTE,INST_SZ	* save instruction size
         CLR     D3
         JSR     MOVE_EA
+        **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
        
 OP_2:   * could be MOVE.L or MOVEA.L
@@ -150,6 +153,9 @@ load_MOVEA_L:   * load and print MOVEA.L neumonic return to op loop
         LEA     _MOVEA_L,A1
         JSR     WRITE_ASCII
         MOVE.B  #LONG,INST_SZ	* save instruction size
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
 
 load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
@@ -158,6 +164,7 @@ load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ	* save instruction size
         JSR     MOVE_EA
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
         
 OP_3:   * could be MOVE.W or MOVEA.W
@@ -172,6 +179,9 @@ load_MOVEA_W:   * load and print MOVEA.W neumonic return to op loop
         LEA     _MOVEA_W,A1
         JSR     WRITE_ASCII
         MOVE.B  #WORD,INST_SZ	* save instruction size
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
 
 load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
@@ -180,6 +190,7 @@ load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ	* save instruction size
         JSR     MOVE_EA
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
 
 OP_4:   * could be not, nop, rts, jsr, MOVEM.L, lea
@@ -216,24 +227,34 @@ NOT_:   * instruction is not, determine size
         CMPI.W  #$0040,D3       * if bits 8-6 are 001, instruction is NOT.W
         BEQ     load_NOT_W
         CMPI.W  #$0080,D3       * if bits 8-6 are 010, instruction is NOT.L
-        BEQ     load_NOT_L 
+        BEQ     load_NOT_L
+         
        
 load_NOT_B:   * load and print NOT.B neumonic return to op loop
         LEA     _NOT_B,A1
         JSR     WRITE_ASCII
         MOVE.B  #BYTE,INST_SZ   * save instruction size
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
         
 load_NOT_W:   * load and print NOT.W neumonic return to op loop
         LEA     _NOT_W,A1
         JSR     WRITE_ASCII
         MOVE.B  #WORD,INST_SZ   * save instruction size
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
         
 load_NOT_L:   * load and print NOT.L neumonic return to op loop
         LEA     _NOT_L,A1
         JSR     WRITE_ASCII
         MOVE.B  #LONG,INST_SZ   * save instruction size
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
 
 NOP_RTS_JSR: * could be NOP or RTS or JSR
@@ -265,6 +286,9 @@ load_RTS:   * load and print RTS neumonic return to op loop
 load_LEA:   * load and print LEA neumonic return to op loop
         LEA     _LEA,A1
         JSR     WRITE_ASCII
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
         
 load_JSR:   * load and print JSR neumonic return to op loop
@@ -276,12 +300,18 @@ load_MOVEM_W:   * load and print MOVEM.W neumonic return to op loop
         LEA     _MOVEM_W,A1
         JSR     WRITE_ASCII
 	MOVE.B  #WORD,INST_SZ	* save instruction size
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
         
 load_MOVEM_L:   * load and print MOVEM.L neumonic return to op loop
         LEA     _MOVEM_L,A1
         JSR     WRITE_ASCII
-		MOVE.B  #LONG,INST_SZ	* save instruction size
+        MOVE.B  #LONG,INST_SZ	* save instruction size
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
 
 ADDQ_:  * instruction is addq, determine size
@@ -298,18 +328,27 @@ load_ADDQ_B:  * load and print ADDQ.B neumonic return to op loop
         LEA     _ADDQ_B,A1
         JSR     WRITE_ASCII
         MOVE.B  #BYTE,INST_SZ   * save instruction size
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
       
 load_ADDQ_W:  * load and print ADDQ.W neumonic return to op loop
         LEA     _ADDQ_W,A1
         JSR     WRITE_ASCII
         MOVE.B  #WORD,INST_SZ   * save instruction size
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
         
 load_ADDQ_L:  * load and print ADDQ.L neumonic return to op loop
         LEA     _ADDQ_L,A1
         JSR     WRITE_ASCII
         MOVE.B  #LONG,INST_SZ
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
         
 OP_6:   * could be BRA, BEQ, BGT, BLE
@@ -327,11 +366,13 @@ OP_6:   * could be BRA, BEQ, BGT, BLE
 load_BRA:   * load and print BRA neumonic return to op loop
         LEA     _BRA,A1
         JSR     WRITE_ASCII
+
         BRA     DECODE_DONE
         
 load_BEQ:   * load and print BEQ neumonic return to op loop
         LEA     _BEQ,A1
         JSR     WRITE_ASCII
+
         BRA     DECODE_DONE
 
 load_BGT:   * load and print BGT neumonic return to op loop
@@ -360,16 +401,25 @@ OP_8:       * could be DIVU or OR
 load_DIVU:  * load and print DIVU neumonic return to op loop
         LEA     _DIVU,A1
         JSR     WRITE_ASCII
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
         
 load_OR:    * load and print DIVU neuomnic return to op loop
         LEA     _OR,A1
         JSR     WRITE_ASCII
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
 
 load_SUB:   * load and print SUB neumonic return to op loop
         LEA     _SUB,A1
         JSR     WRITE_ASCII
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
 
 OP_C:       * could be MULS or AND
@@ -383,11 +433,17 @@ OP_C:       * could be MULS or AND
 load_MULS:  * load and print MULS neumonic return to op loop
         LEA     _MULS,A1
         JSR     WRITE_ASCII
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
         
 load_AND:   * load and print AND neumonic return to op loop
         LEA     _AND,A1
         JSR     WRITE_ASCII
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
 
 OP_D:       * could be ADD or ADDA
@@ -402,11 +458,17 @@ OP_D:       * could be ADD or ADDA
 load_ADDA:  * load and print ADDA neumonic return to op loop
         LEA     _ADDA,A1
         JSR     WRITE_ASCII
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
 
 load_ADD:   * load and print ADD neumonic return to op loop
         LEA     _ADD,A1
         JSR     WRITE_ASCII
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
 
 OP_E:       * could be ASL, ASR, LSL, LSR (memory or register)
@@ -436,11 +498,17 @@ ASL_ASR_MEM:    * could be ASL or ASR (memory)
 load_ASR_MEM:   * load and print ASR neumonic return to op loop
         LEA     _ASR,A1
         JSR     WRITE_ASCII
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
         
 load_ASL_MEM:   * load and print ASL neumonic return to op loop
         LEA     _ASL,A1
         JSR     WRITE_ASCII
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
 
 LSL_LSR_MEM:    * could be LSL or LSR (memory)
@@ -454,11 +522,17 @@ LSL_LSR_MEM:    * could be LSL or LSR (memory)
 load_LSR_MEM:   * load and print LSR neumonic return to op loop
         LEA     _LSR,A1
         JSR     WRITE_ASCII
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
         
 load_LSL_MEM:   * load and print LSL neumonic return to op loop
         LEA     _LSL,A1
         JSR     WRITE_ASCII
+         **** EA CODE GOES HERE ****
+        * must set unused mode/reg vars to 0
+        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
 
 REG_shift:      * could be ASL, ASR, LSL, LSR (register)
@@ -755,17 +829,17 @@ BASE_EA_ERR_CHK:
         CMPI.B  #8,D0
         BGE     EA_ERR
         MULU   #6,D0       
-        LEA     BASE_EA_ERR_MODES,A1 
-        JSR     (A1,D0)
+        LEA     BASE_EA_ERR_MODES,A0 
+        JSR     (A0,D0)
 
         * load destination modes and registers
         MOVE.B  DEST_MODE,D0
         MOVE.B  DEST_REG,D1
         CMPI.B  #8,D0
         BGE     EA_ERR
-        MULU   #6,D0       
-        LEA     BASE_EA_ERR_MODES,A1 
-        JSR     (A1,D0)
+        MULU   #6,D0
+        LEA     BASE_EA_ERR_MODES,A0 
+        JSR     (A0,D0)
 
         MOVEM.L (SP)+,D0-D1/A0
         RTS
@@ -794,6 +868,7 @@ BASE_EA_ERR_MODES:
         
 * write error to string buffer and move on to next instruction
 EA_ERR:
+        MOVEM.L D0/A1,-(SP)
         MOVE.L  END_OP_CODE_PTR,D0      * load end of opcode pointer
         CMPI.L  #0,D0                   * if ptr is 0 use existing str buf value
         BEQ     LOAD_EA_ERR_MSG
@@ -803,14 +878,17 @@ LOAD_EA_ERR_MSG:
         LEA     EA_ERR_MSG,A1
         JSR     WRITE_ASCII
         MOVE.B  #-1,EA_ERR_FLAG
+        MOVEM.L (SP)+,D0/A1
         RTS
 
 * check mode 7 for invalid reg values
 MODE_7_CHK:
+        MOVEM.L D1,-(SP)
         CMP.B #%010,D1 * check for (d16,PC) 
         BEQ   EA_ERR
         CMP.B #%011,D1 * check for (d8,PC,Xn)
         BEQ   EA_ERR
+        MOVEM.L (SP)+,D1
         RTS   
 
 ***       UTILS     ****
