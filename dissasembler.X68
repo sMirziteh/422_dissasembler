@@ -600,8 +600,9 @@ MOVE_EA:
         MOVE.L  D2,D3           *copy instruction to D3 for register
         MOVE.L  D2,D4           *copy instruction to D4 for mode
         ANDI.W  #Bit2Mask,D4    *mask to isolate 3-bit source mode
-        ANDI.W  #Bit3Mask,D3    *mask to isolate 3-bit source register
+        ANDI.W  #Bit3Mask,D3    *mask to isolate 3-bit source register 
         LSR.L   #3,D4
+        MOVE.B  D4,SRC_MODE     * save source ea mode to memory
         MULU    #6,D4
         MULU    #6,D3
         LEA     EA_MODE,A1
@@ -615,11 +616,12 @@ MOVE_EA:
         MOVE.L  D2,D3           *copy instruction to D3 for register
         MOVE.L  D2,D4           *copy instruction to D4 for modE
         ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
-        ANDI.W  #Bit1Mask,D4    *mask to isolate 3-bit opmode
+        ANDI.W  #Bit1Mask,D4    *mask to isolate 3-bit mode
         MOVE.B  #9, D5
         LSR     D5,D3
         MULU   #6,D3 
         LSR.L   #6,D4
+        MOVE.B  D4,DEST_MODE     * save destination ea mode to memory
         MULU   #6,D4
        
         LEA     EA_MODE,A1 
@@ -1055,7 +1057,11 @@ E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for th
 ST_LEN  DCB.B   1,0 * var to track start address length
 E_LEN   DC.B    1,0 * var to track end address length
 STR_BUF DCB.B   241,0  * buffer to hold 240 chars + null terminator. 3 80 char lines
-INST_SZ	DC.B	1,0		* used to store instuction size
+INST_SZ	DCB.B	1,0		* used to store instuction size
+DEST_MODE:
+        DCB.B   1,0     * var for destination ea mode
+SRC_MODE:
+        DCB.B   1,0     * var for source ea mode
          
 ****    CONST   ****
 CR          EQU     $0D     * carraige return          
@@ -1194,6 +1200,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
 
 
 
