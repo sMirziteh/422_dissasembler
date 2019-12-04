@@ -1026,6 +1026,11 @@ WRITE_TAB_A4:
         MOVE.B  #TAB,(A4)+
         RTS   
 
+* writes current string buffer pointer address to end_op_code_ptr
+SET_END_OP_CODE_PTR:
+        MOVE.L  A4,END_OP_CODE_PTR
+        RTS
+
 NL_TERM_PNT_RST_BUF: * write newline, null then print contents then reset bufffer
         JSR     WRITE_NL_A4
         JSR     WRITE_NULL_A4
@@ -1054,14 +1059,22 @@ RESET_BUF_PTR:  * sets a4 to start of string buffer
 ****    VARS    ****
 ST_ADDR DS.L    3   * allocate 3 longs for address ascii input needs 9 bytes to get 8 chars 
 E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for this
+
+END_OP_CODE_PTR:
+        DCB.L   1,0 * pointer to end of opcode neumonic in the string buffer, used for ea errors
+
 ST_LEN  DCB.B   1,0 * var to track start address length
 E_LEN   DC.B    1,0 * var to track end address length
 STR_BUF DCB.B   241,0  * buffer to hold 240 chars + null terminator. 3 80 char lines
 INST_SZ	DCB.B	1,0		* used to store instuction size
 DEST_MODE:
         DCB.B   1,0     * var for destination ea mode
+DEST_REG:
+        DCB.B   1,0     * var to save destination register in
 SRC_MODE:
         DCB.B   1,0     * var for source ea mode
+SRC_REG: 
+        DCB.B   1,0     * var to save source register in
          
 ****    CONST   ****
 CR          EQU     $0D     * carraige return          
@@ -1194,7 +1207,9 @@ ADR_ODD_ERR DC.B    CR,LF,'ERROR INVALID ADDRESS: Start address must be even',CR
 ADR_S_GT_E  DC.B    CR,LF,'ERROR INVALID ADDRESS: Start address must come before end address',CR,LF,0 * start greater than end address error msg
 
 HEX_ERR     DC.B    CR,LF,'ERROR INVALID ADDRESS: Input must be 0-1 A-F case insensitive',CR,LF,0
-  
+
+EA_ERR_MSG  DC.B    'ERROR: INVALID EFFECTIVE ADDRESS',0      * error message for invalid eas
+
 DATA_MSG    DC.B    'DATA   $',0
 
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
