@@ -84,6 +84,8 @@ OP_START:
         MOVE.B #0,DEST_REG
         MOVE.B #0,SRC_MODE
         MOVE.B #0,DEST_MODE
+        * clear d7 for data flag
+        MOVE.L  #0,D7  * set flag when data is detected
         
 CHK_LFT_NIB:
         MOVE.L  D2,D3   * copy to d2
@@ -115,9 +117,11 @@ CHK_LFT_NIB:
         BEQ     OP_E
                        
 OP_ERR  JSR     LOAD_DATA_STR_INTO_BUF
-        
+        MOVE.L  #-13,D7  * set flag when data is detected to -13 or -D      
 
 DECODE_DONE:    * print newline then check if op-code loop is done
+        CMP.L   #-13,D7
+        BEQ     EA_ERR_DONE     * if -D word was data so skip ea error check
         JSR     BASE_EA_ERR_CHK     * check for standard EA errors
 EA_ERR_DONE:
         JSR     NL_TERM_PNT_RST_BUF * write newline then print
@@ -1266,6 +1270,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
 
 
 
