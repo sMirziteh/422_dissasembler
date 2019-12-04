@@ -868,50 +868,21 @@ REG111:
 
 * invalid codes for all instructions
 BASE_EA_ERR_CHK:
-        MOVEM.L D0-D1/A0,-(SP)
+        MOVEM.L D6-D7,-(SP)
+        CLR.L   D6
+        CLR.L   D7
         * load source modes and registers
-        MOVE.B  SRC_MODE,D0
-        MOVE.B  SRC_REG,D1
-        CMPI.B  #8,D0
-        BGE     EA_ERR
-        MULU   #6,D0       
-        LEA     BASE_EA_ERR_MODES,A0 
-        JSR     (A0,D0)
-
+        MOVE.B  SRC_MODE,D6
+        MOVE.B  SRC_REG,D7
+        JSR GLOBAL_INVALID_EAS
         * load destination modes and registers
-        MOVE.B  DEST_MODE,D0
-        MOVE.B  DEST_REG,D1
-        CMPI.B  #8,D0
-        BGE     EA_ERR
-        MULU   #6,D0
-        LEA     BASE_EA_ERR_MODES,A0 
-        JSR     (A0,D0)
+        MOVE.B  DEST_MODE,D6
+        MOVE.B  DEST_REG,D7
+        JSR GLOBAL_INVALID_EAS
 
-        MOVEM.L (SP)+,D0-D1/A0
+        MOVEM.L (SP)+,D6-D7
         RTS
-* jmp table to handle base ea errors        
-BASE_EA_ERR_MODES:
-        * NOP slide to catch good modes and direct to rts
-        NOP
-        NOP
-        NOP
-        NOP
-        NOP
-        NOP
-        NOP
-        NOP
-        NOP
-        NOP
-        NOP
-        NOP
-        RTS * return on good modes
-        NOP * 2 extra words needed for ofset to jmps
-        NOP
-        JMP EA_ERR      * mode (d16,An)      
-        JMP EA_ERR      * mode (d8,An,Xn)
-        JMP MODE_7_CHK
-
-        
+     
 * write error to string buffer and move on to next instruction
 EA_ERR:
         MOVEM.L D0/A1,-(SP)
@@ -927,15 +898,153 @@ LOAD_EA_ERR_MSG:
         MOVEM.L (SP)+,D0/A1
         RTS
 
-* check mode 7 for invalid reg values
-MODE_7_CHK:
-        MOVEM.L D1,-(SP)
-        CMP.B #%010,D1 * check for (d16,PC) 
-        BEQ   EA_ERR
-        CMP.B #%011,D1 * check for (d8,PC,Xn)
-        BEQ   EA_ERR
-        MOVEM.L (SP)+,D1
+
+*** EA ERROR groups ***
+
+* load d6 with mode, d7 with register
+GLOBAL_INVALID_EAS:
+        JSR DAN_EA_CHK    * error on (d16,An)
+        JSR DANXN_EA_CHK  * error on (d8,An,Xn)
+        JSR DPC_EA_CHK    * error on (d16,PC)
+        JSR DPCXN_EA_CHK  * error on (d8,PC,Xn)
+        JSR MODE_7_EA_CHK * error on invalid mode 7 reg values
+        RTS
+
+*** Checks for individual EA modes
+
+* prints ea error to buffer if DN mode detected
+* takes mode in on d6 and reg in on d7 sets EA_ERR_FLAG
+DN_EA_CHK:
+        CMP.B #%000,D6
+        BNE   END_DN_EA_CHK
+        JSR EA_ERR
+END_DN_EA_CHK:
+        RTS
+
+* prints ea error to buffer if AN mode detected
+* takes mode in on d6 and reg in on d7 sets EA_ERR_FLAG
+AN_EA_CHK:
+        CMP.B #%001,D6
+        BNE   END_AN_EA_CHK
+        JSR   EA_ERR
+END_AN_EA_CHK:
+        RTS      
+
+* prints ea error to buffer if (AN) mode detected
+* takes mode in on d6 and reg in on d7 sets EA_ERR_FLAG
+AN_IND_EA_CHK:
+        CMP.B #%010,D6
+        BNE   END_AN_IND_EA_CHK
+        JSR   EA_ERR
+END_AN_IND_EA_CHK:
+        RTS      
+
+* prints ea error to buffer if (AN)+ mode detected
+* takes mode in on d6 and reg in on d7 sets EA_ERR_FLAG
+AN_PINC_EA_CHK:
+        CMP.B #%011,D6
+        BNE   END_AN_PINC_EA_CHK
+        JSR   EA_ERR
+END_AN_PINC_EA_CHK:
+        RTS      
+
+* prints ea error to buffer if -(AN) mode detected
+* takes mode in on d6 and reg in on d7 sets EA_ERR_FLAG
+AN_PDEC_EA_CHK:
+        CMP.B #%100,D6
+        BNE   END_AN_PDEC_EA_CHK
+        JSR   EA_ERR
+END_AN_PDEC_EA_CHK:
+        RTS      
+
+* prints ea error to buffer if XXXX.W mode detected
+* takes mode in on d6 and reg in on d7 sets EA_ERR_FLAG
+ABS_WRD_EA_CHK:
+        CMP.B #%111,D6
+        BNE   END_ABS_WRD_EA_CHK
+        CMP.B #%000,d7
+        BNE   END_ABS_WRD_EA_CHK
+        JSR   EA_ERR
+END_ABS_WRD_EA_CHK:
+        RTS      
+
+* prints ea error to buffer if XXXX.L mode detected
+* takes mode in on d6 and reg in on d7 sets EA_ERR_FLAG
+ABS_LNG_EA_CHK:
+        CMP.B #%111,D6
+        BNE   END_ABS_LNG_EA_CHK
+        CMP.B #%001,d7
+        BNE   END_ABS_LNG_EA_CHK
+        JSR   EA_ERR
+END_ABS_LNG_EA_CHK:
         RTS   
+
+* prints ea error to buffer if #<data> mode detected
+* takes mode in on d6 and reg in on d7 sets EA_ERR_FLAG
+IM_DATA_EA_CHK:
+        CMP.B #%111,D6
+        BNE   END_IM_DATA_EA_CHK
+        CMP.B #%100,d7
+        BNE   END_IM_DATA_EA_CHK
+        JSR   EA_ERR
+END_IM_DATA_EA_CHK:
+        RTS   
+
+* prints ea error to buffer if (d16,An) mode detected
+* takes mode in on d6 and reg in on d7 sets EA_ERR_FLAG
+DAN_EA_CHK:
+        CMP.B #%101,D6
+        BNE   END_DAN_EA_CHK
+        JSR   EA_ERR
+END_DAN_EA_CHK:
+        RTS   
+
+* prints ea error to buffer if (d8,An,Xn) mode detected
+* takes mode in on d6 and reg in on d7 sets EA_ERR_FLAG
+DANXN_EA_CHK:
+        CMP.B #%110,D6
+        BNE   END_DANXN_EA_CHK
+        JSR   EA_ERR
+END_DANXN_EA_CHK:
+        RTS
+
+* prints ea error to buffer if (d16,PC) mode detected
+* takes mode in on d6 and reg in on d7 sets EA_ERR_FLAG
+DPC_EA_CHK:
+        CMP.B #%111,D6
+        BNE   END_DPC_EA_CHK
+        CMP.B #%010,d7
+        BNE   END_DPC_EA_CHK
+        JSR   EA_ERR
+END_DPC_EA_CHK:
+        RTS   
+
+* prints ea error to buffer if (d8,PC,Xn) mode detected
+* takes mode in on d6 and reg in on d7 sets EA_ERR_FLAG
+DPCXN_EA_CHK:
+        CMP.B #%111,D6
+        BNE   END_DPCXN_EA_CHK
+        CMP.B #%011,d7
+        BNE   END_DPCXN_EA_CHK
+        JSR   EA_ERR
+END_DPCXN_EA_CHK:
+        RTS      
+
+* throws errors for register modes that do not exist for mode 7
+* takes mode in on d6 and reg in on d7 sets EA_ERR_FLAG
+MODE_7_EA_CHK:
+        CMP.B #%111,D6
+        BNE   END_MODE_7_EA_CHK
+        CMP.B #%101,d7
+        BEQ   M7_ERR
+        CMP.B #%110,d7
+        BEQ   M7_ERR
+        CMP.B #%111,d7
+        BEQ   M7_ERR
+        BRA   END_MODE_7_EA_CHK
+M7_ERR  JSR   EA_ERR
+END_MODE_7_EA_CHK:
+        RTS
 
 * destination adress register and imediate mode are invalid eas
 DEST_AN_IM_INVALID:
