@@ -69,10 +69,10 @@ OP_CODES:
         MOVE.L  ST_ADDR,A5  * load starting address into a5
         MOVE.L  E_ADDR,A6   * load ending address into a6
         
-OP_START:
-        MOVE.L  SP,SP_COPY * save copy of stack pointer so it can be reset when an error occurs            
+OP_START:          
         * write address and a tab to str buffer
         MOVE.L  A5,D1   * load address from A5 into D1
+        MOVE.L  D1,CURRENT_ADDR * save backup of opcode word address
         MOVEQ   #32,D5   * set hex length to long for address printing
         JSR     WRITE_HEX_TO_ASCII
         JSR     WRITE_TAB_A4
@@ -84,8 +84,8 @@ OP_START:
         MOVE.B #0,DEST_REG
         MOVE.B #0,SRC_MODE
         MOVE.B #0,DEST_MODE
-        * clear d7 for data flag
-        MOVE.L  #0,D7  * set flag when data is detected
+        MOVE.L  #0,END_OP_CODE_PTR * clear end of op-code str buffer pointer
+        MOVE.B  #0,EA_ERR_FLAG * clear ea error flag
         
 CHK_LFT_NIB:
         MOVE.L  D2,D3   * copy to d2
@@ -116,15 +116,14 @@ CHK_LFT_NIB:
         CMPI.W  #$E000,D3   * if nibble3 == E, branch to that set (asl, asr, lsl, lsr)
         BEQ     OP_E
                        
-OP_ERR  JSR     LOAD_DATA_STR_INTO_BUF
-        MOVE.L  #-13,D7  * set flag when data is detected to -13 or -D      
+OP_ERR  JSR     LOAD_DATA_STR_INTO_BUF   
 
 DECODE_DONE:    * print newline then check if op-code loop is done
-        CMP.L   #-13,D7
-        BEQ     EA_ERR_DONE     * if -D word was data so skip ea error check
-        JSR     BASE_EA_ERR_CHK     * check for standard EA errors
-EA_ERR_DONE:
         JSR     NL_TERM_PNT_RST_BUF * write newline then print
+        CMP.B   #-1,EA_ERR_FLAG
+        BNE     NO_EA_ERROR
+        MOVEA.L CURRENT_ADDR,A5 * reset curent address if ea error occurred
+ NO_EA_ERROR:
         ADD.L   #2,A5   * increment current address pointer by 2 bytes 
         CMP.L   A6,A5  * loop if start is less than or equal to end
         BLE     OP_START
@@ -133,7 +132,8 @@ OP_DONE RTS
 load_MOVE_B:    * load and print MOVE.B neumonic return to op loop
         LEA     _MOVE_B,A1
         JSR     WRITE_ASCII
-		MOVE.B  #BYTE,INST_SZ	* save instruction size
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
+        MOVE.B  #BYTE,INST_SZ	* save instruction size
         CLR     D3
         JSR     MOVE_EA
         BRA     DECODE_DONE
@@ -149,13 +149,14 @@ OP_2:   * could be MOVE.L or MOVEA.L
 load_MOVEA_L:   * load and print MOVEA.L neumonic return to op loop
         LEA     _MOVEA_L,A1
         JSR     WRITE_ASCII
-		MOVE.B  #LONG,INST_SZ	* save instruction size
+        MOVE.B  #LONG,INST_SZ	* save instruction size
         BRA     DECODE_DONE
 
 load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
         LEA     _MOVE_L,A1
         JSR     WRITE_ASCII
-		MOVE.B  #LONG,INST_SZ	* save instruction size
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
+        MOVE.B  #LONG,INST_SZ	* save instruction size
         JSR     MOVE_EA
         BRA     DECODE_DONE
         
@@ -170,13 +171,14 @@ OP_3:   * could be MOVE.W or MOVEA.W
 load_MOVEA_W:   * load and print MOVEA.W neumonic return to op loop
         LEA     _MOVEA_W,A1
         JSR     WRITE_ASCII
-		MOVE.B  #WORD,INST_SZ	* save instruction size
+        MOVE.B  #WORD,INST_SZ	* save instruction size
         BRA     DECODE_DONE
 
 load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
         LEA     _MOVE_W,A1
         JSR     WRITE_ASCII
-		MOVE.B  #WORD,INST_SZ	* save instruction size
+        JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
+        MOVE.B  #WORD,INST_SZ	* save instruction size
         JSR     MOVE_EA
         BRA     DECODE_DONE
 
@@ -273,7 +275,7 @@ load_JSR:   * load and print JSR neumonic return to op loop
 load_MOVEM_W:   * load and print MOVEM.W neumonic return to op loop
         LEA     _MOVEM_W,A1
         JSR     WRITE_ASCII
-		MOVE.B  #WORD,INST_SZ	* save instruction size
+	MOVE.B  #WORD,INST_SZ	* save instruction size
         BRA     DECODE_DONE
         
 load_MOVEM_L:   * load and print MOVEM.L neumonic return to op loop
@@ -670,29 +672,30 @@ EA100:
 
 EA101:  RTS
 
-EA110:  RTS 
+EA110:  RTS
 
 EA111:  	
 		DIVU	#6,D3	* divide register num by 6 to undo jmp table multiplication
 		
-		CMP		#0,D3	* if reg 0 load word from mem
-		BNE		EA111_R1
-		LEA		_ABS,A1
-		JSR		WRITE_ASCII		* write $ to buffer
-		JSR		NEXT_MEM_WORD_TO_BUF
+		CMP	#0,D3	* if reg 0 load word from mem
+		BNE	EA111_R1
+		LEA	_ABS,A1
+		JSR	WRITE_ASCII		* write $ to buffer
+		JSR	NEXT_MEM_WORD_TO_BUF
 		RTS
 EA111_R1:
-		CMP		#1,D3	* if reg 1 load long from mem
-		BNE		EA111_R4
-		LEA		_ABS,A1
-		JSR		WRITE_ASCII		* write $ to buffer
-		JSR		NEXT_MEM_LONG_TO_BUF
+		CMP	#1,D3	* if reg 1 load long from mem
+		BNE	EA111_R4
+		LEA	_ABS,A1
+		JSR	WRITE_ASCII		* write $ to buffer
+		JSR	NEXT_MEM_LONG_TO_BUF
 		RTS
 EA111_R4:		
-		CMP		#%100,D3  * if reg 4 load immediate value
+		CMP	#%100,D3  * if reg 4 load immediate value
 		* will need to know instruction size to propperly grab this
-*		BNE	    TODO EA ERROR
-		JSR		ADD_IMMEDIATE_TO_BUF
+		BNE	EA_MODE_DONE    * EA error if not equal to one of the valid modes
+		JSR	ADD_IMMEDIATE_TO_BUF
+EA_MODE_DONE:
 		RTS
 		
 
@@ -768,7 +771,7 @@ BASE_EA_ERR_CHK:
         RTS
 * jmp table to handle base ea errors        
 BASE_EA_ERR_MODES:
-        * NOP slide to catch good modes
+        * NOP slide to catch good modes and direct to rts
         NOP
         NOP
         NOP
@@ -791,12 +794,16 @@ BASE_EA_ERR_MODES:
         
 * write error to string buffer and move on to next instruction
 EA_ERR:
+        MOVE.L  END_OP_CODE_PTR,D0      * load end of opcode pointer
+        CMPI.L  #0,D0                   * if ptr is 0 use existing str buf value
+        BEQ     LOAD_EA_ERR_MSG
+        MOVEA.L D0,A4                   * reset string buffer pointer to end of opcode neumonic 
         * load error message to buffer
+LOAD_EA_ERR_MSG:
         LEA     EA_ERR_MSG,A1
         JSR     WRITE_ASCII
-        * reset stack pointer in case of error so that stack does not slowly fill due to rts not being called
-        MOVEA.L SP_COPY,SP 
-        BRA EA_ERR_DONE
+        MOVE.B  #-1,EA_ERR_FLAG
+        RTS
 
 * check mode 7 for invalid reg values
 MODE_7_CHK:
@@ -1113,10 +1120,11 @@ RESET_BUF_PTR:  * sets a4 to start of string buffer
 ST_ADDR DS.L    3   * allocate 3 longs for address ascii input needs 9 bytes to get 8 chars 
 E_ADDR  DS.L    3   * and null terminator, allocating 12 bytes to account for this
 
-SP_COPY DCB.L   1,0   * var to save stack pointer
-
 END_OP_CODE_PTR:
         DCB.L   1,0 * pointer to end of opcode neumonic in the string buffer, used for ea errors
+
+CURRENT_ADDR:
+        DCB.L   1,0 * BACKUP FOR CURRENT ADDRESS POINTER
 
 ST_LEN  DCB.B   1,0 * var to track start address length
 E_LEN   DC.B    1,0 * var to track end address length
@@ -1129,7 +1137,9 @@ DEST_REG:
 SRC_MODE:
         DCB.B   1,0     * var for source ea mode
 SRC_REG: 
-        DCB.B   1,0     * var to save source register in
+        DCB.B   1,0     * var to save source register in  
+EA_ERR_FLAG:
+        DCB.B   1,0     * var for ea error status
          
 ****    CONST   ****
 CR          EQU     $0D     * carraige return          
