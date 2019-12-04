@@ -603,6 +603,7 @@ MOVE_EA:
         ANDI.W  #Bit3Mask,D3    *mask to isolate 3-bit source register 
         LSR.L   #3,D4
         MOVE.B  D4,SRC_MODE     * save source ea mode to memory
+        MOVE.B  D3,SRC_REG      * save source register to memory
         MULU    #6,D4
         MULU    #6,D3
         LEA     EA_MODE,A1
@@ -622,6 +623,7 @@ MOVE_EA:
         MULU   #6,D3 
         LSR.L   #6,D4
         MOVE.B  D4,DEST_MODE     * save destination ea mode to memory
+        MOVE.B  D3,DEST_REG      * save destination register to memory 
         MULU   #6,D4
        
         LEA     EA_MODE,A1 
@@ -759,20 +761,20 @@ ADD_IMMEDIATE_TO_BUF:
 		MOVEM.L	D1/A1,-(SP)
 		MOVE.B	INST_SZ,D1	* load instruction size
 		CMPI.B	#BYTE,D1
-		BEQ		IN_IM_W		* if byte goto word since behavior is the same
-     	CMPI.B  #WORD,D1
-		BNE		CMP_IM_L	* if not equal to word branch compare to long
+		BEQ	IN_IM_W		* if byte goto word since behavior is the same
+     	        CMPI.B  #WORD,D1
+		BNE	CMP_IM_L	* if not equal to word branch compare to long
 IN_IM_W:
-		LEA		_IMD,A1		* print next mem word as imediate data to buffer
-		JSR		WRITE_ASCII
-		JSR		NEXT_MEM_WORD_TO_BUF
+		LEA	_IMD,A1		* print next mem word as imediate data to buffer
+		JSR	WRITE_ASCII
+		JSR	NEXT_MEM_WORD_TO_BUF
 		MOVEM.L (SP)+,D1/A1
 		RTS
 CMP_IM_L:
 		CMPI.B  #LONG,D1
 *		TODO BNE		EA ERROR
-		LEA		_IMD,A1      * print next mem long as imediate data to buffer
-		JSR		WRITE_ASCII
+		LEA	_IMD,A1      * print next mem long as imediate data to buffer
+		JSR	WRITE_ASCII
 		JSR     NEXT_MEM_LONG_TO_BUF
 		MOVEM.L (SP)+,D1/A1
 		RTS
@@ -1215,6 +1217,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
 
 
 
