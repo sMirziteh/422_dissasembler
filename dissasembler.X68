@@ -438,8 +438,9 @@ load_DIVU:  * load and print DIVU neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        * EA error check
+        JSR     SRC_AN_INVALID          
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
         
 load_OR:    * load and print DIVU neuomnic return to op loop
@@ -473,8 +474,9 @@ load_MULS:  * load and print MULS neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        * EA error check
+        JSR     SRC_AN_INVALID          
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
         
 load_AND:   * load and print AND neumonic return to op loop
@@ -500,8 +502,8 @@ load_ADDA:  * load and print ADDA neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        * EA error check     
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
 
 load_ADD:   * load and print ADD neumonic return to op loop
@@ -542,8 +544,9 @@ load_ASR_MEM:   * load and print ASR neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        * EA error check
+        JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas     
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
         
 load_ASL_MEM:   * load and print ASL neumonic return to op loop
@@ -551,8 +554,9 @@ load_ASL_MEM:   * load and print ASL neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+         * EA error check
+        JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas     
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
 
 LSL_LSR_MEM:    * could be LSL or LSR (memory) 
@@ -568,8 +572,9 @@ load_LSR_MEM:   * load and print LSR neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+         * EA error check
+        JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas     
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
         
 load_LSL_MEM:   * load and print LSL neumonic return to op loop
@@ -577,8 +582,9 @@ load_LSL_MEM:   * load and print LSL neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+         * EA error check
+        JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas     
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
 
 REG_shift:      * could be ASL, ASR, LSL, LSR (register)
@@ -991,6 +997,12 @@ SRC_IM_INVALID:
         MOVEM.L (SP)+,D6-D7
         RTS
 
+SRC_AN_INVALID:
+        MOVEM.L D6-D7,-(SP)
+        JSR     LOAD_SRC_EA_D6_D7
+        JSR     AN_EA_CHK
+        MOVEM.L (SP)+,D6-D7
+        RTS
 *** Checks for individual EA modes
 
 * prints ea error to buffer if DN mode detected
