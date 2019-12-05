@@ -907,36 +907,41 @@ ADDQ_EA:
         
 ********** BRA_EA ************
 BRA_EA:
-        * to do *
+        MOVE.L  D2,D3
+        ANDI.W  #Byte0Mask,D3
+        CMPI.W  #$0000,D3       * if last 8 bits are 00, write next word of memory
+        BEQ     NEXT_MEM_WORD_TO_BUF
+        CMPI.W  #$00FF,D3       * if last 8 bits are FF, write next long? of memory
+        BEQ     NEXT_MEM_LONG_TO_BUF
         
 ******** MOVEQ_EA ************
 * TO FIX *
 MOVEQ_EA:
-        MOVE.L  D2,D3
-        ANDI.W  #Byte0Mask,D3
-        *MULU    #6,D3
-        
-        LEA     _IMD,A1
-        JSR     WRITE_ASCII
-        ** ? **
-        JSR     (A1,D3)
-        
-        CLR     D3
-        
-        MOVE.L  D2,D3
-        ANDI.W  #Bit0Mask,D3
-        MOVE.B  #9,D5
-        LSR     D5,D3
-        MOVE.B  D3,DEST_REG
-        MULU    #6,D3
-        
-        LEA     _COMMA,A1
-        JSR     WRITE_ASCII
-        LEA     _DR,A1
-        JSR     WRITE_ASCII
-        LEA     EA_REG,A1
-        JSR     (A1,D3)
-        RTS
+*        MOVE.L  D2,D3
+*        ANDI.W  #Byte0Mask,D3
+*        MULU    #6,D3
+*        
+*        LEA     _IMD,A1
+*        JSR     WRITE_ASCII
+*        * ? *
+*        JSR     (A1,D3)
+*        
+*        CLR     D3
+*        
+*        MOVE.L  D2,D3
+*        ANDI.W  #Bit0Mask,D3
+*        MOVE.B  #9,D5
+*        LSR     D5,D3
+*        MOVE.B  D3,DEST_REG
+*        MULU    #6,D3
+*        
+*        LEA     _COMMA,A1
+*        JSR     WRITE_ASCII
+*        LEA     _DR,A1
+*        JSR     WRITE_ASCII
+*        LEA     EA_REG,A1
+*        JSR     (A1,D3)
+*        RTS
 
 ********* DIVU_EA ************
 DIVU_EA:
