@@ -954,9 +954,21 @@ BRA_EA:
         MOVE.L  D2,D3
         ANDI.W  #Byte0Mask,D3
         CMPI.W  #$0000,D3       * if last 8 bits are 00, write next word of memory
-        BEQ     NEXT_MEM_WORD_TO_BUF
-        CMPI.W  #$00FF,D3       * if last 8 bits are FF, write next long? of memory
-        BEQ     NEXT_MEM_LONG_TO_BUF
+        BNE     BRA_LONG_EA
+        JSR     NEXT_MEM_WORD_TO_BUF
+        RTS
+BRA_LONG_EA:
+        CMPI.W  #$00FF,D3       * if last 8 bits are FF, write next long of memory
+        BNE     BRA_8BIT_EA
+        JSR     NEXT_MEM_LONG_TO_BUF
+        RTS
+BRA_8BIT_EA:                    * else 8 bit displacement
+        CLR.L   D1
+        MOVE.W  D3,D1
+        MOVE.L  #8,D5           * set hex digit size to byte
+        JSR     WRITE_HEX_TO_ASCII
+        RTS
+
         
 ******** MOVEQ_EA ************
 * kinda works *
@@ -1986,20 +1998,28 @@ PRINT_A1:
 ****************************************************        
 
 * d5 is a flag for hex value length d5==32 long is used
+* d5 == 8 byte is used
 * any other value short is used        
 WRITE_HEX_TO_ASCII: * write hex in d1 to a4 as ascii
         * may need to add case to handle sign extended shorts
         MOVEM.L   D2-D4,-(SP)
         MOVE.L  D1,D2   * copy input to working temp var
         CMPI.L  #32,D5           * if masked value is 0 there is no value in long portion of register for unsigned ints
-        BNE     h_short         * if not 32 hex value is short else long
-        * setup params for long processing
+        BEQ     h_long         * if 32 long
+        CMPI.L  #8,D5          * if 8 byte 
+        BEQ     h_byte
+        BRA     h_short         * else short
+h_long: * setup params for long processing
         MOVE.L  #$F0000000,D3   * init mask for isolating first long hex most significand digit
         MOVE.L  #28,D4          * init shift value for first long hex MSD
         BRA     h_a_loop
-        
+
+h_byte: * setup params for byte processing
+        MOVE.L  #$000000F0,D3   * init mask for isolating first byte hex most significand digit
+        MOVE.L  #4,D4      * init shift value for first byte hex MSD    
+        BRA     h_a_loop    
 h_short: * setup params for short processing
-        MOVE.L  #$F000,D3   * init mask for isolating first short hex most significand digit
+        MOVE.L  #$0000F000,D3   * init mask for isolating first short hex most significand digit
         MOVE.L  #12,D4      * init shift value for first short hex MSD
         
 h_a_loop:
