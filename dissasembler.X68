@@ -156,8 +156,7 @@ load_MOVEA_L:   * load and print MOVEA.L neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ	* save instruction size
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
 
 load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
@@ -184,8 +183,7 @@ load_MOVEA_W:   * load and print MOVEA.W neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ	* save instruction size
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
 
 load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
@@ -241,9 +239,8 @@ load_NOT_B:   * load and print NOT.B neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
-        JSR     DEST_AN_IM_INVALID * check specific invalid EAS
+        JSR     SRC_GLOBAL_INVALID * check globaly invalid eas bits 0-5
+        JSR     SRC_AN_IM_INVALID * check specific invalid EAS bits 0-5
         BRA     DECODE_DONE
         
 load_NOT_W:   * load and print NOT.W neumonic return to op loop
@@ -252,9 +249,9 @@ load_NOT_W:   * load and print NOT.W neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
-        JSR     DEST_AN_IM_INVALID * check specific invalid EAS
+        
+        JSR     SRC_GLOBAL_INVALID * check globaly invalid eas bits 0-5
+        JSR     SRC_AN_IM_INVALID * check specific invalid EAS bits 0-5
         BRA     DECODE_DONE
         
 load_NOT_L:   * load and print NOT.L neumonic return to op loop
@@ -263,9 +260,9 @@ load_NOT_L:   * load and print NOT.L neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ   * save instruction size
          **** EA CODE GOES HERE ****
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
-        JSR     DEST_AN_IM_INVALID * check specific invalid EAS
+        
+        JSR     SRC_GLOBAL_INVALID * check globaly invalid eas bits 0-5
+        JSR     SRC_AN_IM_INVALID * check specific invalid EAS bits 0-5 
         BRA     DECODE_DONE
 
 NOP_RTS_JSR: * could be NOP or RTS or JSR
@@ -954,6 +951,15 @@ DEST_AN_IM_INVALID:
         MOVEM.L (SP)+,D6-D7
         RTS
 
+* source (bits 0-5) address register and imediate mode are invalid eas
+SRC_AN_IM_INVALID:
+        MOVEM.L D6-D7,-(SP)
+        JSR     LOAD_SRC_EA_D6_D7
+        JSR     IM_DATA_EA_CHK
+        JSR     AN_EA_CHK
+        MOVEM.L (SP)+,D6-D7
+        RTS
+
 * error for  DN, AN, or Imediate modes for source ea bits 0-5
 SRC_DN_AN_IM_INVALID:
         MOVEM.L D6-D7,-(SP)
@@ -1456,15 +1462,23 @@ ST_LEN  DCB.B   1,0 * var to track start address length
 E_LEN   DC.B    1,0 * var to track end address length
 STR_BUF DCB.B   241,0  * buffer to hold 240 chars + null terminator. 3 80 char lines
 INST_SZ	DCB.B	1,0		* used to store instuction size
-DEST_MODE:
-        DCB.B   1,0     * var for destination ea mode
-DEST_REG:
+
+******************
+* IMPORTANT NOTE *
+******************
+* EA MODE and REGISTER variables *
+* name src and dest is based off of move op-code so make sure you are looking
+* at the right bits, name is mapped to bit range NOT ea name in manual
+DEST_MODE: * always bits 6-8 inclusive in op-code
+        DCB.B   1,0     * var for destination ea mode 
+DEST_REG:  * always bits 9-11 inclusive in op-code
         DCB.B   1,0     * var to save destination register in
-SRC_MODE:
+SRC_MODE:  * always bits 3-5 inclusive in op-code
         DCB.B   1,0     * var for source ea mode
-SRC_REG: 
+SRC_REG:   * always bits 0-2 inclusive in op-code
         DCB.B   1,0     * var to save source register in  
-EA_ERR_FLAG:
+
+EA_ERR_FLAG:  * bits 6-8 inclusive in op-code
         DCB.B   1,0     * var for ea error status
          
 ****    CONST   ****
