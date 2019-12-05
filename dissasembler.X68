@@ -460,7 +460,7 @@ load_OR:    * load and print DIVU neuomnic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        JSR     OR_EA_INVALID
         BRA     DECODE_DONE
 
 load_SUB:   * load and print SUB neumonic return to op loop
@@ -1023,6 +1023,40 @@ SRC_AN_INVALID:
         JSR     AN_EA_CHK
         MOVEM.L (SP)+,D6-D7
         RTS
+
+SRC_DN_INVALID:
+        MOVEM.L D6-D7,-(SP)
+        JSR     LOAD_SRC_EA_D6_D7
+        JSR     DN_EA_CHK
+        MOVEM.L (SP)+,D6-D7
+        RTS
+
+
+OR_EA_INVALID:
+        MOVEM.L D6-D7,-(SP)
+        JSR     LOAD_DEST_EA_D6_D7
+        CMP.B   #0,D6
+        BLT     OR_ERR   * if opmode < 0 bad data
+        CMP.B   #4,D6
+        BGE     OR_DN_EA  * if opmode >= 4 check if less than 7       
+        * EA -> DN
+        JSR     SRC_AN_INVALID
+        JSR     SRC_DN_INVALID
+        JSR     SRC_GLOBAL_INVALID
+        BRA     OR_EA_IN_DONE
+OR_DN_EA:
+        CMP.B   #7,D6
+        BGE     OR_ERR  * if opcode >= 7 error
+        * DN -> EA
+        JSR     SRC_DN_AN_IM_INVALID
+        JSR     SRC_GLOBAL_INVALID
+        BRA     OR_EA_IN_DONE
+
+OR_ERR  JSR     EA_ERR
+OR_EA_IN_DONE:
+        MOVEM.L (SP)+,D6-D7
+        RTS
+
 *** Checks for individual EA modes
 
 * prints ea error to buffer if DN mode detected
