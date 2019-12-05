@@ -497,6 +497,7 @@ load_ADDA:  * load and print ADDA neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
+        JSR     OPMODE_EA
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
@@ -831,6 +832,8 @@ OPMODE_EA:
 
         CMP.B   #%1,D5                  *if flag == 1, <ea> V Dn - Dn
         BEQ     D_TO_EA
+        CMP.B   #%11,D5                 *if flag == 2, <ea> - An
+        BEQ     EA_TO_A
         CMP.B   #%1,D5                  *else, Dn V <ea> - <ea>
         BNE     EA_TO_D
         RTS
@@ -907,6 +910,42 @@ D_TO_EA:
         JSR     (A1,D4)
         RTS
 
+EA_TO_A:
+        CLR     D3
+        CLR     D4
+
+        MOVE.L  D2,D3 
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    *mask to isolate 3-bit source mode
+        ANDI.W  #Bit3Mask,D3    *mask to isolate 3-bit source register 
+        LSR.L   #3,D4
+        MOVE.B  D4,SRC_MODE     * save source ea mode to memory
+        MOVE.B  D3,SRC_REG      * save source register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+
+        CLR     D3
+        CLR     D4 
+
+        MOVE.L  D2,D3 
+        ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
+        MOVE.B  #9, D5
+        LSR     D5,D3 
+        MOVE.B  D3,DEST_REG      * save destination register to memory 
+        MULU   #6,D3
+        LEA     _AR,A1 
+        JSR WRITE_ASCII
+
+
+        LEA     EA_REG,A1 
+        JSR     (A1,D3)
+        RTS
+
 ******* OPMODE **********
 OPMODE:
         JMP     OM000
@@ -936,6 +975,9 @@ OM010:
 
         RTS   
 OM011:
+        LEA     _W,A1
+        JSR     WRITE_ASCII
+        MOVE.B  #%11,D5
         RTS   
 OM100:
         LEA     _B,A1
@@ -956,6 +998,9 @@ OM110:
 
         RTS   
 OM111:
+        LEA     _L,A1
+        JSR     WRITE_ASCII
+        MOVE.B  #%11,D5
         RTS   
  
         
