@@ -910,8 +910,33 @@ BRA_EA:
         * to do *
         
 ******** MOVEQ_EA ************
+* TO FIX *
 MOVEQ_EA:
-        * to do *
+        MOVE.L  D2,D3
+        ANDI.W  #Byte0Mask,D3
+        *MULU    #6,D3
+        
+        LEA     _IMD,A1
+        JSR     WRITE_ASCII
+        ** ? **
+        JSR     (A1,D3)
+        
+        CLR     D3
+        
+        MOVE.L  D2,D3
+        ANDI.W  #Bit0Mask,D3
+        MOVE.B  #9,D5
+        LSR     D5,D3
+        MOVE.B  D3,DEST_REG
+        MULU    #6,D3
+        
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+        LEA     _DR,A1
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        JSR     (A1,D3)
+        RTS
 
 ********* DIVU_EA ************
 DIVU_EA:
