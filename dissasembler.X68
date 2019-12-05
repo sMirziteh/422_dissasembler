@@ -243,7 +243,7 @@ load_NOT_B:   * load and print NOT.B neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
-         **** EA CODE GOES HERE ****
+        JSR     NOT_EA
         JSR     SRC_GLOBAL_INVALID * check globaly invalid eas bits 0-5
         JSR     SRC_AN_IM_INVALID * check specific invalid EAS bits 0-5
         BRA     DECODE_DONE
@@ -253,7 +253,7 @@ load_NOT_W:   * load and print NOT.W neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
-         **** EA CODE GOES HERE ****
+        JSR     NOT_EA
         
         JSR     SRC_GLOBAL_INVALID * check globaly invalid eas bits 0-5
         JSR     SRC_AN_IM_INVALID * check specific invalid EAS bits 0-5
@@ -264,7 +264,7 @@ load_NOT_L:   * load and print NOT.L neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ   * save instruction size
-         **** EA CODE GOES HERE ****
+        JSR     NOT_EA
         
         JSR     SRC_GLOBAL_INVALID * check globaly invalid eas bits 0-5
         JSR     SRC_AN_IM_INVALID * check specific invalid EAS bits 0-5 
@@ -316,6 +316,7 @@ load_JSR:   * load and print JSR neumonic return to op loop
         LEA     _JSR,A1
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
+        JSR     JSR_EA
         * check for invalid eas
         JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
         JSR     SRC_PINC_PDEC_INVALID    * -(AN) invalid and (AN)+ invalid
@@ -783,6 +784,38 @@ MOVE_EA:
         JSR     (A1,D4)
         RTS
 
+********** NOT_EA ***********
+NOT_EA:
+        MOVE.L  D2,D3
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA register
+        LSR.L   #3,D4
+        MOVE.B  D4,SRC_MODE     * save source EA mode to memory
+        MOVE.B  D3,SRC_REG      * save source EA register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+        
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        RTS
+        
+********** JSR_EA ***********
+JSR_EA:
+        MOVE.L  D2,D3
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA register
+        LSR.L   #3,D4
+        MOVE.B  D4,SRC_MODE     * save source EA mode to memory
+        MOVE.B  D3,SRC_REG      * save source EA register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+        
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        RTS
+        
 ********** LEA_EA ***********
 LEA_EA:
         MOVE.L  D2,D3 
@@ -1943,6 +1976,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
 
 
 
