@@ -419,7 +419,7 @@ OP_6:   * could be BRA, BEQ, BGT, BLE
 load_BRA:   * load and print BRA neumonic return to op loop
         LEA     _BRA,A1
         JSR     WRITE_ASCII
-        JSR     BRA_EA
+        JSR     BRA_BCC_EA
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         BRA     DECODE_DONE
         
@@ -949,8 +949,8 @@ ADDQ_EA:
         
         RTS
         
-********** BRA_EA ************
-BRA_EA:
+********** BRA_BCC_EA ************
+BRA_BCC_EA:
         MOVE.L  D2,D3
         ANDI.W  #Byte0Mask,D3
         CMPI.W  #$0000,D3       * if last 8 bits are 00, write next word of memory
