@@ -832,10 +832,6 @@ JSR_EA:
         JSR     (A1,D4)
         RTS
         
-******** MOVEM_EA ***********
-MOVEM_EA:
-        * to do *
-        
 ********** LEA_EA ***********
 LEA_EA:
         MOVE.L  D2,D3 
@@ -871,9 +867,43 @@ LEA_EA:
         JSR     (A1,D4)
         RTS
         
+******** MOVEM_EA ***********
+MOVEM_EA:
+        * to do * 
+       
 ********* ADDQ_EA ************
 ADDQ_EA:
-        * to do *
+        MOVE.L  D2,D3
+        ANDI.W  #Bit0Mask,D3    * mask to isolate 3-bit data
+        MOVE.B  #9,D5
+        LSR     D5,D3
+        MOVE.B  D3,DEST_REG     * save data to memory
+        MULU    #6,D3
+        
+        LEA     _IMD,A1
+        JSR     WRITE_ASCII
+        LEA     EA_IMM,A1
+        JSR     (A1,D3)
+        
+        CLR     D3
+        
+        MOVE.L  D2,D3
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA register
+        LSR     #3,D4
+        MOVE.B  D4,SRC_MODE      * save source register to memory
+        MOVE.B  D3,SRC_REG    * save source mode to memory
+        MULU    #6,D4
+        MULU    #6,D3
+        
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+        
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        
+        RTS
         
 ********** BRA_EA ************
 BRA_EA:
@@ -1092,7 +1122,7 @@ REG_IMM_EA:
         
         LEA     _IMD,A1
         JSR     WRITE_ASCII
-        LEA     EA_SHIFT,A1
+        LEA     EA_IMM,A1
         JSR     (A1,D3)
         
         CLR     D3
@@ -1325,46 +1355,46 @@ REG111:
         JSR     WRITE_ASCII
         RTS   
   
-********* JUMP TABLE FOR SHIFT COUNT ******
-EA_SHIFT:
-        JMP     SHI000
-        JMP     SHI001
-        JMP     SHI010
-        JMP     SHI011
-        JMP     SHI100
-        JMP     SHI101
-        JMP     SHI110
-        JMP     SHI111
+********* JUMP TABLE FOR IMMEDIATE VALUE ******
+EA_IMM:
+        JMP     IMM000
+        JMP     IMM001
+        JMP     IMM010
+        JMP     IMM011
+        JMP     IMM100
+        JMP     IMM101
+        JMP     IMM110
+        JMP     IMM111
 
-SHI000:
+IMM000:
         LEA     _EIGHT,A1 
         JSR     WRITE_ASCII
         RTS   
-SHI001:
+IMM001:
         LEA     _ONE,A1 
         JSR     WRITE_ASCII
         RTS   
-SHI010:
+IMM010:
         LEA     _TWO,A1 
         JSR     WRITE_ASCII
         RTS   
-SHI011:
+IMM011:
         LEA     _THREE,A1 
         JSR     WRITE_ASCII
         RTS   
-SHI100:
+IMM100:
         LEA     _FOUR,A1 
         JSR     WRITE_ASCII
         RTS   
-SHI101:
+IMM101:
         LEA     _FIVE,A1 
         JSR     WRITE_ASCII
         RTS   
-SHI110:
+IMM110:
         LEA     _SIX,A1 
         JSR     WRITE_ASCII
         RTS   
-SHI111:
+IMM111:
         LEA     _SEVEN,A1 
         JSR     WRITE_ASCII
         RTS   
