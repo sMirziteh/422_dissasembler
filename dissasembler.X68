@@ -869,8 +869,52 @@ LEA_EA:
         
 ******** MOVEM_EA ***********
 MOVEM_EA:
-        * to do * 
-       
+        MOVE.L  D2,D3
+        ANDI.W  #Bit0Mask,D3    * mask to isolate bits 11-9 to get dr
+        CMPI.W  #$0800,D3       * if bit 10 is 0, dr is register to memory
+        BEQ     MOVEM_REG_EA
+        CMPI.W  #$0C00,D3       * if bit 10 is 1, dr is memory to register
+        BEQ     MOVEM_MEM_EA
+
+****** MOVEM_REG_EA **********
+MOVEM_REG_EA:
+        * code for list goes here *
+        
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+        
+        MOVE.L  D2,D3
+        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA reg
+        LSR     #3,D4
+        MOVE.B  D4,SRC_MODE     * save mode to memory
+        MOVE.B  D3,SRC_REG      * save register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+        
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+
+
+****** MOVEM_MEM_EA **********
+MOVEM_MEM_EA:  
+        MOVE.L  D2,D3
+        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA reg
+        LSR     #3,D4
+        MOVE.B  D4,SRC_MODE     * save mode to memory
+        MOVE.B  D3,SRC_REG      * save register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+        
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        
+        * code for list goes here *
+        
+        
+        RTS
+        
 ********* ADDQ_EA ************
 ADDQ_EA:
         MOVE.L  D2,D3
@@ -915,33 +959,37 @@ BRA_EA:
         BEQ     NEXT_MEM_LONG_TO_BUF
         
 ******** MOVEQ_EA ************
-* TO FIX *
+* kinda works *
 MOVEQ_EA:
-*        MOVE.L  D2,D3
-*        ANDI.W  #Byte0Mask,D3
-*        MULU    #6,D3
-*        
-*        LEA     _IMD,A1
-*        JSR     WRITE_ASCII
-*        * ? *
-*        JSR     (A1,D3)
-*        
-*        CLR     D3
-*        
-*        MOVE.L  D2,D3
-*        ANDI.W  #Bit0Mask,D3
-*        MOVE.B  #9,D5
-*        LSR     D5,D3
-*        MOVE.B  D3,DEST_REG
-*        MULU    #6,D3
-*        
-*        LEA     _COMMA,A1
-*        JSR     WRITE_ASCII
-*        LEA     _DR,A1
-*        JSR     WRITE_ASCII
-*        LEA     EA_REG,A1
-*        JSR     (A1,D3)
-*        RTS
+        MOVE.L  D2,D3
+        ANDI.W  #Byte0Mask,D3
+        
+        LEA     _IMD,A1
+        JSR     WRITE_ASCII
+        LEA     _ABS,A1
+        JSR     WRITE_ASCII
+        
+        CLR.L   D1
+        MOVE.W  D3,D1
+        MOVE.L  #2,D5
+        JSR     WRITE_HEX_TO_ASCII
+        
+        CLR     D3
+        
+        MOVE.L  D2,D3
+        ANDI.W  #Bit0Mask,D3
+        MOVE.B  #9,D5
+        LSR     D5,D3
+        MOVE.B  D3,DEST_REG
+        MULU    #6,D3
+        
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+        LEA     _DR,A1
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        JSR     (A1,D3)
+        RTS
 
 ********* DIVU_EA ************
 DIVU_EA:
@@ -2208,6 +2256,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
 
 
 
