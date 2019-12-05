@@ -145,9 +145,9 @@ load_MOVE_B:    * load and print MOVE.B neumonic return to op loop
 OP_2:   * could be MOVE.L or MOVEA.L
         MOVE.L  D2,D3   * copy instruction word
         ANDI.W  #Bit1Mask,D3    * mask, isolate distinguishing bits 8-6
-        CMPI.W  #0040,D3        * if bits 8-6 are 001, instruction is MOVEA.L
+        CMPI.W  #$0040,D3        * if bits 8-6 are 001, instruction is MOVEA.L
         BEQ     load_MOVEA_L
-        CMPI.W  #0040,D3        * if bits 8-6 are NOT 001, instruction is MOVE.L
+        CMPI.W  #$0040,D3        * if bits 8-6 are NOT 001, instruction is MOVE.L
         BNE     load_MOVE_L
         
 load_MOVEA_L:   * load and print MOVEA.L neumonic return to op loop
@@ -156,6 +156,8 @@ load_MOVEA_L:   * load and print MOVEA.L neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ	* save instruction size
          **** EA CODE GOES HERE ****
+        JSR     MOVE_EA
+
         JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
 
@@ -172,9 +174,9 @@ load_MOVE_L:    * load and print MOVE.L neumonic return to op loop
 OP_3:   * could be MOVE.W or MOVEA.W
         MOVE.L  D2,D3   * copy instruction word
         ANDI.W  #Bit1Mask,D3    * mask, isolate distinguishing bits 8-6
-        CMPI.W  #0040,D3        * if bits 8-6 are 001, instruction is MOVEA.W
+        CMPI.W  #$0040,D3        * if bits 8-6 are 001, instruction is MOVEA.W
         BEQ     load_MOVEA_W
-        CMPI.W  #0040,D3        * if bits 8-6 are NOT 001, instruction is MOVE.W
+        CMPI.W  #$0040,D3        * if bits 8-6 are NOT 001, instruction is MOVE.W
         BNE     load_MOVE_W
         
 load_MOVEA_W:   * load and print MOVEA.W neumonic return to op loop
@@ -183,7 +185,10 @@ load_MOVEA_W:   * load and print MOVEA.W neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ	* save instruction size
          **** EA CODE GOES HERE ****
+
+        JSR     MOVE_EA
         JSR     SRC_GLOBAL_INVALID
+
         BRA     DECODE_DONE
 
 load_MOVE_W:    * load and print MOVE.W neumonic return to op loop
@@ -298,9 +303,13 @@ load_LEA:   * load and print LEA neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
+
+        JSR    LEA_EA
+
         JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
         JSR     SRC_PINC_PDEC_INVALID   * -(AN) invalid and (AN)+ invalid
         JSR     SRC_GLOBAL_INVALID
+
         BRA     DECODE_DONE
         
 load_JSR:   * load and print JSR neumonic return to op loop
@@ -415,6 +424,7 @@ load_BRA:   * load and print BRA neumonic return to op loop
 load_BEQ:   * load and print BEQ neumonic return to op loop
         LEA     _BEQ,A1
         JSR     WRITE_ASCII
+        JSR     NEXT_MEM_WORD_TO_BUF
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         BRA     DECODE_DONE
 
@@ -449,6 +459,7 @@ load_DIVU:  * load and print DIVU neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
+        JSR     DIVU_EA
         * EA error check
         JSR     SRC_AN_INVALID          
         JSR     SRC_GLOBAL_INVALID
@@ -459,6 +470,7 @@ load_OR:    * load and print DIVU neuomnic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
+        JSR     OPMODE_EA
         * must set unused mode/reg vars to 0
         JSR     OR_EA_INVALID
         BRA     DECODE_DONE
@@ -468,6 +480,8 @@ load_SUB:   * load and print SUB neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
+        JSR     OPMODE_EA
+
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
@@ -495,6 +509,7 @@ load_AND:   * load and print AND neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
+        JSR     OPMODE_EA
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
@@ -513,6 +528,8 @@ load_ADDA:  * load and print ADDA neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
+
+        JSR     OPMODE_EA
         * EA error check     
         JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
@@ -522,6 +539,7 @@ load_ADD:   * load and print ADD neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
+        JSR     OPMODE_EA
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
@@ -732,7 +750,7 @@ load_LSL_L_REG:   * load and print LSL.L neumonic return to op loop
 
 ****       EA       ****
 
-**** FIRST EA COMMAND *********
+**** MOVE_EA FIRST EA COMMAND *********
 MOVE_EA:
         MOVE.L  D2,D3           *copy instruction to D3 for register
         MOVE.L  D2,D4           *copy instruction to D4 for mode
@@ -750,7 +768,7 @@ MOVE_EA:
 
         CLR     D3
         CLR     D4 
-******* SECOND EA COMMAND **********
+******* MOVE_EA SECOND EA COMMAND **********
         MOVE.L  D2,D3           *copy instruction to D3 for register
         MOVE.L  D2,D4           *copy instruction to D4 for modE
         ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
@@ -766,6 +784,262 @@ MOVE_EA:
         LEA     EA_MODE,A1 
         JSR     (A1,D4)
         RTS
+
+********** LEA_EA ***********
+LEA_EA:
+        MOVE.L  D2,D3 
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    *mask to isolate 3-bit source mode
+        ANDI.W  #Bit3Mask,D3    *mask to isolate 3-bit source register 
+        LSR.L   #3,D4
+        MOVE.B  D4,SRC_MODE     * save source ea mode to memory
+        MOVE.B  D3,SRC_REG      * save source register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+
+        CLR     D3
+        CLR     D4 
+
+
+        MOVE.L  D2,D3 
+        ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
+        MOVE.B  #9, D5
+        LSR     D5,D3 
+        MOVE.B  D3,DEST_REG      * save destination register to memory 
+        MULU   #6,D3
+        MOVE.W  #$0001,D4       *set mode to address register
+        MULU    #6,D4
+
+
+        LEA     EA_MODE,A1 
+        JSR     (A1,D4)
+        RTS
+
+********* DIVU_EA ************
+DIVU_EA:
+        MOVE.L  D2,D3 
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    *mask to isolate 3-bit source mode
+        ANDI.W  #Bit3Mask,D3    *mask to isolate 3-bit source register 
+        LSR.L   #3,D4
+        MOVE.B  D4,SRC_MODE     * save source ea mode to memory
+        MOVE.B  D3,SRC_REG      * save source register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+
+        CLR     D3
+        CLR     D4 
+
+        MOVE.L  D2,D3 
+        ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
+        MOVE.B  #9, D5
+        LSR     D5,D3 
+        MOVE.B  D3,DEST_REG      * save destination register to memory 
+        MULU   #6,D3
+        LEA     _DR,A1 
+        JSR WRITE_ASCII
+
+
+        LEA     EA_REG,A1 
+        JSR     (A1,D3)
+        RTS 
+
+****** 0PMODE_EA ************
+OPMODE_EA:
+        MOVE.L  D2,D4
+        ANDI.W  #Bit1Mask,D4            *FIND OPMODE
+        LSR.L   #6,D4
+        MOVE.B  D4,DEST_MODE     * save destination ea mode to memory
+        MULU    #6,D4 
+
+        LEA     OPMODE,A1               *LOAD OPMODE TABLE
+        JSR     (A1,D4)                 *JMP TO OPMODE TABLE
+
+
+        CMP.B   #%1,D5                  *if flag == 1, <ea> V Dn - Dn
+        BEQ     D_TO_EA
+        CMP.B   #%11,D5                 *if flag == 2, <ea> - An
+        BEQ     EA_TO_A
+        CMP.B   #%1,D5                  *else, Dn V <ea> - <ea>
+        BNE     EA_TO_D
+        RTS
+EA_TO_D:
+        CLR     D3
+        CLR     D4
+
+        MOVE.L  D2,D3 
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    *mask to isolate 3-bit source mode
+        ANDI.W  #Bit3Mask,D3    *mask to isolate 3-bit source register 
+        LSR.L   #3,D4
+        MOVE.B  D4,SRC_MODE     * save source ea mode to memory
+        MOVE.B  D3,SRC_REG      * save source register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+
+        CLR     D3
+        CLR     D4 
+
+        MOVE.L  D2,D3 
+        ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
+        MOVE.B  #9, D5
+        LSR     D5,D3 
+        MOVE.B  D3,DEST_REG      * save destination register to memory 
+        MULU   #6,D3
+        LEA     _DR,A1 
+        JSR WRITE_ASCII
+
+
+        LEA     EA_REG,A1 
+        JSR     (A1,D3)
+        RTS
+
+D_TO_EA:
+
+        CLR     D3
+        CLR     D4 
+
+        MOVE.L  D2,D3 
+        ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
+        MOVE.B  #9, D5
+        LSR     D5,D3 
+        MOVE.B  D3,DEST_REG      * save destination register to memory 
+        MULU   #6,D3
+        LEA     _DR,A1 
+        JSR WRITE_ASCII
+
+
+        LEA     EA_REG,A1 
+        JSR     (A1,D3)
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+
+        CLR     D3
+        CLR     D4
+
+        MOVE.L  D2,D3 
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    *mask to isolate 3-bit source mode
+        ANDI.W  #Bit3Mask,D3    *mask to isolate 3-bit source register 
+        LSR.L   #3,D4
+        MOVE.B  D4,SRC_MODE     * save source ea mode to memory
+        MOVE.B  D3,SRC_REG      * save source register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        RTS
+
+EA_TO_A:
+        CLR     D3
+        CLR     D4
+
+        MOVE.L  D2,D3 
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    *mask to isolate 3-bit source mode
+        ANDI.W  #Bit3Mask,D3    *mask to isolate 3-bit source register 
+        LSR.L   #3,D4
+        MOVE.B  D4,SRC_MODE     * save source ea mode to memory
+        MOVE.B  D3,SRC_REG      * save source register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+
+        CLR     D3
+        CLR     D4 
+
+        MOVE.L  D2,D3 
+        ANDI.W  #Bit0Mask,D3    *mask to isolate 3-bit register code
+        MOVE.B  #9, D5
+        LSR     D5,D3 
+        MOVE.B  D3,DEST_REG      * save destination register to memory 
+        MULU   #6,D3
+        LEA     _AR,A1 
+        JSR WRITE_ASCII
+
+
+        LEA     EA_REG,A1 
+        JSR     (A1,D3)
+        RTS
+
+******* OPMODE **********
+OPMODE:
+        JMP     OM000
+        JMP     OM001
+        JMP     OM010
+        JMP     OM011
+        JMP     OM100
+        JMP     OM101
+        JMP     OM110
+        JMP     OM111
+
+OM000:
+        LEA     _B,A1
+        JSR     WRITE_ASCII
+        CLR     D5
+        RTS   
+OM001:
+        LEA     _W,A1
+        JSR     WRITE_ASCII
+        CLR     D5
+
+        RTS   
+OM010:
+        LEA     _L,A1
+        JSR     WRITE_ASCII
+        CLR     D5
+
+        RTS   
+OM011:
+        LEA     _W,A1
+        JSR     WRITE_ASCII
+        MOVE.B  #%11,D5
+        RTS   
+OM100:
+        LEA     _B,A1
+        JSR     WRITE_ASCII
+        MOVE.B  #%1,D5
+
+        RTS   
+OM101:
+        LEA     _W,A1
+        JSR     WRITE_ASCII
+        MOVE.B  #%1,D5
+
+        RTS   
+OM110:
+        LEA     _L,A1
+        JSR     WRITE_ASCII
+        MOVE.B  #%1,D5
+
+        RTS   
+OM111:
+        LEA     _L,A1
+        JSR     WRITE_ASCII
+        MOVE.B  #%11,D5
+        RTS   
+ 
+        
 
 
 ******** JUMP TABLE FOR EA MODES *********
@@ -1578,7 +1852,10 @@ _BGT    DC.B    'BGT ',0
 _BLE    DC.B    'BLE ',0
 _MOVEQ  DC.B    'MOVEQ ',0
 _DIVU   DC.B    'DIVU ',0
-_OR     DC.B    'OR ',0
+_OR     DC.B    'OR',0
+_B   DC.B    '.B ',0
+_W   DC.B    '.W ',0
+_L   DC.B    '.L ',0
 _SUB    DC.B    'SUB ',0
 _MULS   DC.B    'MULS ',0
 _AND    DC.B    'AND ',0
