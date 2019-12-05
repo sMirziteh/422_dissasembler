@@ -481,9 +481,7 @@ load_SUB:   * load and print SUB neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         JSR     OPMODE_EA
-
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
 
 OP_C:       * could be MULS or AND
@@ -510,8 +508,8 @@ load_AND:   * load and print AND neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         JSR     OPMODE_EA
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
 
 OP_D:       * could be ADD or ADDA
@@ -540,8 +538,8 @@ load_ADD:   * load and print ADD neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         JSR     OPMODE_EA
-        * must set unused mode/reg vars to 0
-        JSR     BASE_EA_ERR_CHK * check globaly invalid eas
+        * EA error check     
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
 
 OP_E:       * could be ASL, ASR, LSL, LSR (memory or register)
