@@ -1063,11 +1063,83 @@ MEM_SHIFT_EA:
         
 ******* LS_REG_EA *******
 LS_REG_EA:
-        * to do *
+        MOVE.L  D2,D3
+        * determine shift count specification
+        ANDI.L  #Bit2Mask,D3    * mask, isolate bits 5-3
+        CMPI.W  #$0008,D3       * if bits 5-3 are 001, i/r is 0 and field is immediate byte
+        BEQ     REG_IMM_EA
+        CMPI.W  #$0028,D3       * if bits 5-3 are 101, i/r is 1 and field is register
+        BEQ     REG_REG_EA
         
 ******* AS_REG_EA *******
 AS_REG_EA:
-        * to do *
+        MOVE.L  D2,D3
+        * determine shift count specification
+        ANDI.L  #Bit2Mask,D3    * mask, isolate bits 5-3
+        CMPI.W  #$0000,D3       * if bits 5-3 are 000, i/r is 0 and field is immediate byte
+        BEQ     REG_IMM_EA
+        CMPI.W  #$0020,D3       * if bits 5-3 are 001, i/r is 1 and field is register
+        BEQ     REG_REG_EA
+        
+******* REG_IMM_EA ******
+REG_IMM_EA:
+        MOVE.L  D2,D3
+        ANDI.W  #Bit0Mask,D3    * find shift count
+        MOVE.B  #9,D5
+        LSR     D5,D3
+        MOVE.B  D3,DEST_REG     * save shift count to memory
+        MULU    #6,D3
+        
+        LEA     _IMD,A1
+        JSR     WRITE_ASCII
+        LEA     EA_SHIFT,A1
+        JSR     (A1,D3)
+        
+        CLR     D3
+        
+        MOVE.L  D2,D3
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit register
+        MOVE.B  D3,SRC_REG      * save register to memory
+        MULU    #6,D3
+        
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+        LEA     _DR,A1
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        JSR     (A1,D3)
+        
+        RTS
+        
+****** REG_REG_EA *******
+REG_REG_EA:
+        MOVE.L  D2,D3
+        ANDI.W  #Bit0Mask,D3    * mask to isolate 3-bit register w/shift count
+        MOVE.B  #9,D5
+        LSR     D5,D3
+        MOVE.B  D3,DEST_REG     * save register to memory
+        MULU    #6,D3
+        
+        LEA     _DR,A1
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        JSR     (A1,D3)
+        
+        CLR     D3
+        
+        MOVE.L  D2,D3
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit register
+        MOVE.B  D3,SRC_REG      * save register to memory
+        MULU    #6,D3
+        
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+        LEA     _DR,A1
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        JSR     (A1,D3)
+        
+        RTS
 
 ******* OPMODE **********
 OPMODE:
@@ -1253,6 +1325,49 @@ REG111:
         JSR     WRITE_ASCII
         RTS   
   
+********* JUMP TABLE FOR SHIFT COUNT ******
+EA_SHIFT:
+        JMP     SHI000
+        JMP     SHI001
+        JMP     SHI010
+        JMP     SHI011
+        JMP     SHI100
+        JMP     SHI101
+        JMP     SHI110
+        JMP     SHI111
+
+SHI000:
+        LEA     _EIGHT,A1 
+        JSR     WRITE_ASCII
+        RTS   
+SHI001:
+        LEA     _ONE,A1 
+        JSR     WRITE_ASCII
+        RTS   
+SHI010:
+        LEA     _TWO,A1 
+        JSR     WRITE_ASCII
+        RTS   
+SHI011:
+        LEA     _THREE,A1 
+        JSR     WRITE_ASCII
+        RTS   
+SHI100:
+        LEA     _FOUR,A1 
+        JSR     WRITE_ASCII
+        RTS   
+SHI101:
+        LEA     _FIVE,A1 
+        JSR     WRITE_ASCII
+        RTS   
+SHI110:
+        LEA     _SIX,A1 
+        JSR     WRITE_ASCII
+        RTS   
+SHI111:
+        LEA     _SEVEN,A1 
+        JSR     WRITE_ASCII
+        RTS   
  
 ***      EA ERRORS      ***
 
@@ -1986,6 +2101,7 @@ _FOUR   DC.B    '4',0
 _FIVE   DC.B    '5',0
 _SIX    DC.B    '6',0
 _SEVEN  DC.B    '7',0
+_EIGHT  DC.B    '8',0
 _COMMA  DC.B    ',',0
 
 ****    MODE CMP VALUES    ****
