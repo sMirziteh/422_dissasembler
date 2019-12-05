@@ -440,7 +440,7 @@ load_OR:    * load and print DIVU neuomnic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
-        JSR     OR_EA
+        JSR     OPMODE_EA
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
@@ -450,6 +450,8 @@ load_SUB:   * load and print SUB neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
+        JSR     OPMODE_EA
+
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
@@ -476,6 +478,7 @@ load_AND:   * load and print AND neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
+        JSR     OPMODE_EA
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
@@ -503,6 +506,7 @@ load_ADD:   * load and print ADD neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
+        JSR     OPMODE_EA
         * must set unused mode/reg vars to 0
         JSR     BASE_EA_ERR_CHK * check globaly invalid eas
         BRA     DECODE_DONE
@@ -813,12 +817,12 @@ DIVU_EA:
         JSR     (A1,D3)
         RTS 
 
-****** 0R_EA ************
-OR_EA:
+****** 0PMODE_EA ************
+OPMODE_EA:
         MOVE.L  D2,D4
         ANDI.W  #Bit1Mask,D4            *FIND OPMODE
         LSR.L   #6,D4
-        * MOVE.B  D4,DEST_MODE     * save destination ea mode to memory
+        MOVE.B  D4,DEST_MODE     * save destination ea mode to memory
         MULU    #6,D4 
 
         LEA     OPMODE,A1               *LOAD OPMODE TABLE
