@@ -472,7 +472,7 @@ load_OR:    * load and print DIVU neuomnic return to op loop
          **** EA CODE GOES HERE ****
         JSR     OPMODE_EA
         * must set unused mode/reg vars to 0
-        JSR     OR_EA_INVALID
+        JSR     OR_AND_EA_INVALID
         BRA     DECODE_DONE
 
 load_SUB:   * load and print SUB neumonic return to op loop
@@ -481,7 +481,7 @@ load_SUB:   * load and print SUB neumonic return to op loop
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         JSR     OPMODE_EA
-        JSR     SRC_GLOBAL_INVALID
+        JSR     SUB_ADD_EA_INVALID
         BRA     DECODE_DONE
 
 OP_C:       * could be MULS or AND
@@ -509,7 +509,7 @@ load_AND:   * load and print AND neumonic return to op loop
          **** EA CODE GOES HERE ****
         JSR     OPMODE_EA
         
-        JSR     SRC_GLOBAL_INVALID
+        JSR     OR_AND_EA_INVALID
         BRA     DECODE_DONE
 
 OP_D:       * could be ADD or ADDA
@@ -539,7 +539,7 @@ load_ADD:   * load and print ADD neumonic return to op loop
          **** EA CODE GOES HERE ****
         JSR     OPMODE_EA
         * EA error check     
-        JSR     SRC_GLOBAL_INVALID
+        JSR     SUB_ADD_EA_INVALID
         BRA     DECODE_DONE
 
 OP_E:       * could be ASL, ASR, LSL, LSR (memory or register)
@@ -1304,7 +1304,30 @@ SRC_DN_INVALID:
         RTS
 
 
-OR_EA_INVALID:
+SUB_ADD_EA_INVALID:
+        MOVEM.L D6-D7,-(SP)
+        JSR     LOAD_DEST_EA_D6_D7
+        CMP.B   #0,D6
+        BLT     SUB_ERR   * if opmode < 0 bad data
+        CMP.B   #4,D6
+        BGE     SUB_DN_EA  * if opmode >= 4 check if less than 7       
+        * EA -> DN
+        JSR     SRC_GLOBAL_INVALID
+        BRA     SUB_EA_IN_DONE
+SUB_DN_EA:
+        CMP.B   #7,D6
+        BGE     SUB_ERR  * if opcode >= 7 error
+        * DN -> EA
+        JSR     SRC_DN_AN_IM_INVALID
+        JSR     SRC_GLOBAL_INVALID
+        BRA     SUB_EA_IN_DONE
+
+SUB_ERR JSR     EA_ERR
+SUB_EA_IN_DONE:
+        MOVEM.L (SP)+,D6-D7
+        RTS
+
+OR_AND_EA_INVALID:
         MOVEM.L D6-D7,-(SP)
         JSR     LOAD_DEST_EA_D6_D7
         CMP.B   #0,D6
@@ -1313,7 +1336,6 @@ OR_EA_INVALID:
         BGE     OR_DN_EA  * if opmode >= 4 check if less than 7       
         * EA -> DN
         JSR     SRC_AN_INVALID
-        JSR     SRC_DN_INVALID
         JSR     SRC_GLOBAL_INVALID
         BRA     OR_EA_IN_DONE
 OR_DN_EA:
@@ -1946,7 +1968,7 @@ TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing star
 
 
 
-
+ 
 
 
 
