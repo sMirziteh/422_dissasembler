@@ -243,7 +243,7 @@ load_NOT_B:   * load and print NOT.B neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
-         **** EA CODE GOES HERE ****
+        JSR     NOT_EA
         JSR     SRC_GLOBAL_INVALID * check globaly invalid eas bits 0-5
         JSR     SRC_AN_IM_INVALID * check specific invalid EAS bits 0-5
         BRA     DECODE_DONE
@@ -253,7 +253,7 @@ load_NOT_W:   * load and print NOT.W neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
-         **** EA CODE GOES HERE ****
+        JSR     NOT_EA
         
         JSR     SRC_GLOBAL_INVALID * check globaly invalid eas bits 0-5
         JSR     SRC_AN_IM_INVALID * check specific invalid EAS bits 0-5
@@ -264,7 +264,7 @@ load_NOT_L:   * load and print NOT.L neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ   * save instruction size
-         **** EA CODE GOES HERE ****
+        JSR     NOT_EA
         
         JSR     SRC_GLOBAL_INVALID * check globaly invalid eas bits 0-5
         JSR     SRC_AN_IM_INVALID * check specific invalid EAS bits 0-5 
@@ -316,6 +316,7 @@ load_JSR:   * load and print JSR neumonic return to op loop
         LEA     _JSR,A1
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
+        JSR     JSR_EA
         * check for invalid eas
         JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
         JSR     SRC_PINC_PDEC_INVALID    * -(AN) invalid and (AN)+ invalid
@@ -326,8 +327,8 @@ load_MOVEM_W:   * load and print MOVEM.W neumonic return to op loop
         LEA     _MOVEM_W,A1
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
-	MOVE.B  #WORD,INST_SZ	* save instruction size
-         **** EA CODE GOES HERE ****
+	    MOVE.B  #WORD,INST_SZ	* save instruction size
+        JSR     MOVEM_EA
          * check for invalid eas
         MOVE.W  D2,D3  * copy full opcode to D3
         ANDI.W  #$0400,D3 * isolate direction bit
@@ -346,7 +347,7 @@ load_MOVEM_L:   * load and print MOVEM.L neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ	* save instruction size
-         **** EA CODE GOES HERE ****
+        JSR     MOVEM_EA
         *  check for invalid eas
         MOVE.W  D2,D3  * copy full opcode to D3
         ANDI.W  #$0400,D3 * isolate direction bit
@@ -375,7 +376,7 @@ load_ADDQ_B:  * load and print ADDQ.B neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
-         **** EA CODE GOES HERE ****
+        JSR     ADDQ_EA
          *  check for invalid eas
         JSR     SRC_IM_INVALID
         JSR     SRC_GLOBAL_INVALID
@@ -386,7 +387,7 @@ load_ADDQ_W:  * load and print ADDQ.W neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
-         **** EA CODE GOES HERE ****
+        JSR     ADDQ_EA
          *  check for invalid eas
         JSR     SRC_IM_INVALID
         JSR     SRC_GLOBAL_INVALID
@@ -397,7 +398,7 @@ load_ADDQ_L:  * load and print ADDQ.L neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ
-         **** EA CODE GOES HERE ****
+        JSR     ADDQ_EA
          *  check for invalid eas
         JSR     SRC_IM_INVALID
         JSR     SRC_GLOBAL_INVALID
@@ -418,6 +419,7 @@ OP_6:   * could be BRA, BEQ, BGT, BLE
 load_BRA:   * load and print BRA neumonic return to op loop
         LEA     _BRA,A1
         JSR     WRITE_ASCII
+        JSR     BRA_BCC_EA
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         BRA     DECODE_DONE
         
@@ -443,6 +445,7 @@ load_BLE:   * load and print BLE neumonic return to op loop
 load_MOVEQ: * load and print MOVEQ neumonic return to op loop
         LEA     _MOVEQ,A1
         JSR     WRITE_ASCII
+        JSR     MOVEQ_EA
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         BRA     DECODE_DONE
         
@@ -544,11 +547,13 @@ load_ADD:   * load and print ADD neumonic return to op loop
 
 OP_E:       * could be ASL, ASR, LSL, LSR (memory or register)
         MOVE.L  D2,D3       * copy instruction word
-        ANDI.L  #$FFFF00FF,D3   * mask, isolate bits 7-6
-        CMPI.W  #$00C0,D3       * if bits 7-6 are 11, instruction is MEMORY shift
+        ANDI.L  #Bit1Mask,D3   * mask, isolate bits 8-6
+        CMPI.W  #$00C0,D3   * if bits 8-6 are 011, instruction is MEMORY shift
         BEQ     MEMORY_shift
-        CMPI.W  #$00C0,D3       * if bits 7-6 are NOT 11, instruction is REG shift
-        BNE     REG_shift
+        CMPI.W  #$01C0,D3   * if bits 8-6 are 111, instruction is MEMORY shift
+        BEQ     MEMORY_shift
+        CMPI.W  #$01C0,D3   * if bits 8-6 are NOT 011 or 111, instruction is REG shift
+        BNE     REG_shift        
         
 MEMORY_shift:   * could be ASL, ASR, LSL, LSR (memory)
         MOVE.L  D2,D3       * copy instruction word
@@ -570,7 +575,7 @@ load_ASR_MEM:   * load and print ASR neumonic return to op loop
         LEA     _ASR,A1
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
-         **** EA CODE GOES HERE ****
+        JSR     MEM_SHIFT_EA
         * EA error check
         JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas     
         JSR     SRC_GLOBAL_INVALID
@@ -580,7 +585,7 @@ load_ASL_MEM:   * load and print ASL neumonic return to op loop
         LEA     _ASL,A1
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
-         **** EA CODE GOES HERE ****
+        JSR     MEM_SHIFT_EA
          * EA error check
         JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas     
         JSR     SRC_GLOBAL_INVALID
@@ -598,7 +603,7 @@ load_LSR_MEM:   * load and print LSR neumonic return to op loop
         LEA     _LSR,A1
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
-         **** EA CODE GOES HERE ****
+        JSR     MEM_SHIFT_EA
          * EA error check
         JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas     
         JSR     SRC_GLOBAL_INVALID
@@ -608,7 +613,7 @@ load_LSL_MEM:   * load and print LSL neumonic return to op loop
         LEA     _LSL,A1
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
-         **** EA CODE GOES HERE ****
+        JSR     MEM_SHIFT_EA
          * EA error check
         JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas     
         JSR     SRC_GLOBAL_INVALID
@@ -649,6 +654,7 @@ load_ASR_B_REG:   * load and print ASR.B neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
+        JSR     AS_REG_EA
         BRA     DECODE_DONE
         
 load_ASR_W_REG:   * load and print ASR.W neumonic return to op loop
@@ -656,6 +662,7 @@ load_ASR_W_REG:   * load and print ASR.W neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
+        JSR     AS_REG_EA
         BRA     DECODE_DONE
         
 load_ASR_L_REG:   * load and print ASR.L neumonic return to op loop
@@ -663,6 +670,7 @@ load_ASR_L_REG:   * load and print ASR.L neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ   * save instruction size
+        JSR     AS_REG_EA
         BRA     DECODE_DONE
         
 load_ASL_B_REG:   * load and print ASL.B neumonic return to op loop
@@ -670,6 +678,7 @@ load_ASL_B_REG:   * load and print ASL.B neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
+        JSR     AS_REG_EA
         BRA     DECODE_DONE
         
 load_ASL_W_REG:   * load and print ASL.W neumonic return to op loop
@@ -677,6 +686,7 @@ load_ASL_W_REG:   * load and print ASL.W neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
+        JSR     AS_REG_EA
         BRA     DECODE_DONE
         
 load_ASL_L_REG:   * load and print ASL.L neumonic return to op loop
@@ -684,6 +694,7 @@ load_ASL_L_REG:   * load and print ASL.L neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ   * save instruction size
+        JSR     AS_REG_EA
         BRA     DECODE_DONE
 
 LSL_LSR_REG:    * could be LSL or LSR (register)
@@ -709,6 +720,7 @@ load_LSR_B_REG:   * load and print LSR.B neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
+        JSR     LS_REG_EA
         BRA     DECODE_DONE
         
 load_LSR_W_REG:   * load and print LSR.W neumonic return to op loop
@@ -716,6 +728,7 @@ load_LSR_W_REG:   * load and print LSR.W neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
+        JSR     LS_REG_EA
         BRA     DECODE_DONE
         
 load_LSR_L_REG:   * load and print LSR.L neumonic return to op loop
@@ -723,6 +736,7 @@ load_LSR_L_REG:   * load and print LSR.L neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ   * save instruction size
+        JSR     LS_REG_EA
         BRA     DECODE_DONE
         
 load_LSL_B_REG:   * load and print LSL.B neumonic return to op loop
@@ -730,6 +744,7 @@ load_LSL_B_REG:   * load and print LSL.B neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #BYTE,INST_SZ   * save instruction size
+        JSR     LS_REG_EA
         BRA     DECODE_DONE
         
 load_LSL_W_REG:   * load and print LSL.W neumonic return to op loop
@@ -737,6 +752,7 @@ load_LSL_W_REG:   * load and print LSL.W neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #WORD,INST_SZ   * save instruction size
+        JSR     LS_REG_EA
         BRA     DECODE_DONE
         
 load_LSL_L_REG:   * load and print LSL.L neumonic return to op loop
@@ -744,6 +760,7 @@ load_LSL_L_REG:   * load and print LSL.L neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
         MOVE.B  #LONG,INST_SZ   * save instruction size
+        JSR     LS_REG_EA
         BRA     DECODE_DONE
 
 ****       EA       ****
@@ -783,6 +800,38 @@ MOVE_EA:
         JSR     (A1,D4)
         RTS
 
+********** NOT_EA ***********
+NOT_EA:
+        MOVE.L  D2,D3
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA register
+        LSR.L   #3,D4
+        MOVE.B  D4,SRC_MODE     * save source EA mode to memory
+        MOVE.B  D3,SRC_REG      * save source EA register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+        
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        RTS
+        
+********** JSR_EA ***********
+JSR_EA:
+        MOVE.L  D2,D3
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA register
+        LSR.L   #3,D4
+        MOVE.B  D4,SRC_MODE     * save source EA mode to memory
+        MOVE.B  D3,SRC_REG      * save source EA register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+        
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        RTS
+        
 ********** LEA_EA ***********
 LEA_EA:
         MOVE.L  D2,D3 
@@ -816,6 +865,142 @@ LEA_EA:
 
         LEA     EA_MODE,A1 
         JSR     (A1,D4)
+        RTS
+        
+******** MOVEM_EA ***********
+MOVEM_EA:
+        MOVE.L  D2,D3
+        ANDI.W  #Bit0Mask,D3    * mask to isolate bits 11-9 to get dr
+        CMPI.W  #$0800,D3       * if bit 10 is 0, dr is register to memory
+        BEQ     MOVEM_REG_EA
+        CMPI.W  #$0C00,D3       * if bit 10 is 1, dr is memory to register
+        BEQ     MOVEM_MEM_EA
+
+****** MOVEM_REG_EA **********
+MOVEM_REG_EA:
+        * code for list goes here *
+        
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+        
+        MOVE.L  D2,D3
+        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA reg
+        LSR     #3,D4
+        MOVE.B  D4,SRC_MODE     * save mode to memory
+        MOVE.B  D3,SRC_REG      * save register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+        
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+
+
+****** MOVEM_MEM_EA **********
+MOVEM_MEM_EA:  
+        MOVE.L  D2,D3
+        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA reg
+        LSR     #3,D4
+        MOVE.B  D4,SRC_MODE     * save mode to memory
+        MOVE.B  D3,SRC_REG      * save register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+        
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        
+        * code for list goes here *
+        
+        
+        RTS
+        
+********* ADDQ_EA ************
+ADDQ_EA:
+        MOVE.L  D2,D3
+        ANDI.W  #Bit0Mask,D3    * mask to isolate 3-bit data
+        MOVE.B  #9,D5
+        LSR     D5,D3
+        MOVE.B  D3,DEST_REG     * save data to memory
+        MULU    #6,D3
+        
+        LEA     _IMD,A1
+        JSR     WRITE_ASCII
+        LEA     EA_IMM,A1
+        JSR     (A1,D3)
+        
+        CLR     D3
+        
+        MOVE.L  D2,D3
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA register
+        LSR     #3,D4
+        MOVE.B  D4,SRC_MODE      * save source register to memory
+        MOVE.B  D3,SRC_REG    * save source mode to memory
+        MULU    #6,D4
+        MULU    #6,D3
+        
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+        
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        
+        RTS
+        
+********** BRA_BCC_EA ************
+BRA_BCC_EA:
+        MOVE.L  D2,D3
+        ANDI.W  #Byte0Mask,D3
+        CMPI.W  #$0000,D3       * if last 8 bits are 00, write next word of memory
+        BNE     BRA_LONG_EA
+        JSR     NEXT_MEM_WORD_TO_BUF
+        RTS
+BRA_LONG_EA:
+        CMPI.W  #$00FF,D3       * if last 8 bits are FF, write next long of memory
+        BNE     BRA_8BIT_EA
+        JSR     NEXT_MEM_LONG_TO_BUF
+        RTS
+BRA_8BIT_EA:                    * else 8 bit displacement
+        CLR.L   D1
+        MOVE.W  D3,D1
+        MOVE.L  #8,D5           * set hex digit size to byte
+        JSR     WRITE_HEX_TO_ASCII
+        RTS
+
+        
+******** MOVEQ_EA ************
+* kinda works *
+MOVEQ_EA:
+        MOVE.L  D2,D3
+        ANDI.W  #Byte0Mask,D3
+        
+        LEA     _IMD,A1
+        JSR     WRITE_ASCII
+        LEA     _ABS,A1
+        JSR     WRITE_ASCII
+        
+        CLR.L   D1
+        MOVE.W  D3,D1
+        MOVE.L  #2,D5
+        JSR     WRITE_HEX_TO_ASCII
+        
+        CLR     D3
+        
+        MOVE.L  D2,D3
+        ANDI.W  #Bit0Mask,D3
+        MOVE.B  #9,D5
+        LSR     D5,D3
+        MOVE.B  D3,DEST_REG
+        MULU    #6,D3
+        
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+        LEA     _DR,A1
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        JSR     (A1,D3)
         RTS
 
 ********* DIVU_EA ************
@@ -978,6 +1163,102 @@ EA_TO_A:
 
         LEA     EA_REG,A1 
         JSR     (A1,D3)
+        RTS
+        
+******* ASR_MEM_EA ******
+MEM_SHIFT_EA:
+        MOVE.L  D2,D3
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA register
+        LSR.L   #3,D4
+        MOVE.B  D4,SRC_MODE     * save source EA mode to mem
+        MOVE.B  D3,SRC_REG      * save source EA reg to mem
+        MULU    #6,D4
+        MULU    #6,D3
+        
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        RTS
+        
+******* LS_REG_EA *******
+LS_REG_EA:
+        MOVE.L  D2,D3
+        * determine shift count specification
+        ANDI.L  #Bit2Mask,D3    * mask, isolate bits 5-3
+        CMPI.W  #$0008,D3       * if bits 5-3 are 001, i/r is 0 and field is immediate byte
+        BEQ     REG_IMM_EA
+        CMPI.W  #$0028,D3       * if bits 5-3 are 101, i/r is 1 and field is register
+        BEQ     REG_REG_EA
+        
+******* AS_REG_EA *******
+AS_REG_EA:
+        MOVE.L  D2,D3
+        * determine shift count specification
+        ANDI.L  #Bit2Mask,D3    * mask, isolate bits 5-3
+        CMPI.W  #$0000,D3       * if bits 5-3 are 000, i/r is 0 and field is immediate byte
+        BEQ     REG_IMM_EA
+        CMPI.W  #$0020,D3       * if bits 5-3 are 001, i/r is 1 and field is register
+        BEQ     REG_REG_EA
+        
+******* REG_IMM_EA ******
+REG_IMM_EA:
+        MOVE.L  D2,D3
+        ANDI.W  #Bit0Mask,D3    * find shift count
+        MOVE.B  #9,D5
+        LSR     D5,D3
+        MOVE.B  D3,DEST_REG     * save shift count to memory
+        MULU    #6,D3
+        
+        LEA     _IMD,A1
+        JSR     WRITE_ASCII
+        LEA     EA_IMM,A1
+        JSR     (A1,D3)
+        
+        CLR     D3
+        
+        MOVE.L  D2,D3
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit register
+        MOVE.B  D3,SRC_REG      * save register to memory
+        MULU    #6,D3
+        
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+        LEA     _DR,A1
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        JSR     (A1,D3)
+        
+        RTS
+        
+****** REG_REG_EA *******
+REG_REG_EA:
+        MOVE.L  D2,D3
+        ANDI.W  #Bit0Mask,D3    * mask to isolate 3-bit register w/shift count
+        MOVE.B  #9,D5
+        LSR     D5,D3
+        MOVE.B  D3,DEST_REG     * save register to memory
+        MULU    #6,D3
+        
+        LEA     _DR,A1
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        JSR     (A1,D3)
+        
+        CLR     D3
+        
+        MOVE.L  D2,D3
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit register
+        MOVE.B  D3,SRC_REG      * save register to memory
+        MULU    #6,D3
+        
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+        LEA     _DR,A1
+        JSR     WRITE_ASCII
+        LEA     EA_REG,A1
+        JSR     (A1,D3)
+        
         RTS
 
 ******* OPMODE **********
@@ -1164,6 +1445,49 @@ REG111:
         JSR     WRITE_ASCII
         RTS   
   
+********* JUMP TABLE FOR IMMEDIATE VALUE ******
+EA_IMM:
+        JMP     IMM000
+        JMP     IMM001
+        JMP     IMM010
+        JMP     IMM011
+        JMP     IMM100
+        JMP     IMM101
+        JMP     IMM110
+        JMP     IMM111
+
+IMM000:
+        LEA     _EIGHT,A1 
+        JSR     WRITE_ASCII
+        RTS   
+IMM001:
+        LEA     _ONE,A1 
+        JSR     WRITE_ASCII
+        RTS   
+IMM010:
+        LEA     _TWO,A1 
+        JSR     WRITE_ASCII
+        RTS   
+IMM011:
+        LEA     _THREE,A1 
+        JSR     WRITE_ASCII
+        RTS   
+IMM100:
+        LEA     _FOUR,A1 
+        JSR     WRITE_ASCII
+        RTS   
+IMM101:
+        LEA     _FIVE,A1 
+        JSR     WRITE_ASCII
+        RTS   
+IMM110:
+        LEA     _SIX,A1 
+        JSR     WRITE_ASCII
+        RTS   
+IMM111:
+        LEA     _SEVEN,A1 
+        JSR     WRITE_ASCII
+        RTS   
  
 ***      EA ERRORS      ***
 
@@ -1696,20 +2020,28 @@ PRINT_A1:
 ****************************************************        
 
 * d5 is a flag for hex value length d5==32 long is used
+* d5 == 8 byte is used
 * any other value short is used        
 WRITE_HEX_TO_ASCII: * write hex in d1 to a4 as ascii
         * may need to add case to handle sign extended shorts
         MOVEM.L   D2-D4,-(SP)
         MOVE.L  D1,D2   * copy input to working temp var
         CMPI.L  #32,D5           * if masked value is 0 there is no value in long portion of register for unsigned ints
-        BNE     h_short         * if not 32 hex value is short else long
-        * setup params for long processing
+        BEQ     h_long         * if 32 long
+        CMPI.L  #8,D5          * if 8 byte 
+        BEQ     h_byte
+        BRA     h_short         * else short
+h_long: * setup params for long processing
         MOVE.L  #$F0000000,D3   * init mask for isolating first long hex most significand digit
         MOVE.L  #28,D4          * init shift value for first long hex MSD
         BRA     h_a_loop
-        
+
+h_byte: * setup params for byte processing
+        MOVE.L  #$000000F0,D3   * init mask for isolating first byte hex most significand digit
+        MOVE.L  #4,D4      * init shift value for first byte hex MSD    
+        BRA     h_a_loop    
 h_short: * setup params for short processing
-        MOVE.L  #$F000,D3   * init mask for isolating first short hex most significand digit
+        MOVE.L  #$0000F000,D3   * init mask for isolating first short hex most significand digit
         MOVE.L  #12,D4      * init shift value for first short hex MSD
         
 h_a_loop:
@@ -1876,11 +2208,11 @@ _OR     DC.B    'OR',0
 _B   DC.B    '.B ',0
 _W   DC.B    '.W ',0
 _L   DC.B    '.L ',0
-_SUB    DC.B    'SUB ',0
-_MULS   DC.B    'MULS ',0
-_AND    DC.B    'AND ',0
-_ADD    DC.B    'ADD ',0
-_ADDA   DC.B    'ADDA ',0
+_SUB    DC.B    'SUB',0
+_MULS   DC.B    'MULS.W',0
+_AND    DC.B    'AND',0
+_ADD    DC.B    'ADD',0
+_ADDA   DC.B    'ADDA',0
 _ASL    DC.B    'ASL ',0
 _ASR    DC.B    'ASR ',0
 _LSL    DC.B    'LSL ',0
@@ -1919,6 +2251,7 @@ _FOUR   DC.B    '4',0
 _FIVE   DC.B    '5',0
 _SIX    DC.B    '6',0
 _SEVEN  DC.B    '7',0
+_EIGHT  DC.B    '8',0
 _COMMA  DC.B    ',',0
 
 ****    MODE CMP VALUES    ****
@@ -1969,6 +2302,10 @@ TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing star
 
 
  
+
+
+
+
 
 
 
