@@ -897,10 +897,10 @@ MOVEM_REG_EA:
         LEA     _DR,A3
         JSR     NEXT_MEM_WORD_TO_D1     * get bit mask
         MOVE.W  D1,MOVEM_MASK           * save bit mask to memory
-        CMP.B   #4,D4
+        CMP.B   #24,D4
         BEQ     MOVEM_PDEC
         MOVEQ.L #1,D0
-         LEA    _DR,A2
+        LEA     _DR,A2
         LEA     _AR,A3
         BRA     MOVEM_OTHER * set mem to reg for all modes other than -(An)
 MOVEM_PDEC:
@@ -2436,6 +2436,7 @@ TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing star
 
 
  
+
 
 
 
