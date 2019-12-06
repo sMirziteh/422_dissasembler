@@ -68,14 +68,17 @@ OP_CODES:
         JSR     RESET_BUF_PTR   * reset string buffer pointer
         MOVE.L  ST_ADDR,A5  * load starting address into a5
         MOVE.L  E_ADDR,A6   * load ending address into a6
+        MOVE.B  #25,D7
         
-OP_START:          
+OP_START:
+        SUB.B   #1,D7          
         * write address and a tab to str buffer
         MOVE.L  A5,D1   * load address from A5 into D1
         MOVE.L  D1,CURRENT_ADDR * save backup of opcode word address
         MOVEQ   #32,D5   * set hex length to long for address printing
         JSR     WRITE_HEX_TO_ASCII
         JSR     WRITE_TAB_A4
+        
         
         MOVE.W (A5),D2 * load word of memory into D1
 
@@ -88,8 +91,7 @@ OP_START:
         MOVE.B  #0,EA_ERR_FLAG * clear ea error flag
         
 CHK_LFT_NIB:
-        MOVE.L  D2,D3   * copy to d2
-        
+        MOVE.L  D2,D3   * copy to d2 
         ANDI.W  #Nib3Mask,D3 * clear all but left four bits
         CMPI.W  #$1000,D3   * if nibble3 == 1, branch to move byte (1)
         BEQ     load_MOVE_B
@@ -123,7 +125,12 @@ DECODE_DONE:    * print newline then check if op-code loop is done
         CMP.B   #-1,EA_ERR_FLAG
         BNE     NO_EA_ERROR
         MOVEA.L CURRENT_ADDR,A5 * reset curent address if ea error occurred
- NO_EA_ERROR:
+NO_EA_ERROR:
+        CMP.B   #0,D7
+        BNE     OP_NEXT
+        JSR     WAIT_USR_INPUT
+        MOVE.B  #25,D7
+OP_NEXT:
         ADD.L   #2,A5   * increment current address pointer by 2 bytes 
         CMP.L   A6,A5  * loop if start is less than or equal to end
         BLE     OP_START
@@ -2436,6 +2443,7 @@ TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing star
 
 
  
+
 
 
 
