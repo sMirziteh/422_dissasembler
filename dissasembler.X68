@@ -879,11 +879,18 @@ MOVEM_EA:
 ****** MOVEM_REG_EA **********
 MOVEM_REG_EA:
         * code for list goes here *
-        
+        LEA     _AR,A2
+        LEA     _DR,A3
+        MOVEQ.L #0,D0   * set to reg to mem
+        JSR     REG_LOOP
+
         LEA     _COMMA,A1
         JSR     WRITE_ASCII
-        
+        CLR.L   D3
+        CLR.L   D4
+
         MOVE.L  D2,D3
+        MOVE.L  D2,D4
         ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
         ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA reg
         LSR     #3,D4
@@ -891,7 +898,7 @@ MOVEM_REG_EA:
         MOVE.B  D3,SRC_REG      * save register to memory
         MULU    #6,D4
         MULU    #6,D3
-        
+
         LEA     EA_MODE,A1
         JSR     (A1,D4)
         
@@ -899,8 +906,11 @@ MOVEM_REG_EA:
 
 
 ****** MOVEM_MEM_EA **********
-MOVEM_MEM_EA:  
+MOVEM_MEM_EA: 
+        CLR.L   D3
+        CLR.L   D4 
         MOVE.L  D2,D3
+        MOVE.L  D2,D4
         ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
         ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA reg
         LSR     #3,D4
@@ -912,20 +922,21 @@ MOVEM_MEM_EA:
         LEA     EA_MODE,A1
         JSR     (A1,D4)
         
-        * code for list goes here *
         LEA     _COMMA,A1
         JSR     WRITE_ASCII
         
         LEA     _DR,A2
         LEA     _AR,A3
+        MOVEQ.L #1,D0   * set to mem to reg
         JSR     REG_LOOP
 
         RTS
 
 * load a2 with register type that corisponds with bits 0-7
-* load a3 with register type that corisponds with bits 8-15        
+* load a3 with register type that corisponds with bits 8-15
+* d0 i is direction if 0 reg to mem  if 1 mem to reg        
 REG_LOOP:
-        MOVEM.L D2/D3/D4/D7/A2,-(SP)
+        MOVEM.L D2/D3/D4/D7,-(SP)
         CLR.L   D7
         MOVE.B  #0,D3
         MOVE.B  #16,D4   
@@ -946,11 +957,24 @@ REG_LOOP_START:
         BRA     REG_PRINT
 REG_TYPE_2:
         MOVEA.L A3,A1           * load second label type
+        * MEM TO REG
         SUB.B   #8,D7           * correct register number
-REG_PRINT:
+        CMP.B   #1,D0
+        BEQ     REG_NUM_PRINT
+        * REG TO MEM   
+        MOVE.B  #15,D7
+        SUB.B   D3,D7
+        BRA     REG_NUM_PRINT
+REG_PRINT: 
+        CMP.B   #1,D0
+        BEQ     REG_NUM_PRINT   * if mem to reg skip reg num adjustment
+        * REG TO MEM
+        MOVE.B  #7,D7
+        SUB.B   D3,D7
+REG_NUM_PRINT:
         JSR     WRITE_ASCII
         CLR     D1
-        MOVE.B  D7,D1           * copy reg num to d1
+        MOVE.B  D7,D1           * copy reg num to d1        
         MOVE.B  #4,D5           * set to nibble    
         JSR     WRITE_HEX_TO_ASCII      * write register number
         CMP.B   #0,D6
@@ -961,7 +985,7 @@ REG_LOOP_INC:
         ADD.B   #1,D3
         BRA     REG_LOOP_START
 REG_LOOP_DONE:
-        MOVEM.L (SP)+,D2/D3/D4/D7/A2
+        MOVEM.L (SP)+,D2/D3/D4/D7
         RTS 
         
 
