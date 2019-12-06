@@ -330,15 +330,15 @@ load_MOVEM_W:   * load and print MOVEM.W neumonic return to op loop
 	    MOVE.B  #WORD,INST_SZ	* save instruction size
         JSR     MOVEM_EA
          * check for invalid eas
-        MOVE.W  D2,D3  * copy full opcode to D3
-        ANDI.W  #$0400,D3 * isolate direction bit
-        BEQ     REG_MEM_W  * if zero register to memory else mem to reg
-        JSR     SRC_AN_PDEC_INVALID * -(An) invalid for mem -> reg
-        BRA     MAW_EA
-REG_MEM_W:   
-        JSR     SRC_AN_PINC_INVALID * (An)+ invalid for reg->mem
-MAW_EA  JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
-        JSR     SRC_GLOBAL_INVALID
+*        MOVE.W  D2,D3  * copy full opcode to D3
+*        ANDI.W  #$0400,D3 * isolate direction bit
+*        BEQ     REG_MEM_W  * if zero register to memory else mem to reg
+*        JSR     SRC_AN_PDEC_INVALID * -(An) invalid for mem -> reg
+*        BRA     MAW_EA
+*REG_MEM_W:   
+*        JSR     SRC_AN_PINC_INVALID * (An)+ invalid for reg->mem
+*MAW_EA  JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
+*        JSR     SRC_GLOBAL_INVALID
         * TODO ADD direction specific errors
         BRA     DECODE_DONE
         
@@ -349,15 +349,15 @@ load_MOVEM_L:   * load and print MOVEM.L neumonic return to op loop
         MOVE.B  #LONG,INST_SZ	* save instruction size
         JSR     MOVEM_EA
         *  check for invalid eas
-        MOVE.W  D2,D3  * copy full opcode to D3
-        ANDI.W  #$0400,D3 * isolate direction bit
-        BEQ     REG_MEM_L * if zero register to memory else mem to reg
-        JSR     SRC_AN_PDEC_INVALID * -(An) invalid for mem -> reg
-        BRA     MAL_EA
-REG_MEM_L:
-        JSR     SRC_AN_PINC_INVALID * (An)+ invalid for reg->mem
-MAL_EA  JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
-        JSR     SRC_GLOBAL_INVALID
+*        MOVE.W  D2,D3  * copy full opcode to D3
+*        ANDI.W  #$0400,D3 * isolate direction bit
+*        BEQ     REG_MEM_L * if zero register to memory else mem to reg
+*        JSR     SRC_AN_PDEC_INVALID * -(An) invalid for mem -> reg
+*        BRA     MAL_EA
+*REG_MEM_L:
+*        JSR     SRC_AN_PINC_INVALID * (An)+ invalid for reg->mem
+*MAL_EA  JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
+*        JSR     SRC_GLOBAL_INVALID
         * TODO ADD direction specific errors
         BRA     DECODE_DONE
 
@@ -894,6 +894,8 @@ MOVEM_REG_EA:
         
         LEA     EA_MODE,A1
         JSR     (A1,D4)
+        
+        RTS
 
 
 ****** MOVEM_MEM_EA **********
@@ -911,9 +913,45 @@ MOVEM_MEM_EA:
         JSR     (A1,D4)
         
         * code for list goes here *
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
         
+        CLR     D3
+        CLR     D4
+        
+        JSR     NEXT_MEM_LONG_TO_BUF
+        MOVE.L  D2,D3
+        ANDI.L  #Byte1Mask,D3   * mask to isolate first 8 bits (direct registers)
+        LSR     #8,D3           * shift to bits 7-0
+        MOVE.B  #0,D5           * loop counter
+        JSR     LOOP_D_START
+        
+        *MOVEA.B (A5),D3         * load current address into D3
+        *ADD.L   #2,D3           * add 2 to current address 
         
         RTS
+        
+LOOP_D_START:
+        * to do: loop for going through the register list mask *
+        CMP.B   #7,D5           * if end of loop, move on to address registers
+        BEQ     LOOP_A_START
+        BTST.L  D5,D3           * if counter bit is 0, continue
+        ADDQ.B  #1,D5
+        BEQ     LOOP_D_START
+        
+        LEA     _DR,A1
+        JSR     WRITE_ASCII
+        MOVEA.W D5,A1
+        JSR     WRITE_ASCII
+        JSR     LOOP_D_CONTINUE * if counter bit is 1, found first reg, continue to end reg
+        
+        RTS 
+        
+LOOP_D_CONTINUE:
+        
+        
+LOOP_A_START:
+        * to do *
         
 ********* ADDQ_EA ************
 ADDQ_EA:
@@ -2276,6 +2314,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
 
 
 
