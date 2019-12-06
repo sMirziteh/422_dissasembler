@@ -916,42 +916,75 @@ MOVEM_MEM_EA:
         LEA     _COMMA,A1
         JSR     WRITE_ASCII
         
-        CLR     D3
-        CLR     D4
-        
-        JSR     NEXT_MEM_LONG_TO_BUF
-        MOVE.L  D2,D3
-        ANDI.L  #Byte1Mask,D3   * mask to isolate first 8 bits (direct registers)
-        LSR     #8,D3           * shift to bits 7-0
-        MOVE.B  #0,D5           * loop counter
-        JSR     LOOP_D_START
-        
-        *MOVEA.B (A5),D3         * load current address into D3
-        *ADD.L   #2,D3           * add 2 to current address 
-        
+        LEA     _DR,A2
+        LEA     _AR,A3
+        JSR     REG_LOOP
+
         RTS
-        
-LOOP_D_START:
+
+* load a2 with register type that corisponds with bits 0-7
+* load a3 with register type that corisponds with bits 8-15        
+REG_LOOP:
+        MOVEM.L D2/D3/D4/D7,-(SP)
+        CLR.L   D7
+        MOVE.B  #0,D3
+        MOVE.B  #16,D4   
+        JSR     NEXT_MEM_WORD_TO_D1
+        MOVE.L  D1,D2
+        JSR     COUNT_BITS_IN_WORD      * set reg count in d6
         * to do: loop for going through the register list mask *
-        CMP.B   #7,D5           * if end of loop, move on to address registers
-        BEQ     LOOP_A_START
-        BTST.L  D5,D3           * if counter bit is 0, continue
-        ADDQ.B  #1,D5
-        BEQ     LOOP_D_START
-        
-        LEA     _DR,A1
+REG_LOOP_START:
+        CMP.B   D4,D3
+        BGE     REG_LOOP_DONE
+        BTST    D3,D2           * test ith bit of D1
+        BEQ     REG_LOOP_INC
+        MOVE.B  D3,D7           * copy bit num to d7
+        SUB.B   #1,D6           * subract one from reg count
+        CMP.B   #7,D3
+        BGT     REG_TYPE_2
+        MOVEA.L A2,A1
+        BRA     REG_PRINT
+REG_TYPE_2:
+        MOVEA.L A3,A1
+        DIVU    #2,D7           * correct register number
+REG_PRINT:
         JSR     WRITE_ASCII
-        MOVEA.W D5,A1
+        CLR     D1
+        MOVE.B  D7,D1           * copy reg num to d1
+        MOVE.B  #4,D5           * set to nibble    
+        JSR     WRITE_HEX_TO_ASCII
+        CMP.B   #0,D6
+        BEQ     REG_LOOP_DONE
+        LEA     _SLASH,A1
         JSR     WRITE_ASCII
-        JSR     LOOP_D_CONTINUE * if counter bit is 1, found first reg, continue to end reg
-        
+REG_LOOP_INC:
+        ADD.B   #1,D3
+        BRA     REG_LOOP_START
+REG_LOOP_DONE:
+        MOVEM.L (SP)+,D2/D3/D4/D7
         RTS 
         
-LOOP_D_CONTINUE:
-        
-        
-LOOP_A_START:
-        * to do *
+
+
+* input word in d1 output in d6     
+COUNT_BITS_IN_WORD:
+        MOVEM.L D3/D4,-(SP)
+        CLR.L   D6
+        MOVE.B  #0,D3
+        MOVE.B  #16,D4
+
+CB_LOOP_START:
+        CMP.B   D4,D3
+        BGE     CB_LOOP_DONE
+        BTST    D3,D1           * test ith bit of D1
+        BEQ     CB_LOOP_INC
+        ADD.B   #1,D6   
+CB_LOOP_INC:
+        ADD.B   #1,D3
+        BRA     CB_LOOP_START
+CB_LOOP_DONE:
+        MOVEM.L (SP)+,D3/D4
+        RTS 
         
 ********* ADDQ_EA ************
 ADDQ_EA:
@@ -1860,7 +1893,13 @@ NEXT_MEM_WORD_TO_BUF:
 		JSR 	WRITE_HEX_TO_ASCII
 		MOVEM.L (SP)+,D1/D5
 		RTS
-		
+
+* read next word of memory to D1 advancing current pointer
+NEXT_MEM_WORD_TO_D1:
+		ADDA.L	#2,A5	* advance pointer
+		MOVE.W	(A5),D1	* load next word of memory
+		RTS
+
 * read next Long of memory to str_buffer advancing current pointer
 NEXT_MEM_LONG_TO_BUF:
 		MOVEM.L	D1/D5,-(SP)
@@ -2257,6 +2296,7 @@ _AR_PRE1        DC.B   '-(A',0
 _AR_PRE2        DC.B   ')',0
 _ABS            DC.B    '$',0
 _IMD            DC.B    '#',0
+_SLASH          DC.B    '/',0
 
 ****    Numbers    ****
 _ZERO   DC.B    '0',0
