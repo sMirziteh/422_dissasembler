@@ -925,12 +925,12 @@ MOVEM_MEM_EA:
 * load a2 with register type that corisponds with bits 0-7
 * load a3 with register type that corisponds with bits 8-15        
 REG_LOOP:
-        MOVEM.L D2/D3/D4/D7,-(SP)
+        MOVEM.L D2/D3/D4/D7/A2,-(SP)
         CLR.L   D7
         MOVE.B  #0,D3
         MOVE.B  #16,D4   
-        JSR     NEXT_MEM_WORD_TO_D1
-        MOVE.L  D1,D2
+        JSR     NEXT_MEM_WORD_TO_D1     * get bit mask
+        MOVE.L  D1,D2                   * copy mask to d2
         JSR     COUNT_BITS_IN_WORD      * set reg count in d6
         * to do: loop for going through the register list mask *
 REG_LOOP_START:
@@ -942,26 +942,26 @@ REG_LOOP_START:
         SUB.B   #1,D6           * subract one from reg count
         CMP.B   #7,D3
         BGT     REG_TYPE_2
-        MOVEA.L A2,A1
+        MOVEA.L A2,A1           * load first label type
         BRA     REG_PRINT
 REG_TYPE_2:
-        MOVEA.L A3,A1
-        DIVU    #2,D7           * correct register number
+        MOVEA.L A3,A1           * load second label type
+        SUB.B   #8,D7           * correct register number
 REG_PRINT:
         JSR     WRITE_ASCII
         CLR     D1
         MOVE.B  D7,D1           * copy reg num to d1
         MOVE.B  #4,D5           * set to nibble    
-        JSR     WRITE_HEX_TO_ASCII
+        JSR     WRITE_HEX_TO_ASCII      * write register number
         CMP.B   #0,D6
         BEQ     REG_LOOP_DONE
-        LEA     _SLASH,A1
+        LEA     _SLASH,A1               * write slash if necessary
         JSR     WRITE_ASCII
 REG_LOOP_INC:
         ADD.B   #1,D3
         BRA     REG_LOOP_START
 REG_LOOP_DONE:
-        MOVEM.L (SP)+,D2/D3/D4/D7
+        MOVEM.L (SP)+,D2/D3/D4/D7/A2
         RTS 
         
 
@@ -2076,6 +2076,7 @@ PRINT_A1:
 
 * d5 is a flag for hex value length d5==32 long is used
 * d5 == 8 byte is used
+* d5 == 4 nibble
 * any other value short is used        
 WRITE_HEX_TO_ASCII: * write hex in d1 to a4 as ascii
         * may need to add case to handle sign extended shorts
@@ -2085,19 +2086,26 @@ WRITE_HEX_TO_ASCII: * write hex in d1 to a4 as ascii
         BEQ     h_long         * if 32 long
         CMPI.L  #8,D5          * if 8 byte 
         BEQ     h_byte
+        CMPI.L  #4,D5          * if 4 nibble 
+        BEQ     h_nibble
         BRA     h_short         * else short
 h_long: * setup params for long processing
         MOVE.L  #$F0000000,D3   * init mask for isolating first long hex most significand digit
         MOVE.L  #28,D4          * init shift value for first long hex MSD
         BRA     h_a_loop
-
+h_short: * setup params for short processing
+        MOVE.L  #$0000F000,D3   * init mask for isolating first short hex most significand digit
+        MOVE.L  #12,D4      * init shift value for first short hex MSD
+        BRA     h_a_loop
 h_byte: * setup params for byte processing
         MOVE.L  #$000000F0,D3   * init mask for isolating first byte hex most significand digit
         MOVE.L  #4,D4      * init shift value for first byte hex MSD    
         BRA     h_a_loop    
-h_short: * setup params for short processing
-        MOVE.L  #$0000F000,D3   * init mask for isolating first short hex most significand digit
-        MOVE.L  #12,D4      * init shift value for first short hex MSD
+h_nibble: * setup params for nibble processing
+        MOVE.L  #$0000000F,D3   * init mask for isolating first nibble hex most significand digit
+        MOVE.L  #0,D4      * init shift value for first nibble hex MSD    
+
+        
         
 h_a_loop:
         CMPI.L  #0,D4   * compare shift value to 0
