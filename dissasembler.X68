@@ -469,6 +469,7 @@ OP_C:       * could be MULS or AND
 load_MULS:  * load and print MULS neumonic return to op loop
         LEA     _MULS,A1
         JSR     WRITE_ASCII
+        MOVE.B  #WORD,INST_SZ
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
         JSR     DM_EA
@@ -993,46 +994,54 @@ OPMODE:
 OM000:
         LEA     _B,A1
         JSR     WRITE_ASCII
+        MOVE.B  #BYTE,INST_SZ
         CLR     D5
         RTS   
 OM001:
         LEA     _W,A1
         JSR     WRITE_ASCII
+        MOVE.B  #WORD,INST_SZ
         CLR     D5
 
         RTS   
 OM010:
         LEA     _L,A1
         JSR     WRITE_ASCII
+        MOVE.B  #LONG,INST_SZ
         CLR     D5
 
         RTS   
 OM011:
         LEA     _W,A1
         JSR     WRITE_ASCII
+        MOVE.B  #WORD,INST_SZ
         MOVE.B  #%11,D5
         RTS   
 OM100:
         LEA     _B,A1
         JSR     WRITE_ASCII
+        MOVE.B  #BYTE,INST_SZ
         MOVE.B  #%1,D5
 
         RTS   
 OM101:
         LEA     _W,A1
         JSR     WRITE_ASCII
+        MOVE.B  #WORD,INST_SZ
         MOVE.B  #%1,D5
 
         RTS   
 OM110:
         LEA     _L,A1
         JSR     WRITE_ASCII
+        MOVE.B  #LONG,INST_SZ
         MOVE.B  #%1,D5
 
         RTS   
 OM111:
         LEA     _L,A1
         JSR     WRITE_ASCII
+        MOVE.B  #LONG,INST_SZ
         MOVE.B  #%11,D5
         RTS   
  
@@ -1636,9 +1645,9 @@ _BLE    DC.B    'BLE ',0
 _MOVEQ  DC.B    'MOVEQ ',0
 _DIVU   DC.B    'DIVU ',0
 _OR     DC.B    'OR',0
-_B   DC.B    '.B ',0
-_W   DC.B    '.W ',0
-_L   DC.B    '.L ',0
+_B      DC.B    '.B ',0
+_W      DC.B    '.W ',0
+_L      DC.B    '.L ',0
 _SUB    DC.B    'SUB ',0
 _MULS   DC.B    'MULS ',0
 _AND    DC.B    'AND ',0
@@ -1728,6 +1737,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
 
 
 
