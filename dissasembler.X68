@@ -441,6 +441,7 @@ load_BLE:   * load and print BLE neumonic return to op loop
         LEA     _BLE,A1
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
+        JSR     BRA_BCC_EA
         BRA     DECODE_DONE
         
 load_MOVEQ: * load and print MOVEQ neumonic return to op loop
