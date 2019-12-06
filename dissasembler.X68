@@ -330,16 +330,16 @@ load_MOVEM_W:   * load and print MOVEM.W neumonic return to op loop
 	    MOVE.B  #WORD,INST_SZ	* save instruction size
         JSR     MOVEM_EA
          * check for invalid eas
-*        MOVE.W  D2,D3  * copy full opcode to D3
-*        ANDI.W  #$0400,D3 * isolate direction bit
-*        BEQ     REG_MEM_W  * if zero register to memory else mem to reg
-*        JSR     SRC_AN_PDEC_INVALID * -(An) invalid for mem -> reg
-*        BRA     MAW_EA
-*REG_MEM_W:   
-*        JSR     SRC_AN_PINC_INVALID * (An)+ invalid for reg->mem
-*MAW_EA  JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
-*        JSR     SRC_GLOBAL_INVALID
-        * TODO ADD direction specific errors
+        MOVE.W  D2,D3  * copy full opcode to D3
+        ANDI.W  #$0400,D3 * isolate direction bit
+        BEQ     REG_MEM_W  * if zero register to memory else mem to reg
+        JSR     SRC_AN_PDEC_INVALID * -(An) invalid for mem -> reg
+        BRA     MAW_EA
+REG_MEM_W:   
+        JSR     SRC_AN_PINC_INVALID * (An)+ invalid for reg->mem
+MAW_EA  JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
+        JSR     SRC_GLOBAL_INVALID
+       
         BRA     DECODE_DONE
         
 load_MOVEM_L:   * load and print MOVEM.L neumonic return to op loop
@@ -349,16 +349,15 @@ load_MOVEM_L:   * load and print MOVEM.L neumonic return to op loop
         MOVE.B  #LONG,INST_SZ	* save instruction size
         JSR     MOVEM_EA
         *  check for invalid eas
-*        MOVE.W  D2,D3  * copy full opcode to D3
-*        ANDI.W  #$0400,D3 * isolate direction bit
-*        BEQ     REG_MEM_L * if zero register to memory else mem to reg
-*        JSR     SRC_AN_PDEC_INVALID * -(An) invalid for mem -> reg
-*        BRA     MAL_EA
-*REG_MEM_L:
-*        JSR     SRC_AN_PINC_INVALID * (An)+ invalid for reg->mem
-*MAL_EA  JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
-*        JSR     SRC_GLOBAL_INVALID
-        * TODO ADD direction specific errors
+        MOVE.W  D2,D3  * copy full opcode to D3
+        ANDI.W  #$0400,D3 * isolate direction bit
+        BEQ     REG_MEM_L * if zero register to memory else mem to reg
+        JSR     SRC_AN_PDEC_INVALID * -(An) invalid for mem -> reg
+        BRA     MAL_EA
+REG_MEM_L:
+        JSR     SRC_AN_PINC_INVALID * (An)+ invalid for reg->mem
+MAL_EA  JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
+        JSR     SRC_GLOBAL_INVALID
         BRA     DECODE_DONE
 
 ADDQ_:  * instruction is addq, determine size
