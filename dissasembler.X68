@@ -1933,14 +1933,17 @@ ADD_IMMEDIATE_TO_BUF:
 IN_IM_W:
 		LEA	_IMD,A1		* print next mem word as imediate data to buffer
 		JSR	WRITE_ASCII
+                LEA	_ABS,A1		
+		JSR	WRITE_ASCII
 		JSR	NEXT_MEM_WORD_TO_BUF
 		MOVEM.L (SP)+,D1/A1
 		RTS
 CMP_IM_L:
 		CMPI.B  #LONG,D1
-*		TODO BNE		EA ERROR
 		LEA	_IMD,A1      * print next mem long as imediate data to buffer
 		JSR	WRITE_ASCII
+                JSR	WRITE_ASCII
+                LEA	_ABS,A1	
 		JSR     NEXT_MEM_LONG_TO_BUF
 		MOVEM.L (SP)+,D1/A1
 		RTS
