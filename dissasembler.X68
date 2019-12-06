@@ -878,17 +878,8 @@ MOVEM_EA:
 
 ****** MOVEM_REG_EA **********
 MOVEM_REG_EA:
-        * code for list goes here *
-        LEA     _AR,A2
-        LEA     _DR,A3
-        MOVEQ.L #0,D0   * set to reg to mem
-        JSR     REG_LOOP
-
-        LEA     _COMMA,A1
-        JSR     WRITE_ASCII
         CLR.L   D3
         CLR.L   D4
-
         MOVE.L  D2,D3
         MOVE.L  D2,D4
         ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
@@ -898,6 +889,25 @@ MOVEM_REG_EA:
         MOVE.B  D3,SRC_REG      * save register to memory
         MULU    #6,D4
         MULU    #6,D3
+        * code for list goes here *
+        LEA     _AR,A2
+        LEA     _DR,A3
+        JSR     NEXT_MEM_WORD_TO_D1     * get bit mask
+        MOVE.W  D1,MOVEM_MASK           * save bit mask to memory
+        CMP.B   #4,D4
+        BEQ     MOVEM_PDEC
+        MOVEQ.L #1,D0
+         LEA    _DR,A2
+        LEA     _AR,A3
+        BRA     MOVEM_OTHER * set mem to reg for all modes other than -(An)
+MOVEM_PDEC:
+        MOVEQ.L #0,D0   * set to reg to mem
+MOVEM_OTHER:
+        JSR     REG_LOOP
+
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+        
 
         LEA     EA_MODE,A1
         JSR     (A1,D4)
@@ -908,9 +918,13 @@ MOVEM_REG_EA:
 ****** MOVEM_MEM_EA **********
 MOVEM_MEM_EA: 
         CLR.L   D3
+        CLR.L   D1
         CLR.L   D4 
         MOVE.L  D2,D3
         MOVE.L  D2,D4
+        JSR     NEXT_MEM_WORD_TO_D1     * get bit mask
+        MOVE.W  D1,MOVEM_MASK           * save bit mask to memory
+
         ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
         ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA reg
         LSR     #3,D4
@@ -939,9 +953,8 @@ REG_LOOP:
         MOVEM.L D2/D3/D4/D7,-(SP)
         CLR.L   D7
         MOVE.B  #0,D3
-        MOVE.B  #16,D4   
-        JSR     NEXT_MEM_WORD_TO_D1     * get bit mask
-        MOVE.L  D1,D2                   * copy mask to d2
+        MOVE.B  #16,D4         
+        MOVE.W  MOVEM_MASK,D2                   * copy mask to d2
         JSR     COUNT_BITS_IN_WORD      * set reg count in d6
         * to do: loop for going through the register list mask *
 REG_LOOP_START:
@@ -2241,6 +2254,9 @@ SRC_REG:   * always bits 0-2 inclusive in op-code
 
 EA_ERR_FLAG:  * bits 6-8 inclusive in op-code
         DCB.B   1,0     * var for ea error status
+
+MOVEM_MASK:
+        DCB.W   1,0     * var to hold bit mask for movem registers
          
 ****    CONST   ****
 CR          EQU     $0D     * carraige return          
