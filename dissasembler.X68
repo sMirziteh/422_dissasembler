@@ -339,7 +339,7 @@ REG_MEM_W:
         JSR     SRC_AN_PINC_INVALID * (An)+ invalid for reg->mem
 MAW_EA  JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
         JSR     SRC_GLOBAL_INVALID
-        * TODO ADD direction specific errors
+       
         BRA     DECODE_DONE
         
 load_MOVEM_L:   * load and print MOVEM.L neumonic return to op loop
@@ -358,7 +358,6 @@ REG_MEM_L:
         JSR     SRC_AN_PINC_INVALID * (An)+ invalid for reg->mem
 MAL_EA  JSR     SRC_DN_AN_IM_INVALID    * DN, AN, #<data> invalid eas
         JSR     SRC_GLOBAL_INVALID
-        * TODO ADD direction specific errors
         BRA     DECODE_DONE
 
 ADDQ_:  * instruction is addq, determine size
@@ -878,42 +877,150 @@ MOVEM_EA:
 
 ****** MOVEM_REG_EA **********
 MOVEM_REG_EA:
+        CLR.L   D3
+        CLR.L   D4
+        MOVE.L  D2,D3
+        MOVE.L  D2,D4
+        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA reg
+        LSR     #3,D4
+        MOVE.B  D4,SRC_MODE     * save mode to memory
+        MOVE.B  D3,SRC_REG      * save register to memory
+        MULU    #6,D4
+        MULU    #6,D3
         * code for list goes here *
+        LEA     _AR,A2
+        LEA     _DR,A3
+        JSR     NEXT_MEM_WORD_TO_D1     * get bit mask
+        MOVE.W  D1,MOVEM_MASK           * save bit mask to memory
+        CMP.B   #4,D4
+        BEQ     MOVEM_PDEC
+        MOVEQ.L #1,D0
+         LEA    _DR,A2
+        LEA     _AR,A3
+        BRA     MOVEM_OTHER * set mem to reg for all modes other than -(An)
+MOVEM_PDEC:
+        MOVEQ.L #0,D0   * set to reg to mem
+MOVEM_OTHER:
+        JSR     REG_LOOP
+
+        LEA     _COMMA,A1
+        JSR     WRITE_ASCII
+        
+
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
+        
+        RTS
+
+
+****** MOVEM_MEM_EA **********
+MOVEM_MEM_EA: 
+        CLR.L   D3
+        CLR.L   D1
+        CLR.L   D4 
+        MOVE.L  D2,D3
+        MOVE.L  D2,D4
+        JSR     NEXT_MEM_WORD_TO_D1     * get bit mask
+        MOVE.W  D1,MOVEM_MASK           * save bit mask to memory
+
+        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
+        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA reg
+        LSR     #3,D4
+        MOVE.B  D4,SRC_MODE     * save mode to memory
+        MOVE.B  D3,SRC_REG      * save register to memory
+        MULU    #6,D4
+        MULU    #6,D3
+        
+        LEA     EA_MODE,A1
+        JSR     (A1,D4)
         
         LEA     _COMMA,A1
         JSR     WRITE_ASCII
         
-        MOVE.L  D2,D3
-        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
-        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA reg
-        LSR     #3,D4
-        MOVE.B  D4,SRC_MODE     * save mode to memory
-        MOVE.B  D3,SRC_REG      * save register to memory
-        MULU    #6,D4
-        MULU    #6,D3
-        
-        LEA     EA_MODE,A1
-        JSR     (A1,D4)
+        LEA     _DR,A2
+        LEA     _AR,A3
+        MOVEQ.L #1,D0   * set to mem to reg
+        JSR     REG_LOOP
 
-
-****** MOVEM_MEM_EA **********
-MOVEM_MEM_EA:  
-        MOVE.L  D2,D3
-        ANDI.W  #Bit2Mask,D4    * mask to isolate 3-bit EA mode
-        ANDI.W  #Bit3Mask,D3    * mask to isolate 3-bit EA reg
-        LSR     #3,D4
-        MOVE.B  D4,SRC_MODE     * save mode to memory
-        MOVE.B  D3,SRC_REG      * save register to memory
-        MULU    #6,D4
-        MULU    #6,D3
-        
-        LEA     EA_MODE,A1
-        JSR     (A1,D4)
-        
-        * code for list goes here *
-        
-        
         RTS
+
+* load a2 with register type that corisponds with bits 0-7
+* load a3 with register type that corisponds with bits 8-15
+* d0 i is direction if 0 reg to mem  if 1 mem to reg        
+REG_LOOP:
+        MOVEM.L D2/D3/D4/D7,-(SP)
+        CLR.L   D7
+        MOVE.B  #0,D3
+        MOVE.B  #16,D4         
+        MOVE.W  MOVEM_MASK,D2                   * copy mask to d2
+        JSR     COUNT_BITS_IN_WORD      * set reg count in d6
+        * to do: loop for going through the register list mask *
+REG_LOOP_START:
+        CMP.B   D4,D3
+        BGE     REG_LOOP_DONE
+        BTST    D3,D2           * test ith bit of D1
+        BEQ     REG_LOOP_INC
+        MOVE.B  D3,D7           * copy bit num to d7
+        SUB.B   #1,D6           * subract one from reg count
+        CMP.B   #7,D3
+        BGT     REG_TYPE_2
+        MOVEA.L A2,A1           * load first label type
+        BRA     REG_PRINT
+REG_TYPE_2:
+        MOVEA.L A3,A1           * load second label type
+        * MEM TO REG
+        SUB.B   #8,D7           * correct register number
+        CMP.B   #1,D0
+        BEQ     REG_NUM_PRINT
+        * REG TO MEM   
+        MOVE.B  #15,D7
+        SUB.B   D3,D7
+        BRA     REG_NUM_PRINT
+REG_PRINT: 
+        CMP.B   #1,D0
+        BEQ     REG_NUM_PRINT   * if mem to reg skip reg num adjustment
+        * REG TO MEM
+        MOVE.B  #7,D7
+        SUB.B   D3,D7
+REG_NUM_PRINT:
+        JSR     WRITE_ASCII
+        CLR     D1
+        MOVE.B  D7,D1           * copy reg num to d1        
+        MOVE.B  #4,D5           * set to nibble    
+        JSR     WRITE_HEX_TO_ASCII      * write register number
+        CMP.B   #0,D6
+        BEQ     REG_LOOP_DONE
+        LEA     _SLASH,A1               * write slash if necessary
+        JSR     WRITE_ASCII
+REG_LOOP_INC:
+        ADD.B   #1,D3
+        BRA     REG_LOOP_START
+REG_LOOP_DONE:
+        MOVEM.L (SP)+,D2/D3/D4/D7
+        RTS 
+        
+
+
+* input word in d1 output in d6     
+COUNT_BITS_IN_WORD:
+        MOVEM.L D3/D4,-(SP)
+        CLR.L   D6
+        MOVE.B  #0,D3
+        MOVE.B  #16,D4
+
+CB_LOOP_START:
+        CMP.B   D4,D3
+        BGE     CB_LOOP_DONE
+        BTST    D3,D1           * test ith bit of D1
+        BEQ     CB_LOOP_INC
+        ADD.B   #1,D6   
+CB_LOOP_INC:
+        ADD.B   #1,D3
+        BRA     CB_LOOP_START
+CB_LOOP_DONE:
+        MOVEM.L (SP)+,D3/D4
+        RTS 
         
 ********* ADDQ_EA ************
 ADDQ_EA:
@@ -1844,7 +1951,13 @@ NEXT_MEM_WORD_TO_BUF:
 		JSR 	WRITE_HEX_TO_ASCII
 		MOVEM.L (SP)+,D1/D5
 		RTS
-		
+
+* read next word of memory to D1 advancing current pointer
+NEXT_MEM_WORD_TO_D1:
+		ADDA.L	#2,A5	* advance pointer
+		MOVE.W	(A5),D1	* load next word of memory
+		RTS
+
 * read next Long of memory to str_buffer advancing current pointer
 NEXT_MEM_LONG_TO_BUF:
 		MOVEM.L	D1/D5,-(SP)
@@ -2021,6 +2134,7 @@ PRINT_A1:
 
 * d5 is a flag for hex value length d5==32 long is used
 * d5 == 8 byte is used
+* d5 == 4 nibble
 * any other value short is used        
 WRITE_HEX_TO_ASCII: * write hex in d1 to a4 as ascii
         * may need to add case to handle sign extended shorts
@@ -2030,19 +2144,26 @@ WRITE_HEX_TO_ASCII: * write hex in d1 to a4 as ascii
         BEQ     h_long         * if 32 long
         CMPI.L  #8,D5          * if 8 byte 
         BEQ     h_byte
+        CMPI.L  #4,D5          * if 4 nibble 
+        BEQ     h_nibble
         BRA     h_short         * else short
 h_long: * setup params for long processing
         MOVE.L  #$F0000000,D3   * init mask for isolating first long hex most significand digit
         MOVE.L  #28,D4          * init shift value for first long hex MSD
         BRA     h_a_loop
-
+h_short: * setup params for short processing
+        MOVE.L  #$0000F000,D3   * init mask for isolating first short hex most significand digit
+        MOVE.L  #12,D4      * init shift value for first short hex MSD
+        BRA     h_a_loop
 h_byte: * setup params for byte processing
         MOVE.L  #$000000F0,D3   * init mask for isolating first byte hex most significand digit
         MOVE.L  #4,D4      * init shift value for first byte hex MSD    
         BRA     h_a_loop    
-h_short: * setup params for short processing
-        MOVE.L  #$0000F000,D3   * init mask for isolating first short hex most significand digit
-        MOVE.L  #12,D4      * init shift value for first short hex MSD
+h_nibble: * setup params for nibble processing
+        MOVE.L  #$0000000F,D3   * init mask for isolating first nibble hex most significand digit
+        MOVE.L  #0,D4      * init shift value for first nibble hex MSD    
+
+        
         
 h_a_loop:
         CMPI.L  #0,D4   * compare shift value to 0
@@ -2154,6 +2275,9 @@ SRC_REG:   * always bits 0-2 inclusive in op-code
 
 EA_ERR_FLAG:  * bits 6-8 inclusive in op-code
         DCB.B   1,0     * var for ea error status
+
+MOVEM_MASK:
+        DCB.W   1,0     * var to hold bit mask for movem registers
          
 ****    CONST   ****
 CR          EQU     $0D     * carraige return          
@@ -2241,6 +2365,7 @@ _AR_PRE1        DC.B   '-(A',0
 _AR_PRE2        DC.B   ')',0
 _ABS            DC.B    '$',0
 _IMD            DC.B    '#',0
+_SLASH          DC.B    '/',0
 
 ****    Numbers    ****
 _ZERO   DC.B    '0',0
@@ -2302,6 +2427,7 @@ TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing star
 
 
  
+
 
 
 
