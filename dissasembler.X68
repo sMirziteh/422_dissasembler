@@ -1118,6 +1118,8 @@ MOVEQ_EA:
 DM_EA:
         MOVE.L  D2,D3 
         MOVE.L  D2,D4
+        MOVE.B  #WORD,INST_SZ   * divu and muls always word for ea
+        
         ANDI.W  #Bit2Mask,D4    *mask to isolate 3-bit source mode
         ANDI.W  #Bit3Mask,D3    *mask to isolate 3-bit source register 
         LSR.L   #3,D4
