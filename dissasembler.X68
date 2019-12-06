@@ -2187,7 +2187,7 @@ _B   DC.B    '.B ',0
 _W   DC.B    '.W ',0
 _L   DC.B    '.L ',0
 _SUB    DC.B    'SUB',0
-_MULS   DC.B    'MULS',0
+_MULS   DC.B    'MULS.W',0
 _AND    DC.B    'AND',0
 _ADD    DC.B    'ADD',0
 _ADDA   DC.B    'ADDA',0
@@ -2276,6 +2276,7 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
+
 
 
 
