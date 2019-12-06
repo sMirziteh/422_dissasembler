@@ -425,20 +425,22 @@ load_BRA:   * load and print BRA neumonic return to op loop
 load_BEQ:   * load and print BEQ neumonic return to op loop
         LEA     _BEQ,A1
         JSR     WRITE_ASCII
-        JSR     NEXT_MEM_WORD_TO_BUF
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
+        JSR     BRA_BCC_EA
         BRA     DECODE_DONE
 
 load_BGT:   * load and print BGT neumonic return to op loop
         LEA     _BGT,A1
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
+        JSR     BRA_BCC_EA
         BRA     DECODE_DONE
         
 load_BLE:   * load and print BLE neumonic return to op loop
         LEA     _BLE,A1
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
+        JSR     BRA_BCC_EA
         BRA     DECODE_DONE
         
 load_MOVEQ: * load and print MOVEQ neumonic return to op loop
@@ -461,7 +463,7 @@ load_DIVU:  * load and print DIVU neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
-        JSR     DIVU_EA
+        JSR     DM_EA
         * EA error check
         JSR     SRC_AN_INVALID          
         JSR     SRC_GLOBAL_INVALID
@@ -499,6 +501,7 @@ load_MULS:  * load and print MULS neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
+         JSR     DM_EA
         * EA error check
         JSR     SRC_AN_INVALID          
         JSR     SRC_GLOBAL_INVALID
@@ -528,7 +531,6 @@ load_ADDA:  * load and print ADDA neumonic return to op loop
         JSR     WRITE_ASCII
         JSR     SET_END_OP_CODE_PTR     * note mem location following op-code neumonic
          **** EA CODE GOES HERE ****
-
         JSR     OPMODE_EA
         * EA error check     
         JSR     SRC_GLOBAL_INVALID
@@ -1110,8 +1112,8 @@ MOVEQ_EA:
         JSR     (A1,D3)
         RTS
 
-********* DIVU_EA ************
-DIVU_EA:
+********* DM_EA ************
+DM_EA:
         MOVE.L  D2,D3 
         MOVE.L  D2,D4
         ANDI.W  #Bit2Mask,D4    *mask to isolate 3-bit source mode
@@ -2423,17 +2425,6 @@ DATA_MSG    DC.B    'DATA   $',0
 TEST_MSG    DC.B    'CONVERTED ADDRESS IS: ',0  * test message for printing start and end addresses
             
 		    END     INIT        * last line of source
-
-
-
- 
-
-
-
-
-
-
-
 
 
 
